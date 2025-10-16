@@ -1,0 +1,277 @@
+@charset "utf-8";
+
+* {
+  box-sizing: border-box;
+}
+
+header.titles { 
+  margin: auto;
+  max-width: 40%;
+}
+
+header.navigation {
+  position: sticky;
+  position: -webkit-sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.footer {
+  margin: auto;
+  margin-top: 25px;
+  padding: 10px;
+  width: 100%;
+  border-top-style: solid;
+  border-top-width: 1px;
+}
+
+body {
+  margin: 0;
+  font-family: Verdana, sans-serif;
+  padding: 10px;
+  background-color: #FFF3F3;
+}
+
+section::after {
+  clear: both;
+  content: "";
+  display: table;
+}
+
+h1, h2 {
+  font-family: Georgia, serif;
+}
+
+h1.site-title {
+  text-align: center;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+}
+
+h2.sub-title {
+  text-align: center;
+  margin-top: 5px;
+}
+
+.card {
+  background-color: white;
+  padding: 10px;
+  margin-top: 20px;
+}
+
+img.inline {
+  max-width: 50%;
+  height: auto;
+}
+
+img.inline.left {
+  float: left;
+  margin: 5px 10px 0px 0px;
+}
+
+img.inline.right {
+  float: right;
+  margin: 5px 0px 0px 10px;
+}
+
+img.block {
+  display: block;
+  max-width: 70%;
+  height: auto;
+}
+
+img.block.center {
+  margin-left:auto;
+  margin-right:auto;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+a:link, a:visited {
+  color: firebrick;
+  text-decoration: underline;
+}
+
+a:hover, a:active {
+  color: firebrick;
+  text-decoration: none;
+}
+
+a.filter-nav {
+  margin-top: 2px;
+  border-radius: 4px;
+  background-color: indianred;
+  color: white;
+  padding: 4px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+}
+
+a.filter-nav:hover {
+  background-color: firebrick;
+}
+
+ul.top-menu {
+  list-style-type: none;
+  margin-top: 25px;
+  margin-bottom: 10px;
+  padding: 0;
+  overflow: hidden;
+  background-color: indianred;
+}
+
+ul.top-menu li {
+  float: left;
+}
+
+ul.top-menu li a {
+  display: block;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  padding: 15px;
+}
+
+ul.top-menu li a:hover:not(.active) {
+  background-color: darkred;
+  padding-left: 12px;
+  border-left-style: solid;
+  border-left-width: 3px;
+  border-left-color: mistyrose;
+}
+
+ul.top-menu li a.active {
+  background-color: darkred;
+  padding-left: 12px;
+  border-left-style: solid;
+  border-left-width: 3px;
+  border-left-color: mistyrose;
+}
+
+ul.top-menu li.right {float: right;}
+
+.row::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.column {
+  padding-left: 10px;
+  padding-right: 10px;
+  float: left;
+}
+
+.column.side {
+  width: 40%;
+}
+
+.column.main {
+  width: 60%;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  color: black;
+  border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 200px;
+  top: 100%;
+  left: 50%;
+  margin-top: 6px;
+  margin-left: -100px;
+  background-color: darkred;
+  font-size: 12px;
+  color: white;
+  text-align: center;
+  padding: 7px;
+  border-radius: 4px;
+  position: absolute;
+  z-index: 1;
+}
+
+.tooltip .tooltiptext::after {
+  content: " ";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent darkred transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
+.mobile-icon {
+  margin: auto;
+  width: 54px;
+  cursor: pointer;
+  padding: 15px 15px;
+  display: none;
+}
+
+.mobile-icon-line {
+  background-color: indianred;
+  display: block;
+  height: 2px;
+  position: relative;
+  width: 24px;
+}
+
+.mobile-icon-line::before, .mobile-icon-line::after {
+  background-color: indianred;
+  content: '';
+  display: block;
+  height: 100%;
+  position: absolute;
+  transition: all .2s ease-out;
+  width: 100%;
+}
+
+.mobile-icon-line::before {
+  top: 7px;
+}
+
+.mobile-icon-line::after {
+  top: -7px;
+}
+
+.mobile-menu {
+  display: none;
+}
+
+.mobile-menu:checked ~ .topnav {
+  display: block;
+}
+
+.mobile-menu:checked ~ .mobile-icon .mobile-icon-line {
+  background: transparent;
+}
+
+.mobile-menu:checked ~ .mobile-icon .mobile-icon-line::before {
+  transform: rotate(-45deg);
+  top:0;
+}
+
+.mobile-menu:checked ~ .mobile-icon .mobile-icon-line::after {
+  transform: rotate(45deg);
+  top:0;
+}
+
+@media screen and (max-width: 720px) {
+  .mobile-icon {display: block;}
+  .topnav {display: none;}
+  ul.top-menu li.right, 
+  ul.top-menu li {float: none;}
+  .column.side, .column.main {width: 100%}
+}

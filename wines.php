@@ -1,0 +1,257 @@
+<?php
+  session_start();
+?>
+
+<!DOCTYPE html>
+<html lang="en-GB">
+
+<?php
+  if (empty($_GET['sort'])) {
+    $sort="region";
+  } else {
+    $sort=$_GET['sort'];
+  }
+  if ($sort=="region") {
+    $sqlOrderBy="order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
+  } elseif ($sort=="producer") {
+    $sqlOrderBy="order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
+  } elseif ($sort=="vintage") {
+    $sqlOrderBy="order by vintage desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc";
+  } elseif ($sort=="variety") {
+    $sqlOrderBy="order by grape asc,country asc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
+  } elseif ($sort=="tenyearsold") {
+    $sqlOrderBy="where vintage is not null and year(curdate())-vintage=10 order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
+  }
+?>
+
+<head>
+  <title>Dominik Mueller - Browse all wines</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Dominik Mueller">
+  <meta name="description" content="On this website, I share my wine cellar with a community of fellow fine wine enthusiasts."
+  <meta name="keywords" content="Dominik Mueller,wine database,wine tasting,tasting notes,fine wine,wine collection,wine cellar">
+  <link rel="canonical" href="https://dmueller.com/">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
+  <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
+  <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
+</head>
+
+<body>
+
+<header class="titles">
+  <h1 class="site-title">Dominik Mueller</h1>
+  <h2 class="sub-title">Wine is my hobby. Fine wine tasting notes and experiences.</h2>
+</header>
+
+<header class="navigation">
+  <input class="mobile-menu" type="checkbox" id="mobile-menu">
+  <label class="mobile-icon" for="mobile-menu"><span class="mobile-icon-line"></span></label>
+
+  <nav class="topnav">
+    <ul class="top-menu">
+      <li><a href="/index.php" title="Back to homepage">Home</a></li>
+      <li><a class="active" href="/wines.php" title="Wine database">Wine database</a></li>
+      <li><a href="/tnotes.php" title="Fine wine tasting notes">Tasting notes</a></li>
+      <li><a href="/blog.php" title="My wine blog">Stories</a></li>
+      <?php
+        if (!isset($_SESSION['user_id'])) {
+          echo "<li class='right'><a href='/login.php' title='Login'>Login</a></li>";
+        } elseif (isset($_SESSION['user_id'])) {
+          echo "<li><a style='font-style:italic;' href='/winemenu.php' title='Carte des vins'>Carte des vins</a></li>";
+          echo "<li class='right'><a href='/logout.php' title='Logout'>Logout</a></li>";
+          echo "<li class='right'><a href='/accountSettings.php' title='My account'>My account</a></li>";
+        }
+      ?>
+    </ul>
+  </nav>
+</header>
+
+<div class="row">
+  <div class="column main">
+    <div class="card">
+      <h3 style="margin-bottom:0;">Browse all wines</h3>
+      <p style="margin-top:0;"><small>
+        Sort by: <a class="filter-nav" href="/wines.php?sort=region">Region</a>
+        <a class="filter-nav" href="/wines.php?sort=producer">Producer</a>
+        <a class="filter-nav" href="/wines.php?sort=vintage">Vintage</a>
+        <a class="filter-nav" href="/wines.php?sort=variety">Variety</a>
+        <a class="filter-nav" href="/wines.php?sort=tenyearsold">Ten years old</a>
+        <a class="filter-nav" href="/wines.php"><b>Reset</b></a>
+      </small></p>
+    </div>
+    <div class="card">
+      <ul style="list-style-type:none;padding:0;margin:0;">
+        <?php getWines(1000,$sort,$sqlOrderBy); ?>
+      </ul>
+    </div>
+  </div>
+  <div class="column side">
+    <div class="card">
+      <aside>
+        <p>This is not a list of my wine cellar. These are wines I've written about in a tasting note or in a story on my blog.</p>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <footer>
+    <p style="float:right;margin-top:0;">
+      <a href="/privacy.php" title="Privacy policy">Privacy policy</a>
+      <br><a href="/impressum.php" title="Impressum / Imprint">Impressum / Imprint</a>
+    </p>
+    <address>
+      Contact details:<br>
+      Dominik Mueller<br>
+      Muehlstr. 24<br>
+      76532 Baden-Baden<br>
+      GERMANY<br><br>
+      E-Mail: <a href="mailto:dm@dmueller.com" title="Contact me by email">dm@dmueller.com</a>
+    </address>
+    <p align="center">
+      <small><u>Cookie notice:</u><br>This website uses session cookies for members logging in only. Aside from that,<br>the
+      website uses <strong>no</strong> cookies. Refer to the <a href="/privacy.php" alt="Privacy policy">privacy policy</a>
+      for details. Have fun!</small>
+    </p>
+  </footer>
+</div>
+
+</body>
+
+</html>
+
+<?php function getWines($num,$sort,$sqlOrderBy)
+{
+  require "db_connect.php";
+  $mysqli->query("SET NAMES utf8");
+  $prevCountry="";
+  $prevRegion="";
+  $prevProducer="";
+  $prevVintage="";
+  // Perform query
+  $result = $mysqli -> query("select
+                                wines.wine_id,
+                                wines.vintage,
+                                wines_master.master_id,
+                                wines_master.name,
+                                wines_master.nameconvention,
+                                wines_master.producer_id,
+                                wines_master.region_id,
+                                wines_master.subregion_id,
+                                wines_master.appellation_id,
+                                wines_master.vineyard_id,
+                                wines_master.grape,
+                                wines_master.colour,
+                                wines_master.style,
+                                producers.producer,
+                                producers.producer_desc,
+                                vineyards.vineyard,
+                                regions.region,
+                                regions.country,
+                                subregions.subregion,
+                                appellations.appellation,
+                                v.grape_desc
+                              from wines
+                                left join wines_master on wines.master_id=wines_master.master_id
+                                left join producers on wines_master.producer_id=producers.producer_id
+                                left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
+                                left join regions on wines_master.region_id=regions.region_id
+                                left join subregions on wines_master.subregion_id=subregions.subregion_id
+                                left join appellations on wines_master.appellation_id=appellations.appellation_id
+                                left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
+                              ".$sqlOrderBy." limit 0,".$num);
+  if ($sort=="region") {
+    echo "<p><small><i>Wines sorted by country and region. Then by producer, wine and vintage.</i></small></p>";
+  } elseif ($sort=="producer") {
+    echo "<p><small><i>Wines sorted by producer, then vintage and wine.</i></small></p>";
+  } elseif ($sort=="vintage") {
+    echo "<p><small><i>Wines sorted by vintage, then country, producer and wine.</i></small></p>";
+  } elseif ($sort=="variety") {
+    echo "<p><small><i>Wines sorted by grape variety, then country, producer and wine.</i></small></p>";
+  } elseif ($sort=="tenyearsold") {
+    echo "<p><small><i>Ten-year-old wines sorted by country and region. Then by producer and wine.</i></small></p>";
+  }
+  while ($wine = $result->fetch_assoc()) {
+    // Vintage NV?
+    if ($wine["vintage"]==null) { $wine["vintage"]="NV"; }
+    // Get wine name
+    if ($wine["nameconvention"]=="vintage_name") {
+      $wine_name=$wine["vintage"]." ".$wine["name"];
+    } elseif ($wine["nameconvention"]=="vintage_producer") {
+      $wine_name=$wine["vintage"]." ".$wine["producer"];
+    } elseif ($wine["nameconvention"]=="vintage_producer_grape_name") {
+      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["grape"]." ".$wine["name"];
+    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_grape_name") {
+      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["grape"]." ".$wine["name"];
+    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_name") {
+      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["name"];
+    // ...else vintage_producer_name as default:
+    } else {
+      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
+    }
+    // Output
+    if($sort=="region" || $sort=="tenyearsold") {
+      if($wine["country"]!=$prevCountry) {
+        echo ($prevCountry!="") ? "</ul></details></li></ul></details><br>" : "";
+        echo "<details><summary><b>".$wine["country"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        $prevRegion="";
+      }
+      if($wine["region"]!=$prevRegion) {
+        echo ($prevRegion!="") ? "</ul></details></li>" : "";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["region"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+      }
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
+    } elseif($sort=="producer") {
+      if ($wine["producer"]!=$prevProducer) {
+        echo ($prevProducer!="") ? "</ul></details><br>" : "";
+        if ($wine["producer_desc"]!=null) {
+          echo "<details><summary><b>".$wine["producer"]."</b></summary><hr><small>".$wine["producer_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
+        } else {
+          echo "<details><summary><b>".$wine["producer"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        }
+      }
+      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
+    } elseif($sort=="vintage") {
+      if($wine["vintage"]!=$prevVintage) {
+        echo ($prevVintage!="") ? "</ul></details></li></ul></details><br>" : "";
+        echo "<details><summary><b>".$wine["vintage"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        $prevCountry="";
+      }
+      if($wine["country"]!=$prevCountry) {
+        echo ($prevCountry!="") ? "</ul></details></li>" : "";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+      }
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
+    } elseif($sort=="variety") {
+      if($wine["grape"]!=$prevVariety) {
+        echo ($prevVariety!="") ? "</ul></details></li></ul></details><br>" : "";
+        if($wine["grape_desc"]!=null) {
+          echo "<details><summary><b>".$wine["grape"]."</b></summary><hr><small>".$wine["grape_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
+        } else {
+          echo "<details><summary><b>".$wine["grape"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        }
+        $prevCountry="";
+      }
+      if($wine["country"]!=$prevCountry) {
+        echo ($prevCountry!="") ? "</ul></details></li>" : "";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+      }
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
+    }
+    // Set previous values
+    $prevCountry=$wine["country"];
+    $prevRegion=$wine["region"];
+    $prevProducer=$wine["producer"];
+    $prevVintage=$wine["vintage"];
+    $prevVariety=$wine["grape"];
+  }
+  if($sort=="region" || $sort=="tenyearsold" || $sort=="vintage" || $sort=="variety") {
+    echo "</ul></details></li></ul></details>";
+  } elseif($sort=="producer") {
+    echo "</ul></details>";
+  }
+  $result -> free_result();
+  $mysqli -> close();
+} ?>
