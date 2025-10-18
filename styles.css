@@ -173,6 +173,19 @@ ul.top-menu li.right {float: right;}
   width: 60%;
 }
 
+.winemenu_wine_desc p {
+  max-width:300px;
+  margin-top:0;
+  margin-bottom:5px;
+  text-indent:0;
+}
+
+.winemenu_wine_desc hr {
+  max-width:300px;
+  margin-left:0;
+  margin-right:auto;
+}
+
 .tooltip {
   position: relative;
   display: inline-block;
