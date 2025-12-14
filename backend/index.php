@@ -134,7 +134,7 @@
 
 <?php function getNumberOfBottlesInStorage()
 {
-  require "db_connect.php";
+  require __DIR__ . "/../db_connect.php";
   $mysqli->query("SET NAMES utf8");
   // Perform query
   $result = $mysqli -> query("select

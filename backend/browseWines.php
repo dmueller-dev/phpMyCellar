@@ -100,7 +100,7 @@
 
 <?php function getWines($num,$sort,$sqlOrderBy)
 {
-  require "db_connect.php";
+  require __DIR__ . "/../db_connect.php";
   $mysqli->query("SET NAMES utf8");
   $prevCountry="";
   $prevRegion="";
