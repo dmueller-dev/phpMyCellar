@@ -137,22 +137,41 @@
   require __DIR__ . "/../db_connect.php";
   $mysqli->query("SET NAMES utf8");
   // Perform query
-  $result = $mysqli -> query("select
-                                storageBins.bin_name,
-                                count(bottles.bottle_id) as btls
-                              from bottles
-                              left join storageBins on bottles.storage_location=storageBins.bin_id
-                              where status='in cellar'
-                              group by storageBins.bin_name
-                              order by storageBins.bin_name");
-  echo "<table>";
+  $result = $mysqli -> query(
+    "select
+      src.cellar_name,
+      src.bin_name,
+      sum(src.btls) over (partition by src.cellar_name) as btls_cellar,
+      src.btls
+    from
+    (
+      select
+        cellars.cellar_name,
+        storageBins.bin_name,
+        count(bottles.bottle_id) as btls
+      from bottles
+        left join storageBins on bottles.storage_location=storageBins.bin_id
+        left join cellars on storageBins.cellar_id=cellars.cellar_id
+      where status='in cellar'
+      group by storageBins.bin_name
+    ) src
+    order by cellar_name, bin_name"
+  );
+  echo "<table style='border-collapse:collapse;'>";
+  $prevCellar="";
   while ($storedBtls = $result->fetch_assoc()) {
-    echo "<tr><td><b>".$storedBtls["bin_name"]."</b></td><td>".$storedBtls["btls"]."</td></tr>";
+    if ($storedBtls["cellar_name"] != $prevCellar) {
+      if ($storedBtls != "") { echo "<tr style='height:15px;'><td colspan='2'></td></tr>"; }
+      $prevCellar = $storedBtls["cellar_name"];
+      echo "<tr style='border-bottom:1px solid;'><td><b>".$storedBtls["cellar_name"]."</b></td><td style='text-indent:5px;'>".$storedBtls["btls_cellar"]."</td></tr>";
+    }
+    echo "<tr style='text-indent:15px;'><td><b>".$storedBtls["bin_name"]."</b></td><td>".$storedBtls["btls"]."</td></tr>";
   }
   $result -> free_result();
   $result = $mysqli -> query("select count(bottle_id) as num from bottles where status='in cellar'");
   $totalBtls = $result->fetch_assoc();
-  echo "<tr><td><b>Total number</b></td><td>".$totalBtls["num"]."</td></tr>";
+  echo "<tr style='height:15px;'><td colspan='2'></td></tr>";
+  echo "<tr><td><b>Total number</b></td><td style='text-indent:5px;'>".$totalBtls["num"]."</td></tr>";
   echo "</table>";
   $result -> free_result();
   $mysqli -> close();
