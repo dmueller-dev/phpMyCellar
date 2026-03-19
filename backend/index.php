@@ -161,7 +161,7 @@
   $prevCellar="";
   while ($storedBtls = $result->fetch_assoc()) {
     if ($storedBtls["cellar_name"] != $prevCellar) {
-      if ($storedBtls != "") { echo "<tr style='height:15px;'><td colspan='2'></td></tr>"; }
+      if ($prevCellar != "") { echo "<tr style='height:15px;'><td colspan='2'></td></tr>"; }
       $prevCellar = $storedBtls["cellar_name"];
       echo "<tr style='border-bottom:1px solid;'><td><b>".$storedBtls["cellar_name"]."</b></td><td style='text-indent:5px;'>".$storedBtls["btls_cellar"]."</td></tr>";
     }
