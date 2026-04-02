@@ -17,7 +17,7 @@
   } else {
     $sort=$_GET['sort'];
   }
-  if ($sort=="region") {
+  if ($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus") {
     $sqlOrderBy="order by regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
   } elseif ($sort=="producer") {
     $sqlOrderBy="order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
@@ -25,12 +25,12 @@
     $sqlOrderBy="order by vintage desc,regions.country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
   } elseif ($sort=="variety") {
     $sqlOrderBy="order by grape asc,regions.country asc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
-  } elseif ($sort=="tenyearsold") {
-    $sqlOrderBy="order by regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
   } elseif ($sort=="location") {
     $sqlOrderBy="order by cellar_name asc,bin_name asc,regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
   } elseif ($sort=="style") {
-    $sqlOrderBy ="order by wines_master.style asc,regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
+    $sqlOrderBy="order by wines_master.style asc,regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
+  } elseif ($sort=="rand") {
+    $sqlOrderBy="order by rand() limit 1";
   }
 ?>
 
@@ -86,7 +86,9 @@
         <a class="filter-nav" href="/winemenu.php?sort=vintage">Vintage</a>
         <a class="filter-nav" href="/winemenu.php?sort=variety">Variety</a>
         <a class="filter-nav" href="/winemenu.php?sort=style">Style</a>
-        <a class="filter-nav" href="/winemenu.php?sort=tenyearsold">Ten years old</a>
+        <a class="filter-nav" href="/winemenu.php?sort=tenyearsold">Aged 10 years</a>
+        <a class="filter-nav" href="/winemenu.php?sort=twentyplus">Aged 20+ years</a>
+        <a class="filter-nav" href="/winemenu.php?sort=rand">Random</a>
       </small></p>
     </div>
     <div class="card">
@@ -193,7 +195,13 @@
       left join appellations on wines_master.appellation_id=appellations.appellation_id
       left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
     where status='in cellar' and (year(curdate())>=bottles.drink_from or bottles.drink_from is null)"
-    .(($sort=="tenyearsold") ? " and vintage is not null and (year(curdate())-vintage=10)" : "")
+    .
+    (
+      ($sort=="tenyearsold") ? " and vintage is not null and (year(curdate())-vintage=10)" :
+      (
+        ($sort=="twentyplus") ? " and vintage is not null and (year(curdate())-vintage>=20)" : ""
+      )
+    )
     ." group by wines.wine_id, bottle_formats.format, storageBins.bin_name "
     .$sqlOrderBy
   );
@@ -211,6 +219,10 @@
     echo "<p><small><i>Bottles sorted by storage location. Then by country, region, producer and wine.</i></small></p>";
   } elseif ($sort=="style") {
     echo "<p><small><i>Bottles sorted by style, then by country, region and producer.</i></small></p>";
+  } elseif ($sort=="rand") {
+    echo "<p><small><i>Featuring a randomly selected wine. Refresh for another recommendation.</i></small></p>";
+  } elseif ($sort=="twentyplus") {
+    echo "<p><small><i>Wines aged twenty years or more, organised by country and region, then by producer, wine name and vintage.</i></small></p>";
   }
   while ($wine = $result->fetch_assoc()) {
     // Vintage NV?
@@ -231,7 +243,7 @@
       $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
     }
     // Output
-    if($sort=="region" || $sort=="tenyearsold") {
+    if($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus" || $sort=="rand") {
       if($wine["country"]!=$prevCountry) {
         echo ($prevCountry!="") ? "</ul></details></li></ul></li></ul><br>" : "";
         echo "<b>".$wine["country"]."</b><ul style='list-style-type:none;padding:0;margin:0;'>";
@@ -311,7 +323,7 @@
     $prevWine=$wine["wine_id"];
     $prevFormat=$wine["format"];
   }
-  if($sort=="region" || $sort=="tenyearsold" || $sort=="vintage" || $sort=="variety" || $sort=="style") {
+  if($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus" || $sort=="vintage" || $sort=="variety" || $sort=="style" || $sort=="rand") {
     echo "</ul></details></ul></details></li></ul></details>";
   } elseif($sort=="producer" || $sort=="location") {
     echo "</ul></details></li></ul>";
