@@ -17,7 +17,7 @@
   } else {
     $sort=$_GET['sort'];
   }
-  if ($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus") {
+  if ($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus" || $sort=="rand") {
     $sqlOrderBy="order by regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
   } elseif ($sort=="producer") {
     $sqlOrderBy="order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
@@ -29,8 +29,6 @@
     $sqlOrderBy="order by cellar_name asc,bin_name asc,regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
   } elseif ($sort=="style") {
     $sqlOrderBy="order by wines_master.style asc,regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
-  } elseif ($sort=="rand") {
-    $sqlOrderBy="order by rand() limit 1";
   }
 ?>
 
@@ -145,6 +143,18 @@
   $prevStyle="";
   $prevWine="";
   $prevFormat="";
+  // Random wine?
+  $randomWineConstraint = " ";
+  if ($sort=="rand") {
+    $randomWineConstraint = " inner join (
+      select b2.wine_id
+      from bottles b2
+      where b2.status = 'in cellar'
+        and (year(curdate()) >= b2.drink_from or b2.drink_from is null)
+      order by rand()
+      limit 1
+    ) as random_wine on bottles.wine_id = random_wine.wine_id ";
+  }
   // Perform query
   $result = $mysqli -> query(
     "select
@@ -182,8 +192,9 @@
       v.grape_desc,
       sum(count(bottles.bottle_id)) over (partition by wines.wine_id, bottle_formats.format) as numWine,
       count(bottles.bottle_id) as numWineBin
-    from bottles
-      left join bottle_formats on bottles.format=bottle_formats.format
+    from bottles"
+    .$randomWineConstraint
+    ."left join bottle_formats on bottles.format=bottle_formats.format
       left join storageBins on bottles.storage_location=storageBins.bin_id
       left join cellars on storageBins.cellar_id=cellars.cellar_id
       left join wines on bottles.wine_id=wines.wine_id
