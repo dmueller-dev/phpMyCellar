@@ -44,6 +44,23 @@
   <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
   <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
   <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
+
+  <script> // Automatically update cellar filter on new selection by user
+    function updateCellarFilter() {
+        const cellarValue = document.getElementById('cellarToggle').value;
+        const url = new URL(window.location.href);
+        
+        // Set or remove the cellar parameter
+        if (cellarValue) {
+            url.searchParams.set('cellar', cellarValue);
+        } else {
+            url.searchParams.delete('cellar');
+        }
+        
+        // Redirect to the new URL
+        window.location.href = url.toString();
+    }
+  </script>
 </head>
 
 <body style="font-family: Georgia, serif;">
@@ -78,15 +95,35 @@
 <div class="row">
   <div class="column main">
     <div class="card">
+      <p align="center" style="margin-top:0;margin-bottom:10px;"><small>
+        Filter by cellar: 
+        <select id="cellarToggle" onchange="updateCellarFilter()" style="font-family: Georgia, serif; padding: 2px;">
+          <option value="">All cellars</option>
+          <?php
+            require "db_connect.php";
+            $cellarRes = $mysqli->query("SELECT cellar_id, cellar_name FROM cellars ORDER BY cellar_name ASC");
+            while($c = $cellarRes->fetch_assoc()) {
+              $selected = (isset($_GET['cellar']) && $_GET['cellar'] == $c['cellar_id']) ? 'selected' : '';
+              echo "<option value='{$c['cellar_id']}' $selected>{$c['cellar_name']}</option>";
+            }
+          ?>
+        </select>
+      </small></p>
+    </div>
+    <div class="card">
       <p align="center" style="margin-top:0;margin-bottom:0;"><small>
-        Sort by: <a class="filter-nav" href="/winemenu.php?sort=region">Region</a>
-        <a class="filter-nav" href="/winemenu.php?sort=producer">Producer</a>
-        <a class="filter-nav" href="/winemenu.php?sort=vintage">Vintage</a>
-        <a class="filter-nav" href="/winemenu.php?sort=variety">Variety</a>
-        <a class="filter-nav" href="/winemenu.php?sort=style">Style</a>
-        <a class="filter-nav" href="/winemenu.php?sort=tenyearsold">Aged 10 years</a>
-        <a class="filter-nav" href="/winemenu.php?sort=twentyplus">Aged 20+ years</a>
-        <a class="filter-nav" href="/winemenu.php?sort=rand">Random</a>
+        Sort by:
+        <?php 
+          $cellarParam = !empty($_GET['cellar']) ? "&cellar=" . urlencode($_GET['cellar']) : ""; 
+        ?>
+        <a class="filter-nav" href="/winemenu.php?sort=region<?php echo $cellarParam; ?>">Region</a>
+        <a class="filter-nav" href="/winemenu.php?sort=producer<?php echo $cellarParam; ?>">Producer</a>
+        <a class="filter-nav" href="/winemenu.php?sort=vintage<?php echo $cellarParam; ?>">Vintage</a>
+        <a class="filter-nav" href="/winemenu.php?sort=variety<?php echo $cellarParam; ?>">Variety</a>
+        <a class="filter-nav" href="/winemenu.php?sort=style<?php echo $cellarParam; ?>">Style</a>
+        <a class="filter-nav" href="/winemenu.php?sort=tenyearsold<?php echo $cellarParam; ?>">Aged 10 years</a>
+        <a class="filter-nav" href="/winemenu.php?sort=twentyplus<?php echo $cellarParam; ?>">Aged 20+ years</a>
+        <a class="filter-nav" href="/winemenu.php?sort=rand<?php echo $cellarParam; ?>">Random</a>
       </small></p>
     </div>
     <div class="card">
@@ -132,8 +169,24 @@
 
 <?php function getBottles($sort,$sqlOrderBy)
 {
+  // Establish database connection
   require "db_connect.php";
   $mysqli->query("SET NAMES utf8");
+
+  // Handle the cellar filter
+  $cellarMsg = "all cellars"; // Variable to print selected cellar name;
+                              // showing all cellars by default
+  $cellarConstraint = ""; // Variable for WHERE string in SQL query
+  if (!empty($_GET['cellar'])) {
+    $cellarId = $mysqli->real_escape_string($_GET['cellar']);
+    $cellarResult = $mysqli->query("SELECT cellar_name FROM cellars WHERE cellar_id = '$cellarId'");
+    if ($cellarRow = $cellarResult->fetch_assoc()) {
+        $cellarMsg = $cellarRow['cellar_name'];
+    }
+    $cellarConstraint = " AND cellars.cellar_id = '$cellarId' ";
+  }
+
+  // Initialise loop variables
   $prevCountry="";
   $prevRegion="";
   $prevProducer="";
@@ -143,6 +196,7 @@
   $prevStyle="";
   $prevWine="";
   $prevFormat="";
+
   // Random wine?
   $randomWineConstraint = " ";
   if ($sort=="rand") {
@@ -155,6 +209,7 @@
       limit 1
     ) as random_wine on bottles.wine_id = random_wine.wine_id ";
   }
+
   // Perform query
   $result = $mysqli -> query(
     "select
@@ -206,8 +261,8 @@
       left join appellations on wines_master.appellation_id=appellations.appellation_id
       left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
     where status='in cellar' and (year(curdate())>=bottles.drink_from or bottles.drink_from is null)"
-    .
-    (
+    .$cellarConstraint
+    .(
       ($sort=="tenyearsold") ? " and vintage is not null and (year(curdate())-vintage=10)" :
       (
         ($sort=="twentyplus") ? " and vintage is not null and (year(curdate())-vintage>=20)" : ""
@@ -216,25 +271,39 @@
     ." group by wines.wine_id, bottle_formats.format, storageBins.bin_name "
     .$sqlOrderBy
   );
-  if ($sort=="region") {
-    echo "<p style='font-family: Georgia, serif;'><small><i>Bottles sorted by country and region. Then by producer, wine and vintage.</i></small></p>";
-  } elseif ($sort=="producer") {
-    echo "<p><small><i>Bottles sorted by producer, then vintage and wine.</i></small></p>";
-  } elseif ($sort=="vintage") {
-    echo "<p><small><i>Bottles sorted by vintage, then country, producer and wine.</i></small></p>";
-  } elseif ($sort=="variety") {
-    echo "<p><small><i>Bottles sorted by grape variety, then country, producer and wine.</i></small></p>";
-  } elseif ($sort=="tenyearsold") {
-    echo "<p><small><i>Ten-year-old wines sorted by country and region. Then by producer and wine.</i></small></p>";
-  } elseif ($sort=="location") {
-    echo "<p><small><i>Bottles sorted by storage location. Then by country, region, producer and wine.</i></small></p>";
-  } elseif ($sort=="style") {
-    echo "<p><small><i>Bottles sorted by style, then by country, region and producer.</i></small></p>";
-  } elseif ($sort=="rand") {
-    echo "<p><small><i>Featuring a randomly selected wine. Refresh for another recommendation.</i></small></p>";
-  } elseif ($sort=="twentyplus") {
-    echo "<p><small><i>Wines aged twenty years or more, organised by country and region, then by producer, wine name and vintage.</i></small></p>";
+
+  // Display message if no bottle found
+  if ($result->num_rows == 0) {
+    echo "<div class='card' style='text-align:center; padding:20px;'>
+      <p>No bottles currently match your selection in <strong>$cellarMsg</strong>.<br>
+      <small>Please adjust your filters or explore another cellar to view the collection.
+      </small></p></div>";
+    return; // Exit function so the rest of the code doesn't run
   }
+
+  // Dynamic sort message
+  $selectionText = ($cellarMsg == "all cellars") ? "across all cellars" : "within $cellarMsg";
+  if ($sort == "region") {
+      echo "<p><small><i>Wines $selectionText, arranged by country and region, then by producer and vintage.</i></small></p>";
+  } elseif ($sort == "producer") {
+      echo "<p><small><i>Wines $selectionText, organised by producer, followed by vintage and cuvée.</i></small></p>";
+  } elseif ($sort == "vintage") {
+      echo "<p><small><i>Wines $selectionText, presented by vintage, then by country and producer.</i></small></p>";
+  } elseif ($sort == "variety") {
+      echo "<p><small><i>Wines $selectionText, grouped by grape variety, then by country and producer.</i></small></p>";
+  } elseif ($sort == "tenyearsold") {
+      echo "<p><small><i>A selection of ten-year-old wines $selectionText, arranged by region and producer.</i></small></p>";
+  } elseif ($sort == "twentyplus") {
+      echo "<p><small><i>A selection of mature wines (20+ years) $selectionText, organised by region and vintage.</i></small></p>";
+  } elseif ($sort == "location") {
+      echo "<p><small><i>Current inventory $selectionText, sorted by specific bin location.</i></small></p>";
+  } elseif ($sort == "style") {
+      echo "<p><small><i>Wines $selectionText, categorised by style, then by country and region.</i></small></p>";
+  } elseif ($sort == "rand") {
+      echo "<p><small><i>A featured recommendation $selectionText. Please refresh for another suggestion.</i></small></p>";
+  }
+
+  // Print wine menu
   while ($wine = $result->fetch_assoc()) {
     // Vintage NV?
     if ($wine["vintage"]==null) { $wine["vintage"]="NV"; }
@@ -339,6 +408,8 @@
   } elseif($sort=="producer" || $sort=="location") {
     echo "</ul></details></li></ul>";
   }
+
+  // Disconnect from database
   $result -> free_result();
   $mysqli -> close();
 } ?>
