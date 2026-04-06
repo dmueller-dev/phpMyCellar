@@ -187,15 +187,16 @@
   }
 
   // Initialise loop variables
-  $prevCountry="";
-  $prevRegion="";
-  $prevProducer="";
-  $prevVintage="";
-  $prevVariety="";
-  $prevLocation="";
-  $prevStyle="";
-  $prevWine="";
-  $prevFormat="";
+  $prevCountry = "";
+  $prevRegion = "";
+  $prevProducer = "";
+  $prevVintage = "";
+  $prevVariety = "";
+  $prevLocation = "";
+  $prevStyle = "";
+  $prevWine = "";
+  $prevFormat = "";
+  $prevMasterId = "";
 
   // Random wine?
   $randomWineConstraint = " ";
@@ -305,24 +306,36 @@
 
   // Print wine menu
   while ($wine = $result->fetch_assoc()) {
+
     // Vintage NV?
-    if ($wine["vintage"]==null) { $wine["vintage"]="NV"; }
-    // Get wine name
-    if ($wine["nameconvention"]=="vintage_name") {
-      $wine_name=$wine["vintage"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_grape_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["grape"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_grape_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["grape"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["name"];
-    // ...else vintage_producer_name as default:
-    } else {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
+    if ($wine["vintage"]==null) {
+      $wine["vintage"]="NV";
     }
-    // Output
+
+    // Get wine name
+    if ($wine["nameconvention"] == "vintage_name") {
+      $base_name = $wine["name"];
+    } elseif ($wine["nameconvention"] == "vintage_producer") {
+      $base_name = $wine["producer"];
+    } elseif ($wine["nameconvention"] == "vintage_producer_grape_name") {
+      $base_name = $wine["producer"] . " " . $wine["grape"] . " " . $wine["name"];
+    } elseif ($wine["nameconvention"] == "vintage_producer_vineyard_grape_name") {
+      $base_name = $wine["producer"] . " " . $wine["vineyard"] . " " . $wine["grape"] . " " . $wine["name"];
+    } elseif ($wine["nameconvention"] == "vintage_producer_vineyard_name") {
+      $base_name = $wine["producer"] . " " . $wine["vineyard"] . " " . $wine["name"];
+    // ...else default to vintage_producer_name:
+    } else {
+      $base_name = $wine["producer"] . " " . $wine["name"];
+    }
+
+    // Determine if we show the full name or a placeholder
+    if ($wine["master_id"] == $prevMasterId && $sort != "rand") {
+      $display_name = $wine["vintage"];
+    } else {
+      $display_name = $wine["vintage"] . " " . $base_name;
+    }
+
+    // Print headers depending on sort algorithm
     if($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus" || $sort=="rand") {
       if($wine["country"]!=$prevCountry) {
         echo ($prevCountry!="") ? "</ul></details></li></ul></li></ul><br>" : "";
@@ -382,26 +395,33 @@
         echo "<li style='text-indent:10px;margin-top:5px;'><i>".$wine["country"]."</i><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
     }
+
     // Print wine
     if($wine["wine_id"]!=$prevWine) {
-      echo (($prevWine!="") ? "</ul></details></li>" : "")."<li style='padding-left:".(($sort!="producer") ? "43" : "35")."px;text-indent:-18px;'><details><summary style='list-style:none;'><img style='display:inline-block;vertical-align:middle;' src='/img/".$wine["colour"]."_16px.gif'>".$wine_name." - <small style='color:Gray;'>".$wine["numWine"]." btl".(($wine["numWine"]>1) ? "s." : ".")."</small></summary>";
-      echo (($wine["wine_desc"]!=null) ? "<div class='winemenu_wine_desc'><hr><small>".$wine["wine_desc"]."</small></div>" : "");
+      echo (($prevWine!="") ? "</ul></details></li>" : "") . "<li style='padding-left:" . (($sort!="producer") ? "43" : "35") .
+          "px;text-indent:-18px;'><details><summary style='list-style:none;'><img style='display:inline-block;vertical-align:middle;' src='/img/" .
+          $wine["colour"] . "_16px.gif'>" . $display_name . "<small style='color:Gray;'> ... " . $wine["numWine"] . " btl" . 
+          (($wine["numWine"]>1) ? "s." : ".") . "</small></summary>";
+      echo (($wine["wine_desc"]!=null) ? "<div class='winemenu_wine_desc'><hr><small>" . $wine["wine_desc"] . "</small></div>" : "");
       echo "<ul style='list-style-type:none;padding:0;margin-top:2px;margin-bottom:8px;'>";
     }
+
     // Print bottles
     if($wine["wine_id"]!=$prevWine || $wine["cellar_name"].$wine["bin_name"]!=$prevLocation || $wine["format"]!=$prevFormat) {
       echo "<li style='padding-left:19px;padding-top:1px;margin:0;line-height:10px;'><small style='color:Gray;'>".$wine["format"]." - ".$wine["bin_name"]." - ".$wine["numWineBin"]." btl".(($wine["numWineBin"]>1) ? "s." : ".")."</small></li>";
     }
+
     // Set previous values
-    $prevCountry=$wine["country"];
-    $prevRegion=$wine["region"];
-    $prevProducer=$wine["producer"];
-    $prevVintage=$wine["vintage"];
-    $prevVariety=$wine["grape"];
-    $prevLocation=$wine["cellar_name"].$wine["bin_name"];
-    $prevStyle=$wine["style"];
-    $prevWine=$wine["wine_id"];
-    $prevFormat=$wine["format"];
+    $prevCountry = $wine["country"];
+    $prevRegion = $wine["region"];
+    $prevProducer = $wine["producer"];
+    $prevVintage = $wine["vintage"];
+    $prevVariety = $wine["grape"];
+    $prevLocation = $wine["cellar_name"] . $wine["bin_name"];
+    $prevStyle = $wine["style"];
+    $prevWine = $wine["wine_id"];
+    $prevFormat = $wine["format"];
+    $prevMasterId = $wine["master_id"];
   }
   if($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus" || $sort=="vintage" || $sort=="variety" || $sort=="style" || $sort=="rand") {
     echo "</ul></details></ul></details></li></ul></details>";
