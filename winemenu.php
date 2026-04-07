@@ -399,16 +399,18 @@
     // Print wine
     if($wine["wine_id"]!=$prevWine) {
       echo (($prevWine!="") ? "</ul></details></li>" : "") . "<li style='padding-left:" . (($sort!="producer") ? "43" : "35") .
-          "px;text-indent:-18px;'><details><summary style='list-style:none;'><img style='display:inline-block;vertical-align:middle;' src='/img/" .
-          $wine["colour"] . "_16px.gif'>" . $display_name . "<small style='color:Gray;'> ... " . $wine["numWine"] . " btl" . 
-          (($wine["numWine"]>1) ? "s." : ".") . "</small></summary>";
+        "px;text-indent:-18px;'><details><summary style='list-style:none;'><img style='display:inline-block;vertical-align:middle;' src='/img/" .
+        $wine["colour"] . "_16px.gif'>" . $display_name . "<small style='color:Gray;'> - " . $wine["numWine"] . " btl" . 
+        (($wine["numWine"]>1) ? "s." : ".") . "</small></summary>";
       echo (($wine["wine_desc"]!=null) ? "<div class='winemenu_wine_desc'><hr><small>" . $wine["wine_desc"] . "</small></div>" : "");
       echo "<ul style='list-style-type:none;padding:0;margin-top:2px;margin-bottom:8px;'>";
     }
 
     // Print bottles
     if($wine["wine_id"]!=$prevWine || $wine["cellar_name"].$wine["bin_name"]!=$prevLocation || $wine["format"]!=$prevFormat) {
-      echo "<li style='padding-left:19px;padding-top:1px;margin:0;line-height:10px;'><small style='color:Gray;'>".$wine["format"]." - ".$wine["bin_name"]." - ".$wine["numWineBin"]." btl".(($wine["numWineBin"]>1) ? "s." : ".")."</small></li>";
+      echo "<li style='padding-left:19px;padding-top:1px;margin:0;line-height:10px;'><small style='color:Gray;'>" .
+        $wine["format"] . " - " . $wine["cellar_name"] . "/" . $wine["bin_name"] . " - " . $wine["numWineBin"] . " btl" .
+        (($wine["numWineBin"]>1) ? "s." : ".") . "</small></li>";
     }
 
     // Set previous values
