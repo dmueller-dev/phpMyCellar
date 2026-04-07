@@ -409,7 +409,7 @@
     // Print bottles
     if($wine["wine_id"]!=$prevWine || $wine["cellar_name"].$wine["bin_name"]!=$prevLocation || $wine["format"]!=$prevFormat) {
       echo "<li style='padding-left:19px;padding-top:1px;margin:0;line-height:10px;'><small style='color:Gray;'>" .
-        $wine["format"] . " - " . $wine["cellar_name"] . "/" . $wine["bin_name"] . " - " . $wine["numWineBin"] . " btl" .
+        $wine["format"] . " - " . $wine["cellar_name"] . " / " . $wine["bin_name"] . " - " . $wine["numWineBin"] . " btl" .
         (($wine["numWineBin"]>1) ? "s." : ".") . "</small></li>";
     }
 
