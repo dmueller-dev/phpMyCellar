@@ -40,9 +40,10 @@
 
 <body>
 
-<header class="titles">
-  <h1 class="site-title">Dominik Mueller</h1>
-  <h2 class="sub-title">Wine is my hobby. Fine wine tasting notes and experiences.</h2>
+<header>
+  <a href="https://dmueller.com" title="Dominik Mueller - Fine wine tasting notes">
+    <img src="/img/logo_web.webp" class="logo" alt="Dominik Mueller - Fine wine tasting notes">
+  </a>
 </header>
 
 <header class="navigation">

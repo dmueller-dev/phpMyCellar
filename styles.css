@@ -89,6 +89,16 @@ img.block.center {
   margin-bottom: 5px;
 }
 
+img.logo {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  height: auto;
+  max-width: 150px;
+}
+
 a:link, a:visited {
   color: firebrick;
   text-decoration: underline;
@@ -287,4 +297,5 @@ ul.top-menu li.right {float: right;}
   ul.top-menu li.right, 
   ul.top-menu li {float: none;}
   .column.side, .column.main {width: 100%}
+  img.logo {max-with: 50%;}
 }

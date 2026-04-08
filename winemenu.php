@@ -65,8 +65,10 @@
 
 <body style="font-family: Georgia, serif;">
 
-<header class="titles">
-  <h1 class="site-title">CARTE DES VINS</h1>
+<header>
+  <a href="https://dmueller.com" title="Dominik Mueller - Fine wine tasting notes">
+    <img src="/img/logo_web.webp" class="logo" alt="Dominik Mueller - Fine wine tasting notes">
+  </a>
 </header>
 
 <header class="navigation">
