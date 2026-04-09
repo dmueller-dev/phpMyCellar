@@ -41,7 +41,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="author" content="Dominik Mueller">
-  <meta name="description" content="On this website, I share my wine cellar with a community of fellow fine wine enthusiasts."
+  <meta name="description" content="On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.">
   <meta name="keywords" content="Dominik Mueller,wine database,wine tasting,tasting notes,fine wine,wine collection,wine cellar">
   <link rel="canonical" href="https://dmueller.com/">
   <link rel="stylesheet" href="styles.css">
