@@ -1,78 +1,81 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
 
-// Include the database configuration file
-require 'dbConnectBackend.php';
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 
-$errors = [];
-$success_message = '';
+  // Include the database configuration file
+  global $mysqli, $conn;
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (isset($_POST['update'])) {
-    // Validate CSRF token
-    if (!validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-    // Sanitize and validate inputs
-    $master_id = filter_input(INPUT_POST, 'master_id', FILTER_VALIDATE_INT);
-    $producer_id = filter_input(INPUT_POST, 'producer_id', FILTER_VALIDATE_INT);
-    $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
-    $subregion_id = filter_input(INPUT_POST, 'subregion_id', FILTER_VALIDATE_INT);
-    $appellation_id = filter_input(INPUT_POST, 'appellation_id', FILTER_VALIDATE_INT);
-    $vineyard_id = filter_input(INPUT_POST, 'vineyard_id', FILTER_VALIDATE_INT);
-    $name = sanitizeInput($_POST['name']);
-    $cuvee_yn = sanitizeInput($_POST['cuvee_yn']);
-    $variety = sanitizeInput($_POST['grape']);
-    $colour = sanitizeInput($_POST['colour']);
-    $style = sanitizeInput($_POST['style']);
-    $nameconvention = sanitizeInput($_POST['nameconvention']);
-    $errors = validateMasterInput($conn, $master_id, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id);
-    if (empty($errors)) {
-      // Start transaction
-      $conn->begin_transaction();
-      try {
-        if (updateMaster($conn, $master_id, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id, $name, $cuvee_yn, $variety, $colour, $style, $nameconvention)) {
-          $conn->commit();
-          $success_message = "Master updated successfully";
-        } else {
+  $errors = [];
+  $success_message = '';
+
+  // Handle form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['update'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      // Sanitize and validate inputs
+      $master_id = filter_input(INPUT_POST, 'master_id', FILTER_VALIDATE_INT);
+      $producer_id = filter_input(INPUT_POST, 'producer_id', FILTER_VALIDATE_INT);
+      $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
+      $subregion_id = filter_input(INPUT_POST, 'subregion_id', FILTER_VALIDATE_INT);
+      $appellation_id = filter_input(INPUT_POST, 'appellation_id', FILTER_VALIDATE_INT);
+      $vineyard_id = filter_input(INPUT_POST, 'vineyard_id', FILTER_VALIDATE_INT);
+      $name = sanitizeInput($_POST['name']);
+      $cuvee_yn = sanitizeInput($_POST['cuvee_yn']);
+      $variety = sanitizeInput($_POST['grape']);
+      $colour = sanitizeInput($_POST['colour']);
+      $style = sanitizeInput($_POST['style']);
+      $nameconvention = sanitizeInput($_POST['nameconvention']);
+      $errors = validateMasterInput($conn, $master_id, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id);
+      if (empty($errors)) {
+        // Start transaction
+        $conn->begin_transaction();
+        try {
+          if (updateMaster($conn, $master_id, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id, $name, $cuvee_yn, $variety, $colour, $style, $nameconvention)) {
+            $conn->commit();
+            $success_message = "Master updated successfully";
+          } else {
+            $conn->rollback();
+            $errors[] = "Error updating master: Invalid master ID.";
+          }
+        } catch (Exception $e) {
           $conn->rollback();
-          $errors[] = "Error updating master: Invalid master ID.";
+          $errors[] = "Error updating master: " . $e->getMessage();
         }
-      } catch (Exception $e) {
-        $conn->rollback();
-        $errors[] = "Error updating master: " . $e->getMessage();
       }
     }
   }
-}
 
-// Get all wines for the dropdown
-$masters = getWineMasters($conn);
-$producers = getProducers($conn);
-$regions = getRegions($conn);
-$subregions = getSubregions($conn);
-$appellations = getAppellations($conn);
-$vineyards = getVineyards($conn);
-$varieties = getVarieties($conn);
-$colours = getColours($conn);
-$styles = getStyles($conn);
-$nameconventions = getNameConventions($conn);
+  // Get all wines for the dropdown
+  $masters = getWineMasters($conn);
+  $producers = getProducers($conn);
+  $regions = getRegions($conn);
+  $subregions = getSubregions($conn);
+  $appellations = getAppellations($conn);
+  $vineyards = getVineyards($conn);
+  $varieties = getVarieties($conn);
+  $colours = getColours($conn);
+  $styles = getStyles($conn);
+  $nameconventions = getNameConventions($conn);
 
-// Get selected master details
-$selected_wine = null;
-if (isset($_GET['master_id'])) {
-  $master_id = filter_input(INPUT_GET, 'master_id', FILTER_VALIDATE_INT);
-  if ($master_id !== false && $master_id !== null) {
-    $selected_wine = getMasterDetails($conn, $master_id);
+  // Get selected master details
+  $selected_wine = null;
+  if (isset($_GET['master_id'])) {
+    $master_id = filter_input(INPUT_GET, 'master_id', FILTER_VALIDATE_INT);
+    if ($master_id !== false && $master_id !== null) {
+      $selected_wine = getMasterDetails($conn, $master_id);
+    }
   }
-}
 
-// Generate CSRF token
-$csrf_token = generateCSRFToken();
+  // Generate CSRF token
+  $csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -298,8 +301,3 @@ $csrf_token = generateCSRFToken();
 </body>
 
 </html>
-
-<?php
-// Close the database connection
-$conn->close();
-?>

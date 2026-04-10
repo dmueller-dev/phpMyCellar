@@ -1,7 +1,8 @@
 <?php
-  session_start();
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 ?>
 
 <?php
@@ -74,9 +75,8 @@
 
 <?php function latestNotes($num)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  // Perform query
+  global $mysqli, $conn;
+    // Perform query
   $result = $mysqli -> query("select * from tnotes
                                 left join users on tnotes.user_id=users.user_id
                                 left join wines on tnotes.wine_id=wines.wine_id
@@ -111,18 +111,15 @@
     echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M y").": <a href='/tnote.php?id=".$tasting_note['note_id']."'>".$wine_name."</a></li>";
   }
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>
 
 <?php function latestBlogs($num)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  // Perform query
+  global $mysqli, $conn;
+    // Perform query
   $result = $mysqli -> query("select * from blogposts order by pub_date desc limit 0,".$num);
   while ($blog = $result->fetch_assoc()) {
     echo "<li>".date_format(date_create($blog["pub_date"]),"d M y").": <a href='/blogpost.php?id=".$blog['blog_id']."'>".$blog["title"]."</a></li>";
   }
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>

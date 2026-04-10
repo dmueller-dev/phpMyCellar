@@ -1,76 +1,79 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
 
-// Include the database configuration file
-require 'dbConnectBackend.php';
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 
-$errors = [];
-$success_message = '';
+  // Include the database configuration file
+  global $mysqli, $conn;
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (isset($_POST['update'])) {
-    // Validate CSRF token
-    if (!validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-    // Sanitize and validate inputs
-    $bottle_id = filter_input(INPUT_POST, 'bottle_id', FILTER_VALIDATE_INT);
-    $wine_id = filter_input(INPUT_POST, 'wine_id', FILTER_VALIDATE_INT);
-    $format = sanitizeInput($_POST['format']);
-    $bin_id = filter_input(INPUT_POST, 'bin_id', FILTER_VALIDATE_INT);
-    $store_id = filter_input(INPUT_POST, 'store_id', FILTER_VALIDATE_INT);
-    $purchase_date = sanitizeInput($_POST['purchase_date']);
-    $purchase_price = number_format(filter_input(INPUT_POST, 'purchase_price', FILTER_VALIDATE_FLOAT),2,'.','');
-    $arrival_date = sanitizeInput($_POST['arrival_date']);
-    $status = sanitizeInput($_POST['status']);
-    $drink_from = filter_input(INPUT_POST, 'drink_from', FILTER_VALIDATE_INT);
-    $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
-    $consumption_date = sanitizeInput($_POST['consumption_date']);
-    $consumption_note = sanitizeInput($_POST['consumption_note']);
-    $for_sale = sanitizeInput($_POST['for_sale']);
-    $note_id = filter_input(INPUT_POST, 'note_id', FILTER_VALIDATE_INT);
-    $errors = validateBottleInput($bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id);
-    if (empty($errors)) {
-      // Start transaction
-      $conn->begin_transaction();
-      try {
-        if (updateBottle($conn, $bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id)) {
-          $conn->commit();
-          $success_message = "Bottle updated successfully";
-        } else {
+  $errors = [];
+  $success_message = '';
+
+  // Handle form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['update'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      // Sanitize and validate inputs
+      $bottle_id = filter_input(INPUT_POST, 'bottle_id', FILTER_VALIDATE_INT);
+      $wine_id = filter_input(INPUT_POST, 'wine_id', FILTER_VALIDATE_INT);
+      $format = sanitizeInput($_POST['format']);
+      $bin_id = filter_input(INPUT_POST, 'bin_id', FILTER_VALIDATE_INT);
+      $store_id = filter_input(INPUT_POST, 'store_id', FILTER_VALIDATE_INT);
+      $purchase_date = sanitizeInput($_POST['purchase_date']);
+      $purchase_price = number_format(filter_input(INPUT_POST, 'purchase_price', FILTER_VALIDATE_FLOAT),2,'.','');
+      $arrival_date = sanitizeInput($_POST['arrival_date']);
+      $status = sanitizeInput($_POST['status']);
+      $drink_from = filter_input(INPUT_POST, 'drink_from', FILTER_VALIDATE_INT);
+      $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
+      $consumption_date = sanitizeInput($_POST['consumption_date']);
+      $consumption_note = sanitizeInput($_POST['consumption_note']);
+      $for_sale = sanitizeInput($_POST['for_sale']);
+      $note_id = filter_input(INPUT_POST, 'note_id', FILTER_VALIDATE_INT);
+      $errors = validateBottleInput($bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id);
+      if (empty($errors)) {
+        // Start transaction
+        $conn->begin_transaction();
+        try {
+          if (updateBottle($conn, $bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id)) {
+            $conn->commit();
+            $success_message = "Bottle updated successfully";
+          } else {
+            $conn->rollback();
+            $errors[] = "Error updating bottle: Invalid bottle ID?";
+          }
+        } catch (Exception $e) {
           $conn->rollback();
-          $errors[] = "Error updating bottle: Invalid bottle ID?";
+          $errors[] = "Error updating bottle: " . $e->getMessage();
         }
-      } catch (Exception $e) {
-        $conn->rollback();
-        $errors[] = "Error updating bottle: " . $e->getMessage();
       }
     }
   }
-}
 
-// Get all wines for the dropdown
-$bottles = getBottles($conn);
-$wines = getWines($conn);
-$formats = getFormats($conn);
-$stores = getStores($conn);
-$storageLocations = getStorageLocations($conn);
+  // Get all wines for the dropdown
+  $bottles = getBottles($conn);
+  $wines = getWines($conn);
+  $formats = getFormats($conn);
+  $stores = getStores($conn);
+  $storageLocations = getStorageLocations($conn);
 
-// Get selected bottle details
-$selected_bottle = null;
-if (isset($_GET['bottle_id'])) {
-  $bottle_id = filter_input(INPUT_GET, 'bottle_id', FILTER_VALIDATE_INT);
-  if ($bottle_id !== false && $bottle_id !== null) {
-    $selected_bottle = getBottleDetails($conn, $bottle_id);
+  // Get selected bottle details
+  $selected_bottle = null;
+  if (isset($_GET['bottle_id'])) {
+    $bottle_id = filter_input(INPUT_GET, 'bottle_id', FILTER_VALIDATE_INT);
+    if ($bottle_id !== false && $bottle_id !== null) {
+      $selected_bottle = getBottleDetails($conn, $bottle_id);
+    }
   }
-}
 
-// Generate CSRF token
-$csrf_token = generateCSRFToken();
+  // Generate CSRF token
+  $csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -274,8 +277,3 @@ $csrf_token = generateCSRFToken();
 </body>
 
 </html>
-
-<?php
-// Close the database connection
-$conn->close();
-?>

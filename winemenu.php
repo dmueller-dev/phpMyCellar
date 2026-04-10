@@ -1,7 +1,8 @@
 <?php
-  session_start();
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 
   // Check if user is not logged in
   if (!isset($_SESSION['user_id'])) {
@@ -46,7 +47,7 @@
         <select id="cellarToggle" onchange="updateCellarFilter()" style="font-family: Georgia, serif; padding: 2px;">
           <option value="">All cellars</option>
           <?php
-            require "db_connect.php";
+            global $mysqli, $conn;
             $cellarRes = $mysqli->query("SELECT cellar_id, cellar_name FROM cellars ORDER BY cellar_name ASC");
             while($c = $cellarRes->fetch_assoc()) {
               $selected = (isset($_GET['cellar']) && $_GET['cellar'] == $c['cellar_id']) ? 'selected' : '';
@@ -92,9 +93,8 @@
 <?php function getBottles($sort,$sqlOrderBy)
 {
   // Establish database connection
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-
+  global $mysqli, $conn;
+  
   // Handle the cellar filter
   $cellarMsg = "all cellars"; // Variable to print selected cellar name;
                               // showing all cellars by default
@@ -364,5 +364,4 @@
 
   // Disconnect from database
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>

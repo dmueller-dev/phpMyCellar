@@ -1,6 +1,8 @@
 <?php
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 
   $page_title = 'Dominik Mueller - Impressum / Imprint';
   

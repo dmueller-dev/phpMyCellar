@@ -1,15 +1,15 @@
 <?php
-  session_start();
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 
   // Get blog ID
   $blogID=$_GET['id'];
 
   // Include the database configuration file
-  require 'db_connect.php';
-  $mysqli->query("SET NAMES utf8");
-
+  global $mysqli, $conn;
+  
   // Check if user is not logged in
   if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -55,8 +55,7 @@
       $mysqli->rollback();
     }
     $post->close();
-    $mysqli->close();
-  }
+      }
 ?>
 
 <?php
@@ -115,9 +114,8 @@
 
 <?php function getPost($id)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-
+  global $mysqli, $conn;
+  
   // Perform query
   $stmt = $mysqli->prepare("select * from blogposts where blog_id=?");
   $stmt->bind_param("i", $id);
@@ -131,14 +129,12 @@
     $result -> free_result();
   }
   $stmt->close();
-  $mysqli -> close();
-} ?>
+  } ?>
 
 <?php function wines($id)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  $prevWine="";
+  global $mysqli, $conn;
+    $prevWine="";
   // Perform query
   $stmt = $mysqli->prepare("select * from x_blog_wines
                                 left join wines on x_blog_wines.wine_id=wines.wine_id
@@ -181,15 +177,13 @@
   if (mysqli_num_rows($result)==0) { echo "<li>No wines were featured in this story.</li>"; }
   $stmt->close();
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>
 
 <?php
   function getComments($id)
   {
-    require "db_connect.php";
-    $mysqli->query("SET NAMES utf8");
-    // Perform query
+    global $mysqli, $conn;
+        // Perform query
     $stmt = $mysqli->prepare("select * from x_comments_blogposts
                                   left join comments on x_comments_blogposts.comment_id=comments.comment_id
                                   left join users on comments.user_id=users.user_id
@@ -206,6 +200,5 @@
     }
     $stmt->close();
     $result -> free_result();
-    $mysqli -> close();
-  }
+      }
 ?>

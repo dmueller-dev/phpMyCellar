@@ -1,8 +1,11 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
+
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 ?>
 
 <!DOCTYPE html>
@@ -107,9 +110,8 @@ if (!defined('INCLUDED_VIA_APP')) {
 
 <?php function getWines($num,$sort,$sqlOrderBy)
 {
-  require __DIR__ . "/../db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  $prevCountry="";
+  global $mysqli, $conn;
+    $prevCountry="";
   $prevRegion="";
   $prevProducer="";
   $prevVintage="";
@@ -236,5 +238,4 @@ if (!defined('INCLUDED_VIA_APP')) {
     echo "</ul></details>";
   }
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>

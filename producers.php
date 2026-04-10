@@ -1,7 +1,8 @@
 <?php
-  session_start();
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 ?>
 
 <?php
@@ -69,9 +70,8 @@
 
 <?php function getProducer($producerID)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-
+  global $mysqli, $conn;
+  
   // Perform query
   $stmt = $mysqli->prepare("select * from producers
                               left join regions on producers.region_id=regions.region_id
@@ -87,14 +87,12 @@
     $result -> free_result();
   }
   $stmt->close();
-  $mysqli -> close();
-} ?>
+  } ?>
 
 <?php function latestNotes($id)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  // Perform query
+  global $mysqli, $conn;
+    // Perform query
   $stmt = $mysqli->prepare("select * from tnotes
                                 left join users on tnotes.user_id=users.user_id
                                 left join wines on tnotes.wine_id=wines.wine_id
@@ -143,5 +141,4 @@
   if (mysqli_num_rows($result)==0) { echo "<li>I haven't tasted any of this producer's wines, yet.</li>"; }
   $stmt->close();
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>

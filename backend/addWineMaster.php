@@ -1,90 +1,93 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
 
-// Include the database configuration file
-require 'dbConnectBackend.php';
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 
-$errors = [];
-$success_message = '';
-$producer_id = '';
-$region_id = '';
-$subregion_id = '';
-$appellation_id = '';
-$vineyard_id = '';
-$name = '';
-$cuvee_yn = '';
-$grape = '';
-$colour = '';
-$style = '';
-$nameconvention = '';
+  // Include the database configuration file
+  global $mysqli, $conn;
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (isset($_POST['update'])) {
-    // Validate CSRF token
-    if (!validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-    // Sanitize and validate inputs
-    $producer_id = filter_input(INPUT_POST, 'producer_id', FILTER_VALIDATE_INT);
-    $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
-    $subregion_id = filter_input(INPUT_POST, 'subregion_id', FILTER_VALIDATE_INT);
-    $appellation_id = filter_input(INPUT_POST, 'appellation_id', FILTER_VALIDATE_INT);
-    $vineyard_id = filter_input(INPUT_POST, 'vineyard_id', FILTER_VALIDATE_INT);
-    $cuvee_yn = sanitizeInput($_POST['cuvee_yn']);
-    $grape = sanitizeInput($_POST['grape']);
-    $name = sanitizeInput($_POST['name']);
-    $colour = sanitizeInput($_POST['colour']);
-    $style = sanitizeInput($_POST['style']);
-    $nameconvention = sanitizeInput($_POST['nameconvention']);
-    $errors = validateMasterInput($conn, 0, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id);
-    if (empty($errors)) {
-      // Start transaction
-      $conn->begin_transaction();
-      try {
-        if (insertWineMaster($conn, $name, $nameconvention, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id, $grape, $cuvee_yn, $colour, $style)) {
-          $conn->commit();
-          $success_message = "Wine master inserted successfully";
-          // Clear the form values on successful submission
-          $producer_id = '';
-          $region_id = '';
-          $subregion_id = '';
-          $appellation_id = '';
-          $vineyard_id = '';
-          $name = '';
-          $cuvee_yn = '';
-          $grape = '';
-          $colour = '';
-          $style = '';
-          $nameconvention = '';
-        } else {
+  $errors = [];
+  $success_message = '';
+  $producer_id = '';
+  $region_id = '';
+  $subregion_id = '';
+  $appellation_id = '';
+  $vineyard_id = '';
+  $name = '';
+  $cuvee_yn = '';
+  $grape = '';
+  $colour = '';
+  $style = '';
+  $nameconvention = '';
+
+  // Handle form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['update'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      // Sanitize and validate inputs
+      $producer_id = filter_input(INPUT_POST, 'producer_id', FILTER_VALIDATE_INT);
+      $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
+      $subregion_id = filter_input(INPUT_POST, 'subregion_id', FILTER_VALIDATE_INT);
+      $appellation_id = filter_input(INPUT_POST, 'appellation_id', FILTER_VALIDATE_INT);
+      $vineyard_id = filter_input(INPUT_POST, 'vineyard_id', FILTER_VALIDATE_INT);
+      $cuvee_yn = sanitizeInput($_POST['cuvee_yn']);
+      $grape = sanitizeInput($_POST['grape']);
+      $name = sanitizeInput($_POST['name']);
+      $colour = sanitizeInput($_POST['colour']);
+      $style = sanitizeInput($_POST['style']);
+      $nameconvention = sanitizeInput($_POST['nameconvention']);
+      $errors = validateMasterInput($conn, 0, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id);
+      if (empty($errors)) {
+        // Start transaction
+        $conn->begin_transaction();
+        try {
+          if (insertWineMaster($conn, $name, $nameconvention, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id, $grape, $cuvee_yn, $colour, $style)) {
+            $conn->commit();
+            $success_message = "Wine master inserted successfully";
+            // Clear the form values on successful submission
+            $producer_id = '';
+            $region_id = '';
+            $subregion_id = '';
+            $appellation_id = '';
+            $vineyard_id = '';
+            $name = '';
+            $cuvee_yn = '';
+            $grape = '';
+            $colour = '';
+            $style = '';
+            $nameconvention = '';
+          } else {
+            $conn->rollback();
+            $errors[] = "Error inserting wine master";
+          }
+        } catch (Exception $e) {
           $conn->rollback();
-          $errors[] = "Error inserting wine master";
+          $errors[] = "Error updating wine master: " . $e->getMessage();
         }
-      } catch (Exception $e) {
-        $conn->rollback();
-        $errors[] = "Error updating wine master: " . $e->getMessage();
       }
     }
   }
-}
 
-// Get all information for the dropdowns
-$producers = getProducers($conn);
-$regions = getRegions($conn);
-$subregions = getSubregions($conn);
-$appellations = getAppellations($conn);
-$vineyards = getVineyards($conn);
-$varieties = getVarieties($conn);
-$colours = getColours($conn);
-$styles = getStyles($conn);
-$nameconventions = getNameConventions($conn);
+  // Get all information for the dropdowns
+  $producers = getProducers($conn);
+  $regions = getRegions($conn);
+  $subregions = getSubregions($conn);
+  $appellations = getAppellations($conn);
+  $vineyards = getVineyards($conn);
+  $varieties = getVarieties($conn);
+  $colours = getColours($conn);
+  $styles = getStyles($conn);
+  $nameconventions = getNameConventions($conn);
 
-// Generate CSRF token
-$csrf_token = generateCSRFToken();
+  // Generate CSRF token
+  $csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -295,8 +298,3 @@ $csrf_token = generateCSRFToken();
 </body>
 
 </html>
-
-<?php
-// Close the database connection
-$conn->close();
-?>

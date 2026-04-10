@@ -1,61 +1,64 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
 
-// Include the database configuration file
-require 'dbConnectBackend.php';
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 
-$errors = [];
-$success_message = '';
-$producer = '';
-$region_id = '';
-$address = '';
-$producer_desc = '';
+  // Include the database configuration file
+  global $mysqli, $conn;
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (isset($_POST['update'])) {
-    // Validate CSRF token
-    if (!validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-    // Sanitize and validate inputs
-    $producer = sanitizeInput($_POST['producer']);
-    $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
-    $address = sanitizeInput($_POST['address']);
-    $producer_desc = sanitizeInput($_POST['producer_desc']);
-    $errors = validateProducerInput($producer, $region_id, $address, $producer_desc);
-    if (empty($errors)) {
-      // Start transaction
-      $conn->begin_transaction();
-      try {
-        if (insertProducer($conn, $producer, $region_id, $address, $producer_desc)) {
-          $conn->commit();
-          $success_message = "Producer inserted successfully";
-          // Clear the form values on successful submission
-          $producer = '';
-          $region_id = '';
-          $address = '';
-          $producer_desc = '';
-        } else {
+  $errors = [];
+  $success_message = '';
+  $producer = '';
+  $region_id = '';
+  $address = '';
+  $producer_desc = '';
+
+  // Handle form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['update'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      // Sanitize and validate inputs
+      $producer = sanitizeInput($_POST['producer']);
+      $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
+      $address = sanitizeInput($_POST['address']);
+      $producer_desc = sanitizeInput($_POST['producer_desc']);
+      $errors = validateProducerInput($producer, $region_id, $address, $producer_desc);
+      if (empty($errors)) {
+        // Start transaction
+        $conn->begin_transaction();
+        try {
+          if (insertProducer($conn, $producer, $region_id, $address, $producer_desc)) {
+            $conn->commit();
+            $success_message = "Producer inserted successfully";
+            // Clear the form values on successful submission
+            $producer = '';
+            $region_id = '';
+            $address = '';
+            $producer_desc = '';
+          } else {
+            $conn->rollback();
+            $errors[] = "Error inserting producer";
+          }
+        } catch (Exception $e) {
           $conn->rollback();
-          $errors[] = "Error inserting producer";
+          $errors[] = "Error updating producer: " . $e->getMessage();
         }
-      } catch (Exception $e) {
-        $conn->rollback();
-        $errors[] = "Error updating producer: " . $e->getMessage();
       }
     }
   }
-}
 
-// Get all regions for the dropdown
-$regions = getRegions($conn);
+  // Get all regions for the dropdown
+  $regions = getRegions($conn);
 
-// Generate CSRF token
-$csrf_token = generateCSRFToken();
+  // Generate CSRF token
+  $csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -178,8 +181,3 @@ $csrf_token = generateCSRFToken();
 </body>
 
 </html>
-
-<?php
-// Close the database connection
-$conn->close();
-?>

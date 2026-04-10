@@ -1,15 +1,15 @@
 <?php
-  session_start();
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 
   // Get tasting note ID
   $noteID=$_GET['id'];
 
   // Include the database configuration file
-  require 'db_connect.php';
-  $mysqli->query("SET NAMES utf8");
-
+  global $mysqli, $conn;
+  
   // Check if user is not logged in
   if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -55,8 +55,7 @@
       $mysqli->rollback();
     }
     $post->close();
-    $mysqli->close();
-  }
+      }
 ?>
 
 <?php
@@ -261,9 +260,8 @@
 
 <?php function getNote($noteID)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-
+  global $mysqli, $conn;
+  
   // Perform query
   $stmt = $mysqli->prepare("select * from tnotes
                                    left join users on tnotes.user_id=users.user_id
@@ -292,14 +290,12 @@
     $result -> free_result();
   }
   $stmt->close();
-  $mysqli -> close();
-} ?>
+  } ?>
 
 <?php function getBlog($id)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  // Perform query
+  global $mysqli, $conn;
+    // Perform query
   $stmt = $mysqli->prepare("select * from x_blog_tnotes
                                 left join blogposts on x_blog_tnotes.blog_id=blogposts.blog_id
                               where x_blog_tnotes.note_id=?
@@ -317,14 +313,12 @@
   }
   $stmt->close();
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>
 
 <?php function moreNotes($id, $wine_id, $wine_name)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  // Perform query
+  global $mysqli, $conn;
+    // Perform query
   $stmt = $mysqli->prepare("select * from tnotes 
                               where tnotes.status='published' and tnotes.note_id<>? and tnotes.wine_id=?
                               order by tnotes.tasting_date desc");
@@ -348,14 +342,12 @@
   }
   $stmt->close();
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>
 
 <?php function otherVintages($wine_id, $master_id)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  // Perform query
+  global $mysqli, $conn;
+    // Perform query
   $stmt = $mysqli->prepare("select * from wines
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join tnotes on wines.wine_id=tnotes.wine_id
@@ -400,15 +392,13 @@
   }
   $stmt->close();
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>
 
 <?php
   function getComments($id)
   {
-    require "db_connect.php";
-    $mysqli->query("SET NAMES utf8");
-    // Perform query
+    global $mysqli, $conn;
+        // Perform query
     $stmt = $mysqli->prepare("select * from x_comments_tnotes
                                   left join comments on x_comments_tnotes.comment_id=comments.comment_id
                                   left join users on comments.user_id=users.user_id
@@ -425,6 +415,5 @@
     }
     $stmt->close();
     $result -> free_result();
-    $mysqli -> close();
-  }
+      }
 ?>

@@ -1,11 +1,14 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
+
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
  
   // Include the database configuration file
-  require 'dbConnectBackend.php';
+  global $mysqli, $conn;
 
   // Initialize error and success messages
   $error = "";
@@ -53,8 +56,7 @@ if (!defined('INCLUDED_VIA_APP')) {
           }
         }
         $stmt->close();
-        $conn->close();
-      }
+              }
     }
   }
 ?>
@@ -169,12 +171,12 @@ if (!defined('INCLUDED_VIA_APP')) {
 </html>
 
 <script>
-function togglePassword() {
-  var x = document.getElementById("password");
-  if (x.type === "password") {
-    x.type = "text";
-  } else {
-    x.type = "password";
+  function togglePassword() {
+    var x = document.getElementById("password");
+    if (x.type === "password") {
+      x.type = "text";
+    } else {
+      x.type = "password";
+    }
   }
-}
 </script>

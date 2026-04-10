@@ -1,86 +1,89 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
 
-// Include the database configuration file
-require 'dbConnectBackend.php';
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 
-$errors = [];
-$success_message = '';
+  // Include the database configuration file
+  global $mysqli, $conn;
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (isset($_POST['update'])) {
-    // Validate CSRF token
-    if (!validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-    // Sanitize and validate inputs
-    $note_id = filter_input(INPUT_POST, 'note_id', FILTER_VALIDATE_INT);
-    $wine_id = filter_input(INPUT_POST, 'wine_id', FILTER_VALIDATE_INT);
-    $tasting_date = sanitizeInput($_POST['tasting_date']);
-    $user_id = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
-    $tasting_note = sanitizeInput($_POST['tasting_note']);
-    $flawed_yn = sanitizeInput($_POST['flawed_yn']);
-    $dmpts = filter_input(INPUT_POST, 'dmpts', FILTER_VALIDATE_INT);
-    $wset_balance = number_format(filter_input(INPUT_POST, 'wset_balance', FILTER_VALIDATE_FLOAT),1,'.','');
-    $wset_length = number_format(filter_input(INPUT_POST, 'wset_length', FILTER_VALIDATE_FLOAT),1,'.','');
-    $wset_intensity = number_format(filter_input(INPUT_POST, 'wset_intensity', FILTER_VALIDATE_FLOAT),1,'.','');
-    $wset_complexity = number_format(filter_input(INPUT_POST, 'wset_complexity', FILTER_VALIDATE_FLOAT),1,'.','');
-    $wsetpts=number_format($wset_balance+$wset_length+$wset_intensity+$wset_complexity, 1, '.', '');
-    $starpts = filter_input(INPUT_POST, 'starpts', FILTER_VALIDATE_INT);
-    $drink_from = filter_input(INPUT_POST, 'drink_from', FILTER_VALIDATE_INT);
-    $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
-    $errorsDrinkDates = validateDrinkDatesInput($drink_from, $drink_through);
-    $blind = sanitizeInput($_POST['blind']);
-    $status = sanitizeInput($_POST['status']);
-    $img = sanitizeInput($_POST['img']);
-    $img_class = sanitizeInput($_POST['img_class']);
-    if ($img_class == "null") { $img_class = null; }
-    $errorsImg = validateImageInput($img, $img_class);
-    $errors = validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $blind, $status, $img, $img_class);
-    if (empty($errorsDrinkDates) && empty($errorsImg) && empty($errors)) {
-      // Start transaction
-      $conn->begin_transaction();
-      try {
-        if (updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $blind, $status, $img, $img_class)) {
-          $conn->commit();
-          $success_message = "Tasting note updated successfully";
-        } else {
+  $errors = [];
+  $success_message = '';
+
+  // Handle form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['update'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      // Sanitize and validate inputs
+      $note_id = filter_input(INPUT_POST, 'note_id', FILTER_VALIDATE_INT);
+      $wine_id = filter_input(INPUT_POST, 'wine_id', FILTER_VALIDATE_INT);
+      $tasting_date = sanitizeInput($_POST['tasting_date']);
+      $user_id = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
+      $tasting_note = sanitizeInput($_POST['tasting_note']);
+      $flawed_yn = sanitizeInput($_POST['flawed_yn']);
+      $dmpts = filter_input(INPUT_POST, 'dmpts', FILTER_VALIDATE_INT);
+      $wset_balance = number_format(filter_input(INPUT_POST, 'wset_balance', FILTER_VALIDATE_FLOAT),1,'.','');
+      $wset_length = number_format(filter_input(INPUT_POST, 'wset_length', FILTER_VALIDATE_FLOAT),1,'.','');
+      $wset_intensity = number_format(filter_input(INPUT_POST, 'wset_intensity', FILTER_VALIDATE_FLOAT),1,'.','');
+      $wset_complexity = number_format(filter_input(INPUT_POST, 'wset_complexity', FILTER_VALIDATE_FLOAT),1,'.','');
+      $wsetpts=number_format($wset_balance+$wset_length+$wset_intensity+$wset_complexity, 1, '.', '');
+      $starpts = filter_input(INPUT_POST, 'starpts', FILTER_VALIDATE_INT);
+      $drink_from = filter_input(INPUT_POST, 'drink_from', FILTER_VALIDATE_INT);
+      $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
+      $errorsDrinkDates = validateDrinkDatesInput($drink_from, $drink_through);
+      $blind = sanitizeInput($_POST['blind']);
+      $status = sanitizeInput($_POST['status']);
+      $img = sanitizeInput($_POST['img']);
+      $img_class = sanitizeInput($_POST['img_class']);
+      if ($img_class == "null") { $img_class = null; }
+      $errorsImg = validateImageInput($img, $img_class);
+      $errors = validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $blind, $status, $img, $img_class);
+      if (empty($errorsDrinkDates) && empty($errorsImg) && empty($errors)) {
+        // Start transaction
+        $conn->begin_transaction();
+        try {
+          if (updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $blind, $status, $img, $img_class)) {
+            $conn->commit();
+            $success_message = "Tasting note updated successfully";
+          } else {
+            $conn->rollback();
+            $errors[] = "Error updating tasting note: Invalid note ID?";
+          }
+        } catch (Exception $e) {
           $conn->rollback();
-          $errors[] = "Error updating tasting note: Invalid note ID?";
+          $errors[] = "Error updating tasting note: " . $e->getMessage();
         }
-      } catch (Exception $e) {
-        $conn->rollback();
-        $errors[] = "Error updating tasting note: " . $e->getMessage();
-      }
-    } else {
-      if (!empty($errorsImg)) {
-        $errors[]=$errorsImg[0];
-      } elseif (!empty($errorsDrinkDates)) {
-        $errors[]=$errorsDrinkDates[0];
+      } else {
+        if (!empty($errorsImg)) {
+          $errors[]=$errorsImg[0];
+        } elseif (!empty($errorsDrinkDates)) {
+          $errors[]=$errorsDrinkDates[0];
+        }
       }
     }
   }
-}
 
-// Get all wines for the dropdown
-$notes = getTastingNotes($conn);
-$wines = getWines($conn);
+  // Get all wines for the dropdown
+  $notes = getTastingNotes($conn);
+  $wines = getWines($conn);
 
-// Get selected bottle details
-$selected_note = null;
-if (isset($_GET['note_id'])) {
-  $note_id = filter_input(INPUT_GET, 'note_id', FILTER_VALIDATE_INT);
-  if ($note_id !== false && $note_id !== null) {
-    $selected_note = getNoteDetails($conn, $note_id);
+  // Get selected bottle details
+  $selected_note = null;
+  if (isset($_GET['note_id'])) {
+    $note_id = filter_input(INPUT_GET, 'note_id', FILTER_VALIDATE_INT);
+    if ($note_id !== false && $note_id !== null) {
+      $selected_note = getNoteDetails($conn, $note_id);
+    }
   }
-}
 
-// Generate CSRF token
-$csrf_token = generateCSRFToken();
+  // Generate CSRF token
+  $csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -383,8 +386,3 @@ window.onload = updateTotal;
 </body>
 
 </html>
-
-<?php
-// Close the database connection
-$conn->close();
-?>

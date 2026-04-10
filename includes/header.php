@@ -1,8 +1,8 @@
 <?php
-// Prevent direct access to this file
-if (!defined('INCLUDED_VIA_APP')) {
-  die('Direct access not permitted');
-}
+  // Prevent direct access to this file
+  if (!defined('INCLUDED_VIA_APP')) {
+    die('Direct access not permitted');
+  }
 ?>
 
 <!DOCTYPE html>

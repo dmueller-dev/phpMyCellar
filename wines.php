@@ -1,7 +1,8 @@
 <?php
-  session_start();
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 ?>
 
 <?php
@@ -61,9 +62,8 @@
 
 <?php function getWines($num,$sort,$sqlOrderBy)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  $prevCountry="";
+  global $mysqli, $conn;
+    $prevCountry="";
   $prevRegion="";
   $prevProducer="";
   $prevVintage="";
@@ -190,5 +190,4 @@
     echo "</ul></details>";
   }
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>

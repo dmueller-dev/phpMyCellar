@@ -1,58 +1,61 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
 
-// Include the database configuration file
-require 'dbConnectBackend.php';
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 
-$errors = [];
-$success_message = '';
-$subregion = '';
-$region_id = '';
-$subregion_desc = '';
+  // Include the database configuration file
+  global $mysqli, $conn;
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (isset($_POST['update'])) {
-    // Validate CSRF token
-    if (!validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-    // Sanitize and validate inputs
-    $subregion = sanitizeInput($_POST['subregion']);
-    $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
-    $subregion_desc = sanitizeInput($_POST['subregion_desc']);
-    $errors = validateSubregionInput($subregion, $region_id, $subregion_desc);
-    if (empty($errors)) {
-      // Start transaction
-      $conn->begin_transaction();
-      try {
-        if (insertSubregion($conn, $subregion, $region_id, $subregion_desc)) {
-          $conn->commit();
-          $success_message = "Subregion inserted successfully";
-          // Clear the form values on successful submission
-          $subregion = '';
-          $region_id = '';
-          $subregion_desc = '';
-        } else {
+  $errors = [];
+  $success_message = '';
+  $subregion = '';
+  $region_id = '';
+  $subregion_desc = '';
+
+  // Handle form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['update'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      // Sanitize and validate inputs
+      $subregion = sanitizeInput($_POST['subregion']);
+      $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
+      $subregion_desc = sanitizeInput($_POST['subregion_desc']);
+      $errors = validateSubregionInput($subregion, $region_id, $subregion_desc);
+      if (empty($errors)) {
+        // Start transaction
+        $conn->begin_transaction();
+        try {
+          if (insertSubregion($conn, $subregion, $region_id, $subregion_desc)) {
+            $conn->commit();
+            $success_message = "Subregion inserted successfully";
+            // Clear the form values on successful submission
+            $subregion = '';
+            $region_id = '';
+            $subregion_desc = '';
+          } else {
+            $conn->rollback();
+            $errors[] = "Error inserting subregion";
+          }
+        } catch (Exception $e) {
           $conn->rollback();
-          $errors[] = "Error inserting subregion";
+          $errors[] = "Error updating subregion: " . $e->getMessage();
         }
-      } catch (Exception $e) {
-        $conn->rollback();
-        $errors[] = "Error updating subregion: " . $e->getMessage();
       }
     }
   }
-}
 
-// Get all regions for the dropdown
-$regions = getRegions($conn);
+  // Get all regions for the dropdown
+  $regions = getRegions($conn);
 
-// Generate CSRF token
-$csrf_token = generateCSRFToken();
+  // Generate CSRF token
+  $csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -171,8 +174,3 @@ $csrf_token = generateCSRFToken();
 </body>
 
 </html>
-
-<?php
-// Close the database connection
-$conn->close();
-?>

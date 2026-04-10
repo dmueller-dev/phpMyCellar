@@ -1,64 +1,67 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
 
-// Include the database configuration file
-require 'dbConnectBackend.php';
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 
-$errors = [];
-$success_message = '';
+  // Include the database configuration file
+  global $mysqli, $conn;
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (isset($_POST['update'])) {
-    // Validate CSRF token
-    if (!validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-    // Sanitize and validate inputs
-    $wine_id = filter_input(INPUT_POST, 'wine_id', FILTER_VALIDATE_INT);
-    $master_id = filter_input(INPUT_POST, 'master_id', FILTER_VALIDATE_INT);
-    $ct_id = filter_input(INPUT_POST, 'ct_id', FILTER_VALIDATE_INT);
-    $vintage = filter_input(INPUT_POST, 'vintage', FILTER_VALIDATE_INT);
-    $wine_desc = sanitizeInput($_POST['wine_desc']);
-    $errors = validateWineInput($wine_id, $master_id, $vintage, $wine_desc, $ct_id);
-    if (empty($errors)) {
-      // Start transaction
-      $conn->begin_transaction();
-      try {
-        if (updateWine($conn, $wine_id, $master_id, $vintage, $wine_desc, $ct_id)) {
-          $conn->commit();
-          $success_message = "Wine updated successfully";
-        } else {
+  $errors = [];
+  $success_message = '';
+
+  // Handle form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['update'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      // Sanitize and validate inputs
+      $wine_id = filter_input(INPUT_POST, 'wine_id', FILTER_VALIDATE_INT);
+      $master_id = filter_input(INPUT_POST, 'master_id', FILTER_VALIDATE_INT);
+      $ct_id = filter_input(INPUT_POST, 'ct_id', FILTER_VALIDATE_INT);
+      $vintage = filter_input(INPUT_POST, 'vintage', FILTER_VALIDATE_INT);
+      $wine_desc = sanitizeInput($_POST['wine_desc']);
+      $errors = validateWineInput($wine_id, $master_id, $vintage, $wine_desc, $ct_id);
+      if (empty($errors)) {
+        // Start transaction
+        $conn->begin_transaction();
+        try {
+          if (updateWine($conn, $wine_id, $master_id, $vintage, $wine_desc, $ct_id)) {
+            $conn->commit();
+            $success_message = "Wine updated successfully";
+          } else {
+            $conn->rollback();
+            $errors[] = "Error updating wine: Invalid wine or master ID.";
+          }
+        } catch (Exception $e) {
           $conn->rollback();
-          $errors[] = "Error updating wine: Invalid wine or master ID.";
+          $errors[] = "Error updating wine: " . $e->getMessage();
         }
-      } catch (Exception $e) {
-        $conn->rollback();
-        $errors[] = "Error updating wine: " . $e->getMessage();
       }
     }
   }
-}
 
-// Get all wines for the dropdown
-$wines = getWines($conn);
-$masters = getWineMasters($conn);
-$vintages = getVintages($conn);
+  // Get all wines for the dropdown
+  $wines = getWines($conn);
+  $masters = getWineMasters($conn);
+  $vintages = getVintages($conn);
 
-// Get selected wine details
-$selected_wine = null;
-if (isset($_GET['wine_id'])) {
-  $wine_id = filter_input(INPUT_GET, 'wine_id', FILTER_VALIDATE_INT);
-  if ($wine_id !== false && $wine_id !== null) {
-    $selected_wine = getWineDetails($conn, $wine_id);
+  // Get selected wine details
+  $selected_wine = null;
+  if (isset($_GET['wine_id'])) {
+    $wine_id = filter_input(INPUT_GET, 'wine_id', FILTER_VALIDATE_INT);
+    if ($wine_id !== false && $wine_id !== null) {
+      $selected_wine = getWineDetails($conn, $wine_id);
+    }
   }
-}
 
-// Generate CSRF token
-$csrf_token = generateCSRFToken();
+  // Generate CSRF token
+  $csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -203,8 +206,3 @@ $csrf_token = generateCSRFToken();
 </body>
 
 </html>
-
-<?php
-// Close the database connection
-$conn->close();
-?>

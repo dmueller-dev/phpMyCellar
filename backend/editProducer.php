@@ -1,63 +1,66 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
 
-// Include the database configuration file
-require 'dbConnectBackend.php';
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 
-$errors = [];
-$success_message = '';
+  // Include the database configuration file
+  global $mysqli, $conn;
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (isset($_POST['update'])) {
-    // Validate CSRF token
-    if (!validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-    // Sanitize and validate inputs
-    $producer_id = filter_input(INPUT_POST, 'producer_id', FILTER_VALIDATE_INT);
-    $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
-    $producer = sanitizeInput($_POST['producer']);
-    $address = sanitizeInput($_POST['address']);
-    $producer_desc = sanitizeInput($_POST['producer_desc']);
-    $errors = validateProducerInput($producer, $region_id, $address, $producer_desc);
-    if (empty($errors)) {
-      // Start transaction
-      $conn->begin_transaction();
-      try {
-        if (updateProducer($conn, $producer_id, $region_id, $producer, $address, $producer_desc)) {
-          $conn->commit();
-          $success_message = "Producer updated successfully";
-        } else {
+  $errors = [];
+  $success_message = '';
+
+  // Handle form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['update'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      // Sanitize and validate inputs
+      $producer_id = filter_input(INPUT_POST, 'producer_id', FILTER_VALIDATE_INT);
+      $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
+      $producer = sanitizeInput($_POST['producer']);
+      $address = sanitizeInput($_POST['address']);
+      $producer_desc = sanitizeInput($_POST['producer_desc']);
+      $errors = validateProducerInput($producer, $region_id, $address, $producer_desc);
+      if (empty($errors)) {
+        // Start transaction
+        $conn->begin_transaction();
+        try {
+          if (updateProducer($conn, $producer_id, $region_id, $producer, $address, $producer_desc)) {
+            $conn->commit();
+            $success_message = "Producer updated successfully";
+          } else {
+            $conn->rollback();
+            $errors[] = "Error updating producer: Invalid region";
+          }
+        } catch (Exception $e) {
           $conn->rollback();
-          $errors[] = "Error updating producer: Invalid region";
+          $errors[] = "Error updating producer: " . $e->getMessage();
         }
-      } catch (Exception $e) {
-        $conn->rollback();
-        $errors[] = "Error updating producer: " . $e->getMessage();
       }
     }
   }
-}
 
-// Get all subregions for the dropdown
-$regions = getRegions($conn);
-$producers = getProducers($conn);
+  // Get all subregions for the dropdown
+  $regions = getRegions($conn);
+  $producers = getProducers($conn);
 
-// Get selected producer details
-$selected_producer = null;
-if (isset($_GET['producer_id'])) {
-  $producer_id = filter_input(INPUT_GET, 'producer_id', FILTER_VALIDATE_INT);
-  if ($producer_id !== false && $producer_id !== null) {
-    $selected_producer = getProducerDetails($conn, $producer_id);
+  // Get selected producer details
+  $selected_producer = null;
+  if (isset($_GET['producer_id'])) {
+    $producer_id = filter_input(INPUT_GET, 'producer_id', FILTER_VALIDATE_INT);
+    if ($producer_id !== false && $producer_id !== null) {
+      $selected_producer = getProducerDetails($conn, $producer_id);
+    }
   }
-}
 
-// Generate CSRF token
-$csrf_token = generateCSRFToken();
+  // Generate CSRF token
+  $csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -195,8 +198,3 @@ $csrf_token = generateCSRFToken();
 </body>
 
 </html>
-
-<?php
-// Close the database connection
-$conn->close();
-?>

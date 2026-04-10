@@ -1,7 +1,8 @@
 <?php
-  session_start();
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 ?>
 
 <?php
@@ -39,9 +40,8 @@
 
 <?php function getNotes($num)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  $prevYear="";
+  global $mysqli, $conn;
+    $prevYear="";
   // Perform query
   $result = $mysqli -> query("select * from blogposts order by pub_date desc, blog_id desc limit 0,".$num);
   // Output
@@ -53,5 +53,4 @@
     $prevYear=date_format(date_create($blogs["pub_date"]),"Y");
   }
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>

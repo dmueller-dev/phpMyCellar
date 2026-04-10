@@ -1,8 +1,11 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
+
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 ?>
 
 <!DOCTYPE html>
@@ -140,9 +143,8 @@ if (!defined('INCLUDED_VIA_APP')) {
 
 <?php function getNumberOfBottlesInStorage()
 {
-  require __DIR__ . "/../db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  // Perform query
+  global $mysqli, $conn;
+    // Perform query
   $result = $mysqli -> query(
     "select
       src.cellar_name,
@@ -180,5 +182,4 @@ if (!defined('INCLUDED_VIA_APP')) {
   echo "<tr><td><b>Total number</b></td><td style='text-indent:5px;'>".$totalBtls["num"]."</td></tr>";
   echo "</table>";
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>

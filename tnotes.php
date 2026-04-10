@@ -1,7 +1,8 @@
 <?php
-  session_start();
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 
   // Check if user is not logged in
   if (!isset($_SESSION['user_id'])) {
@@ -131,9 +132,8 @@
 
 <?php function getNotes($num,$sort,$sqlOrderBy)
 {
-  require "db_connect.php";
-  $mysqli->query("SET NAMES utf8");
-  $prevYear="";
+  global $mysqli, $conn;
+    $prevYear="";
   $prevRating="";
   // Perform query
   $result = $mysqli -> query("select * from tnotes
@@ -270,5 +270,4 @@
     $prevVariety=$tasting_note["grape"];
   }
   $result -> free_result();
-  $mysqli -> close();
-} ?>
+  } ?>

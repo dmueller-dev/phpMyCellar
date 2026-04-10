@@ -1,13 +1,13 @@
-<?php 
-  session_start();
-
+<?php
   // Define a constant to protect included files from direct access
   define('INCLUDED_VIA_APP', true);
+  
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/includes/init.php';
 
   // Include the database configuration file
-  require 'db_connect.php';
-  $mysqli->query("SET NAMES utf8");
-
+  global $mysqli, $conn;
+  
   // Check if user is logged in
   if (!isset($_SESSION['user_id'])) {
     die("<h2>Access Denied</h2><p>You must be <a href='/login.php'>logged in</a> to change your password.</p>");
@@ -55,8 +55,7 @@
         $error = "Failed to update password. Please try again.";
       }
       $update->close();
-      $mysqli->close();
-    }
+          }
   }
 ?>
 

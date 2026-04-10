@@ -1,64 +1,67 @@
 <?php
-// Define a constant to protect included files from direct access
-if (!defined('INCLUDED_VIA_APP')) {
-  define('INCLUDED_VIA_APP', true);
-}
+  // Define a constant to protect included files from direct access
+  if (!defined('INCLUDED_VIA_APP')) {
+    define('INCLUDED_VIA_APP', true);
+  }
 
-// Include the database configuration file
-require 'dbConnectBackend.php';
+  // Include the initialization file (handles sessions and database connection)
+  require_once __DIR__ . '/../includes/init.php';
 
-$errors = [];
-$success_message = '';
+  // Include the database configuration file
+  global $mysqli, $conn;
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (isset($_POST['update'])) {
-    // Validate CSRF token
-    if (!validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-    // Sanitize and validate inputs
-    $vineyard_id = filter_input(INPUT_POST, 'vineyard_id', FILTER_VALIDATE_INT);
-    $appellation_id = filter_input(INPUT_POST, 'appellation_id', FILTER_VALIDATE_INT);
-    $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
-    $vineyard = sanitizeInput($_POST['vineyard']);
-    $vineyard_desc = sanitizeInput($_POST['vineyard_desc']);
-    $errors = validateVineyardInput($vineyard, $appellation_id, $region_id, $vineyard_desc);
-    if (empty($errors)) {
-      // Start transaction
-      $conn->begin_transaction();
-      try {
-        if (updateVineyard($conn, $vineyard_id, $appellation_id, $region_id, $vineyard, $vineyard_desc)) {
-          $conn->commit();
-          $success_message = "Vineyard updated successfully";
-        } else {
+  $errors = [];
+  $success_message = '';
+
+  // Handle form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['update'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      // Sanitize and validate inputs
+      $vineyard_id = filter_input(INPUT_POST, 'vineyard_id', FILTER_VALIDATE_INT);
+      $appellation_id = filter_input(INPUT_POST, 'appellation_id', FILTER_VALIDATE_INT);
+      $region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
+      $vineyard = sanitizeInput($_POST['vineyard']);
+      $vineyard_desc = sanitizeInput($_POST['vineyard_desc']);
+      $errors = validateVineyardInput($vineyard, $appellation_id, $region_id, $vineyard_desc);
+      if (empty($errors)) {
+        // Start transaction
+        $conn->begin_transaction();
+        try {
+          if (updateVineyard($conn, $vineyard_id, $appellation_id, $region_id, $vineyard, $vineyard_desc)) {
+            $conn->commit();
+            $success_message = "Vineyard updated successfully";
+          } else {
+            $conn->rollback();
+            $errors[] = "Error updating vineyard: Invalid region or appellation";
+          }
+        } catch (Exception $e) {
           $conn->rollback();
-          $errors[] = "Error updating vineyard: Invalid region or appellation";
+          $errors[] = "Error updating vineyard: " . $e->getMessage();
         }
-      } catch (Exception $e) {
-        $conn->rollback();
-        $errors[] = "Error updating vineyard: " . $e->getMessage();
       }
     }
   }
-}
 
-// Get all vineyards for the dropdown
-$regions = getRegions($conn);
-$appellations = getAppellations($conn);
-$vineyards = getVineyards($conn);
+  // Get all vineyards for the dropdown
+  $regions = getRegions($conn);
+  $appellations = getAppellations($conn);
+  $vineyards = getVineyards($conn);
 
-// Get selected vineyard details
-$selected_vineyard = null;
-if (isset($_GET['vineyard_id'])) {
-  $vineyard_id = filter_input(INPUT_GET, 'vineyard_id', FILTER_VALIDATE_INT);
-  if ($vineyard_id !== false && $vineyard_id !== null) {
-    $selected_vineyard = getVineyardDetails($conn, $vineyard_id);
+  // Get selected vineyard details
+  $selected_vineyard = null;
+  if (isset($_GET['vineyard_id'])) {
+    $vineyard_id = filter_input(INPUT_GET, 'vineyard_id', FILTER_VALIDATE_INT);
+    if ($vineyard_id !== false && $vineyard_id !== null) {
+      $selected_vineyard = getVineyardDetails($conn, $vineyard_id);
+    }
   }
-}
 
-// Generate CSRF token
-$csrf_token = generateCSRFToken();
+  // Generate CSRF token
+  $csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -203,8 +206,3 @@ $csrf_token = generateCSRFToken();
 </body>
 
 </html>
-
-<?php
-// Close the database connection
-$conn->close();
-?>
