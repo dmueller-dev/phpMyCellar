@@ -63,7 +63,7 @@
   </script>
 </head>
 
-<body style="font-family: Georgia, serif;">
+<body>
 
 <header>
   <a href="https://dmueller.com" title="Dominik Mueller - Fine wine tasting notes">
