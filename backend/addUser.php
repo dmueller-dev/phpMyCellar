@@ -1,4 +1,9 @@
-<?php 
+<?php
+// Define a constant to protect included files from direct access
+if (!defined('INCLUDED_VIA_APP')) {
+  define('INCLUDED_VIA_APP', true);
+}
+ 
   // Include the database configuration file
   require 'dbConnectBackend.php';
 

@@ -1,6 +1,8 @@
 <?php
+  // Define a constant to protect included files from direct access
+  define('INCLUDED_VIA_APP', true);
+
   $page_title = 'Dominik Mueller - Privacy policy';
-  
   
   require_once 'includes/header.php';
 ?>

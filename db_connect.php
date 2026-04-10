@@ -1,4 +1,9 @@
 <?php
+  // Prevent direct access to this file
+  if (!defined('INCLUDED_VIA_APP')) {
+    die('Direct access not permitted');
+  }
+
   // Read .env file
   $env = parse_ini_file(__DIR__.'/.env');
   $_ENV = array_merge($_ENV, $env);

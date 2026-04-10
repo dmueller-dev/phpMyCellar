@@ -1,6 +1,12 @@
+<?php
+// Define a constant to protect included files from direct access
+if (!defined('INCLUDED_VIA_APP')) {
+  define('INCLUDED_VIA_APP', true);
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en-GB">
-
 <head>
   <title>Dominik Mueller - Wine database backend</title>
   <meta charset="UTF-8">

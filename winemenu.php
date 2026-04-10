@@ -1,5 +1,7 @@
 <?php
   session_start();
+  // Define a constant to protect included files from direct access
+  define('INCLUDED_VIA_APP', true);
 
   // Check if user is not logged in
   if (!isset($_SESSION['user_id'])) {

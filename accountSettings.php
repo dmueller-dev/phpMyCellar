@@ -1,6 +1,9 @@
 <?php 
   session_start();
 
+  // Define a constant to protect included files from direct access
+  define('INCLUDED_VIA_APP', true);
+
   // Include the database configuration file
   require 'db_connect.php';
   $mysqli->query("SET NAMES utf8");

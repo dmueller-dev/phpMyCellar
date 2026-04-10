@@ -1,5 +1,7 @@
 <?php
   session_start();
+  // Define a constant to protect included files from direct access
+  define('INCLUDED_VIA_APP', true);
 
   // Get blog ID
   $blogID=$_GET['id'];

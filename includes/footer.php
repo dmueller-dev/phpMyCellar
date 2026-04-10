@@ -1,3 +1,10 @@
+<?php
+// Prevent direct access to this file
+if (!defined('INCLUDED_VIA_APP')) {
+  die('Direct access not permitted');
+}
+?>
+
 <div class="footer">
   <footer>
     <p style="float:right;margin-top:0;">
