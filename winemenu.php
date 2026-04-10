@@ -47,18 +47,18 @@
 
   <script> // Automatically update cellar filter on new selection by user
     function updateCellarFilter() {
-        const cellarValue = document.getElementById('cellarToggle').value;
-        const url = new URL(window.location.href);
-        
-        // Set or remove the cellar parameter
-        if (cellarValue) {
-            url.searchParams.set('cellar', cellarValue);
-        } else {
-            url.searchParams.delete('cellar');
-        }
-        
-        // Redirect to the new URL
-        window.location.href = url.toString();
+      const cellarValue = document.getElementById('cellarToggle').value;
+      const url = new URL(window.location.href);
+      
+      // Set or remove the cellar parameter
+      if (cellarValue) {
+        url.searchParams.set('cellar', cellarValue);
+      } else {
+        url.searchParams.delete('cellar');
+      }
+      
+      // Redirect to the new URL
+      window.location.href = url.toString();
     }
   </script>
 </head>
@@ -203,11 +203,20 @@
   // Random wine?
   $randomWineConstraint = " ";
   if ($sort=="rand") {
+    $randomCellarJoins = "";
+    $randomCellarWhere = "";
+    if (!empty($_GET['cellar'])) {
+      $randomCellarJoins = " left join storageBins sb on b2.storage_location=sb.bin_id left join cellars c on sb.cellar_id=c.cellar_id ";
+      $randomCellarWhere = " and c.cellar_id = '$cellarId' ";
+    }
+
     $randomWineConstraint = " inner join (
       select b2.wine_id
       from bottles b2
+      $randomCellarJoins
       where b2.status = 'in cellar'
         and (year(curdate()) >= b2.drink_from or b2.drink_from is null)
+        $randomCellarWhere
       order by rand()
       limit 1
     ) as random_wine on bottles.wine_id = random_wine.wine_id ";
