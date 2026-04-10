@@ -285,7 +285,7 @@
       ?>
       <form method="post" autocomplete="off" accept-charset="UTF-8" style="margin-bottom:10px;">
         <label for="username">Your name:</label>
-        <br><input type="text" id="username" value="<?= htmlspecialchars($displayname, ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
+        <br><input type="text" id="username" value="<?= htmlspecialchars($displayname ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
         <br><br>
         <label for="comment">Your comment:</label>
         <br><textarea name="comment" id="comment" rows="15" cols="35" maxlength="2000" placeholder="..."></textarea>
@@ -329,7 +329,7 @@
   $mysqli->query("SET NAMES utf8");
 
   // Perform query
-  if ($result = $mysqli -> query("select * from tnotes
+  $stmt = $mysqli->prepare("select * from tnotes
                                    left join users on tnotes.user_id=users.user_id
                                    left join wines on tnotes.wine_id=wines.wine_id
                                    left join wines_master on wines.master_id=wines_master.master_id
@@ -344,12 +344,18 @@
 				   left join wsetpts on tnotes.wsetpts=wsetpts.pts
 				   left join starpts on tnotes.starpts=starpts.pts
 				   left join (select vintage as vint, region_id as rvid, vintage_desc from x_vintage_region) xvr on wines.vintage=xvr.vint and wines_master.region_id=xvr.rvid
-                                 where note_id=".$noteID))
+                                 where note_id=?");
+  $stmt->bind_param("i", $noteID);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
+  if ($result)
   {
     $GLOBALS['tasting_note'] = $result -> fetch_assoc();
     // Free result set
     $result -> free_result();
   }
+  $stmt->close();
   $mysqli -> close();
 } ?>
 
@@ -358,10 +364,14 @@
   require "db_connect.php";
   $mysqli->query("SET NAMES utf8");
   // Perform query
-  $result = $mysqli -> query("select * from x_blog_tnotes
+  $stmt = $mysqli->prepare("select * from x_blog_tnotes
                                 left join blogposts on x_blog_tnotes.blog_id=blogposts.blog_id
-                              where x_blog_tnotes.note_id=".$id."
+                              where x_blog_tnotes.note_id=?
                               order by blogposts.pub_date desc");
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
   if (mysqli_num_rows($result)!=0) {
     echo "<div class='card'><h3>Referenced in these stories:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
     while ($blog = $result->fetch_assoc()) {
@@ -369,6 +379,7 @@
     }
     echo "</ul></p></div>";
   }
+  $stmt->close();
   $result -> free_result();
   $mysqli -> close();
 } ?>
@@ -378,9 +389,13 @@
   require "db_connect.php";
   $mysqli->query("SET NAMES utf8");
   // Perform query
-  $result = $mysqli -> query("select * from tnotes 
-                              where tnotes.status='published' and tnotes.note_id<>".$id." and tnotes.wine_id=".$wine_id."
+  $stmt = $mysqli->prepare("select * from tnotes 
+                              where tnotes.status='published' and tnotes.note_id<>? and tnotes.wine_id=?
                               order by tnotes.tasting_date desc");
+  $stmt->bind_param("ii", $id, $wine_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
   if (mysqli_num_rows($result)!=0) {
     echo "<div class='card'><h3>More tasting notes on this wine:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
     while ($moreNotes = $result->fetch_assoc()) {
@@ -395,6 +410,7 @@
     }
     echo "</ul></p></div>";
   }
+  $stmt->close();
   $result -> free_result();
   $mysqli -> close();
 } ?>
@@ -404,13 +420,17 @@
   require "db_connect.php";
   $mysqli->query("SET NAMES utf8");
   // Perform query
-  $result = $mysqli -> query("select * from wines
+  $stmt = $mysqli->prepare("select * from wines
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join tnotes on wines.wine_id=tnotes.wine_id
                                 left join producers on wines_master.producer_id=producers.producer_id
                                 left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-                              where tnotes.status='published' and wines.wine_id<>".$wine_id." and wines.master_id=".$master_id."
+                              where tnotes.status='published' and wines.wine_id<>? and wines.master_id=?
                               order by tnotes.tasting_date desc");
+  $stmt->bind_param("ii", $wine_id, $master_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
   if (mysqli_num_rows($result)!=0) {
     echo "<div class='card'><h3>Tasting notes on other vintages of this wine:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
     while ($otherVintages = $result->fetch_assoc()) {
@@ -442,6 +462,7 @@
     }
     echo "</ul></p></div>";
   }
+  $stmt->close();
   $result -> free_result();
   $mysqli -> close();
 } ?>
@@ -452,16 +473,21 @@
     require "db_connect.php";
     $mysqli->query("SET NAMES utf8");
     // Perform query
-    $result = $mysqli -> query("select * from x_comments_tnotes
+    $stmt = $mysqli->prepare("select * from x_comments_tnotes
                                   left join comments on x_comments_tnotes.comment_id=comments.comment_id
                                   left join users on comments.user_id=users.user_id
-                                where x_comments_tnotes.note_id=".$id."
+                                where x_comments_tnotes.note_id=?
                                 order by comments.pub_time desc");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
     if (mysqli_num_rows($result)!=0) {
       while ($comments = $result->fetch_assoc()) {
         echo "<div class='card'><p style='font-size:small;'><b>".$comments["displayname"]."</b>, ".date_format(date_create($comments["pub_time"]),"l, j F Y H:i:s").":</p><hr><p style='font-size:small;'>".$comments["content"]."</p></div>";
       }
     }
+    $stmt->close();
     $result -> free_result();
     $mysqli -> close();
   }

@@ -10,17 +10,21 @@
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Perform query
-    $result = $mysqli -> query("SELECT user_id, password FROM users WHERE username='$username'");
+    // Perform query using prepared statement to prevent SQL injection
+    $stmt = $mysqli->prepare("SELECT user_id, password FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     // Validate user
-    if (mysqli_num_rows($result) == 1) {
-      $user = mysqli_fetch_assoc($result);
+    if ($result->num_rows == 1) {
+      $user = $result->fetch_assoc();
       $hashedPassword = $user['password'];
 
       // Verify the password
         if (password_verify($password, $hashedPassword)) {
             $_SESSION['user_id'] = $user['user_id'];
+            $stmt->close();
             header("Location: index.php");
             exit();
         } else {
@@ -29,6 +33,7 @@
     } else {
       $error = "Invalid username or password";
     }
+    $stmt->close();
   }
 ?>
 

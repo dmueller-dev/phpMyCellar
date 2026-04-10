@@ -137,14 +137,20 @@
   $mysqli->query("SET NAMES utf8");
 
   // Perform query
-  if ($result = $mysqli -> query("select * from producers
-                                    left join regions on producers.region_id=regions.region_id
-                                  where producer_id=".$producerID))
+  $stmt = $mysqli->prepare("select * from producers
+                              left join regions on producers.region_id=regions.region_id
+                              where producer_id=?");
+  $stmt->bind_param("i", $producerID);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
+  if ($result)
   {
     $GLOBALS['producer'] = $result -> fetch_assoc();
     // Free result set
     $result -> free_result();
   }
+  $stmt->close();
   $mysqli -> close();
 } ?>
 
@@ -153,7 +159,7 @@
   require "db_connect.php";
   $mysqli->query("SET NAMES utf8");
   // Perform query
-  $result = $mysqli -> query("select * from tnotes
+  $stmt = $mysqli->prepare("select * from tnotes
                                 left join users on tnotes.user_id=users.user_id
                                 left join wines on tnotes.wine_id=wines.wine_id
                                 left join wines_master on wines.master_id=wines_master.master_id
@@ -163,8 +169,12 @@
                                 left join countries on regions.country=countries.country
                                 left join subregions on wines_master.subregion_id=subregions.subregion_id
                                 left join appellations on wines_master.appellation_id=appellations.appellation_id
-                              where status='published' and producers.producer_id=".$id."
+                              where status='published' and producers.producer_id=?
                               order by tasting_date desc, note_id desc");
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
   while ($tasting_note = $result->fetch_assoc()) {
     // Vintage NV?
     if ($tasting_note["vintage"]==null) { $tasting_note["vintage"]="NV"; }
@@ -195,6 +205,7 @@
     echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnote.php?id=".$tasting_note['note_id']."'>".$wine_name."</a> (".$dmpts.")</li>";
   }
   if (mysqli_num_rows($result)==0) { echo "<li>I haven't tasted any of this producer's wines, yet.</li>"; }
+  $stmt->close();
   $result -> free_result();
   $mysqli -> close();
 } ?>

@@ -310,21 +310,27 @@
   $mysqli->query("SET NAMES utf8");
 
   // Perform query
-  if ($result = $mysqli -> query("select * from wines
-                                    left join wines_master on wines.master_id=wines_master.master_id
-                                    left join producers on wines_master.producer_id=producers.producer_id
-                                    left join regions on wines_master.region_id=regions.region_id
-                                    left join subregions on wines_master.subregion_id=subregions.subregion_id
-                                    left join appellations on wines_master.appellation_id=appellations.appellation_id
-                                    left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-                                    left join variety on wines_master.grape=variety.grape
-				    left join (select vintage as vint, region_id as rvid, vintage_desc from x_vintage_region) xvr on wines.vintage=xvr.vint and wines_master.region_id=xvr.rvid
-                                  where wine_id=".$wineID))
+  $stmt = $mysqli->prepare("select * from wines
+                            left join wines_master on wines.master_id=wines_master.master_id
+                            left join producers on wines_master.producer_id=producers.producer_id
+                            left join regions on wines_master.region_id=regions.region_id
+                            left join subregions on wines_master.subregion_id=subregions.subregion_id
+                            left join appellations on wines_master.appellation_id=appellations.appellation_id
+                            left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
+                            left join variety on wines_master.grape=variety.grape
+                            left join (select vintage as vint, region_id as rvid, vintage_desc from x_vintage_region) xvr on wines.vintage=xvr.vint and wines_master.region_id=xvr.rvid
+                          where wine_id=?");
+  $stmt->bind_param("i", $wineID);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
+  if ($result)
   {
     $GLOBALS['wine'] = $result -> fetch_assoc();
     // Free result set
     $result -> free_result();
   }
+  $stmt->close();
   $mysqli -> close();
 } ?>
 
@@ -333,7 +339,7 @@
   require "db_connect.php";
   $mysqli->query("SET NAMES utf8");
   // Perform query
-  $result = $mysqli -> query("select * from tnotes
+  $stmt = $mysqli->prepare("select * from tnotes
                                 left join users on tnotes.user_id=users.user_id
                                 left join wines on tnotes.wine_id=wines.wine_id
                                 left join wines_master on wines.master_id=wines_master.master_id
@@ -343,8 +349,12 @@
                                 left join countries on regions.country=countries.country
                                 left join subregions on wines_master.subregion_id=subregions.subregion_id
                                 left join appellations on wines_master.appellation_id=appellations.appellation_id
-                              where status='published' and wines.wine_id=".$id."
+                              where status='published' and wines.wine_id=?
                               order by tasting_date desc, note_id desc");
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
   while ($tasting_note = $result->fetch_assoc()) {
     // DM points?
     if ($tasting_note['flawed_yn']=="yes") { $dmpts="flawed"; } elseif ($tasting_note['dmpts']!=null) { $dmpts="DM".$tasting_note["dmpts"]; } else { $dmpts="NR"; }
@@ -352,6 +362,7 @@
     echo "<li>Tasted by ".$tasting_note["displayname"]." on ".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnote.php?id=".$tasting_note['note_id']."'>".$dmpts."</a></li>";
   }
   if (mysqli_num_rows($result)==0) { echo "<li>No tasting notes for this wine, yet.</li>"; }
+  $stmt->close();
   $result -> free_result();
   $mysqli -> close();
 } ?>
@@ -361,10 +372,14 @@
   require "db_connect.php";
   $mysqli->query("SET NAMES utf8");
   // Perform query
-  $result = $mysqli -> query("select * from x_blog_wines
-                                left join blogposts on x_blog_wines.blog_id=blogposts.blog_id
-                              where x_blog_wines.wine_id=".$id."
-                              order by blogposts.pub_date desc");
+  $stmt = $mysqli->prepare("select * from x_blog_wines
+                              left join blogposts on x_blog_wines.blog_id=blogposts.blog_id
+                            where x_blog_wines.wine_id=?
+                            order by blogposts.pub_date desc");
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
   if (mysqli_num_rows($result)!=0) {
     echo "<div class='card'><h3>Appears in these blog stories:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
     while ($blog = $result->fetch_assoc()) {
@@ -372,6 +387,7 @@
     }
     echo "</ul></p></div>";
   }
+  $stmt->close();
   $result -> free_result();
   $mysqli -> close();
 } ?>
@@ -381,10 +397,14 @@
   require "db_connect.php";
   $mysqli->query("SET NAMES utf8");
   // Perform query
-  $result = $mysqli -> query("select * from wines
-                                left join wines_master on wines.master_id=wines_master.master_id
-                              where wines.wine_id<>".$id." and wines.master_id=".$master_id."
-                              order by wines.vintage desc");
+  $stmt = $mysqli->prepare("select * from wines
+                              left join wines_master on wines.master_id=wines_master.master_id
+                            where wines.wine_id<>? and wines.master_id=?
+                            order by wines.vintage desc");
+  $stmt->bind_param("ii", $id, $master_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
   if (mysqli_num_rows($result)!=0) {
     $count=1;
     echo "<div class='card'><h3>Other vintages of this wine:</h3><p>";
@@ -397,6 +417,7 @@
     }
     echo "</p></div>";
   }
+  $stmt->close();
   $result -> free_result();
   $mysqli -> close();
 } ?>
@@ -407,16 +428,21 @@
     require "db_connect.php";
     $mysqli->query("SET NAMES utf8");
     // Perform query
-    $result = $mysqli -> query("select * from x_comments_wines
-                                  left join comments on x_comments_wines.comment_id=comments.comment_id
-                                  left join users on comments.user_id=users.user_id
-                                where x_comments_wines.wine_id=".$id."
-                                order by comments.pub_time desc");
+    $stmt = $mysqli->prepare("select * from x_comments_wines
+                                left join comments on x_comments_wines.comment_id=comments.comment_id
+                                left join users on comments.user_id=users.user_id
+                              where x_comments_wines.wine_id=?
+                              order by comments.pub_time desc");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
     if (mysqli_num_rows($result)!=0) {
       while ($comments = $result->fetch_assoc()) {
         echo "<div class='card'><p style='font-size:small;'><b>".$comments["displayname"]."</b>, ".date_format(date_create($comments["pub_time"]),"l, j F Y H:i:s").":</p><hr><p style='font-size:small;'>".$comments["content"]."</p></div>";
       }
     }
+    $stmt->close();
     $result -> free_result();
     $mysqli -> close();
   }

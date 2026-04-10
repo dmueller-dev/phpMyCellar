@@ -139,7 +139,7 @@
       ?>
       <form method="post" autocomplete="off" accept-charset="UTF-8" style="margin-bottom:10px;">
         <label for="username">Your name:</label>
-        <br><input type="text" id="username" value="<?= htmlspecialchars($displayname, ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
+        <br><input type="text" id="username" value="<?= htmlspecialchars($displayname ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
         <br><br>
         <label for="comment">Your comment:</label>
         <br><textarea name="comment" id="comment" rows="15" cols="35" maxlength="2000" placeholder="..."></textarea>
@@ -183,12 +183,18 @@
   $mysqli->query("SET NAMES utf8");
 
   // Perform query
-  if ($result = $mysqli -> query("select * from blogposts where blog_id=".$id))
+  $stmt = $mysqli->prepare("select * from blogposts where blog_id=?");
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
+  if ($result)
   {
     $GLOBALS['blogpost'] = $result -> fetch_assoc();
     // Free result set
     $result -> free_result();
   }
+  $stmt->close();
   $mysqli -> close();
 } ?>
 
@@ -198,14 +204,18 @@
   $mysqli->query("SET NAMES utf8");
   $prevWine="";
   // Perform query
-  $result = $mysqli -> query("select * from x_blog_wines
+  $stmt = $mysqli->prepare("select * from x_blog_wines
                                 left join wines on x_blog_wines.wine_id=wines.wine_id
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join producers on wines_master.producer_id=producers.producer_id
                                 left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
                                 left join (select note_id,wine_id as w_id,tasting_date,flawed_yn,dmpts,status from tnotes) tnotes on x_blog_wines.wine_id=tnotes.w_id
-                              where x_blog_wines.blog_id=".$id."
+                              where x_blog_wines.blog_id=?
                               order by producers.producer asc, wines_master.name asc, wines.vintage asc, tnotes.tasting_date desc");
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
   while ($wine = $result->fetch_assoc()) {
     // Vintage NV?
     if ($wine["vintage"]==null) { $wine["vintage"]="NV"; }
@@ -233,6 +243,7 @@
     if ($wine["note_id"]!=null and $wine["status"]=="published") { echo "<ul><li>Tasted on ".date_format(date_create($wine["tasting_date"]),"d M Y").": <a href='/tnote.php?id=".$wine["note_id"]."'>".$dmpts."</a></li></ul>"; }
   }
   if (mysqli_num_rows($result)==0) { echo "<li>No wines were featured in this story.</li>"; }
+  $stmt->close();
   $result -> free_result();
   $mysqli -> close();
 } ?>
@@ -243,16 +254,21 @@
     require "db_connect.php";
     $mysqli->query("SET NAMES utf8");
     // Perform query
-    $result = $mysqli -> query("select * from x_comments_blogposts
+    $stmt = $mysqli->prepare("select * from x_comments_blogposts
                                   left join comments on x_comments_blogposts.comment_id=comments.comment_id
                                   left join users on comments.user_id=users.user_id
-                                where x_comments_blogposts.blog_id=".$id."
+                                where x_comments_blogposts.blog_id=?
                                 order by comments.pub_time desc");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
     if (mysqli_num_rows($result)!=0) {
       while ($comments = $result->fetch_assoc()) {
         echo "<div class='card'><p style='font-size:small;'><b>".$comments["displayname"]."</b>, ".date_format(date_create($comments["pub_time"]),"l, j F Y H:i:s").":</p><hr><p style='font-size:small;'>".$comments["content"]."</p></div>";
       }
     }
+    $stmt->close();
     $result -> free_result();
     $mysqli -> close();
   }

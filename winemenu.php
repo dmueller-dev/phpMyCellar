@@ -97,7 +97,7 @@
 <div class="row">
   <div class="column main">
     <div class="card">
-      <p align="center" style="margin-top:0;margin-bottom:10px;"><small>
+      <p align="center" style="margin-top:0;margin-bottom:0;"><small>
         Filter by cellar: 
         <select id="cellarToggle" onchange="updateCellarFilter()" style="font-family: Georgia, serif; padding: 2px;">
           <option value="">All cellars</option>
