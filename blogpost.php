@@ -4,6 +4,9 @@
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/includes/init.php';
 
+  // Generate the token for the comments form
+  $csrf_token = generateCSRFToken();
+
   // Get blog ID
   $blogID=$_GET['id'];
 
@@ -34,28 +37,33 @@
 
   // Process form submission
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $comment = $_POST['comment'] ?? '';
-    $mysqli->autocommit(FALSE);
-    $post = $mysqli->prepare("INSERT INTO comments (user_id, content) VALUES (?, ?)");
-    $post->bind_param('is', $user_id, $comment);
-    if ($post->execute()) {
-      $last_id = $mysqli->insert_id;
-      $post->close();
-      $post = $mysqli->prepare("INSERT INTO x_comments_blogposts (comment_id, blog_id) VALUES (?, ?)");
-      $post->bind_param('ii', $last_id, $blogID);
+    // Validate the token before processing the login
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+      $error = "Security check failed. Please refresh the page and try again.";
+    } else {
+      $comment = $_POST['comment'] ?? '';
+      $mysqli->autocommit(FALSE);
+      $post = $mysqli->prepare("INSERT INTO comments (user_id, content) VALUES (?, ?)");
+      $post->bind_param('is', $user_id, $comment);
       if ($post->execute()) {
-        $success = "Thank you! Comment posted successfully.";
-        $mysqli->commit();
+        $last_id = $mysqli->insert_id;
+        $post->close();
+        $post = $mysqli->prepare("INSERT INTO x_comments_blogposts (comment_id, blog_id) VALUES (?, ?)");
+        $post->bind_param('ii', $last_id, $blogID);
+        if ($post->execute()) {
+          $success = "Thank you! Comment posted successfully.";
+          $mysqli->commit();
+        } else {
+          $error = "Failed to post comment. Please try again.";
+          $mysqli->rollback();
+        }
       } else {
         $error = "Failed to post comment. Please try again.";
         $mysqli->rollback();
       }
-    } else {
-      $error = "Failed to post comment. Please try again.";
-      $mysqli->rollback();
+      $post->close();
     }
-    $post->close();
-      }
+  }
 ?>
 
 <?php
@@ -97,6 +105,7 @@
         }
       ?>
       <form method="post" autocomplete="off" accept-charset="UTF-8" style="margin-bottom:10px;">
+        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
         <label for="username">Your name:</label>
         <br><input type="text" id="username" value="<?= htmlspecialchars($displayname ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
         <br><br>
