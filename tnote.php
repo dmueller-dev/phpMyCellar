@@ -107,7 +107,7 @@
         ?>
       </section>
     </div>
-    <?php getBlog($noteID); ?>
+    <?php renderBlogReferences($conn, $noteID, 'tnote', 'Referenced in these stories:'); ?>
   </div>
 
   <div class="column side">
@@ -252,7 +252,7 @@
         <button type="submit">Post comment</button>
       </form></details>
     </div>
-    <?php getComments($noteID) ?>
+    <?php renderComments($conn, $noteID, 'tnote'); ?>
   </div>
 </div>
 
@@ -290,30 +290,7 @@
     $result -> free_result();
   }
   $stmt->close();
-  } ?>
-
-<?php function getBlog($id)
-{
-  global $mysqli, $conn;
-    // Perform query
-  $stmt = $mysqli->prepare("select * from x_blog_tnotes
-                                left join blogposts on x_blog_tnotes.blog_id=blogposts.blog_id
-                              where x_blog_tnotes.note_id=?
-                              order by blogposts.pub_date desc");
-  $stmt->bind_param("i", $id);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  
-  if (mysqli_num_rows($result)!=0) {
-    echo "<div class='card'><h3>Referenced in these stories:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
-    while ($blog = $result->fetch_assoc()) {
-      echo "<li>".date_format(date_create($blog["pub_date"]),"d M Y").": <a href='/blogpost.php?id=".$blog['blog_id']."'>".$blog["title"]."</a></li>";
-    }
-    echo "</ul></p></div>";
-  }
-  $stmt->close();
-  $result -> free_result();
-  } ?>
+} ?>
 
 <?php function moreNotes($id, $wine_id, $wine_name)
 {
@@ -342,7 +319,7 @@
   }
   $stmt->close();
   $result -> free_result();
-  } ?>
+} ?>
 
 <?php function otherVintages($wine_id, $master_id)
 {
@@ -392,28 +369,4 @@
   }
   $stmt->close();
   $result -> free_result();
-  } ?>
-
-<?php
-  function getComments($id)
-  {
-    global $mysqli, $conn;
-        // Perform query
-    $stmt = $mysqli->prepare("select * from x_comments_tnotes
-                                  left join comments on x_comments_tnotes.comment_id=comments.comment_id
-                                  left join users on comments.user_id=users.user_id
-                                where x_comments_tnotes.note_id=?
-                                order by comments.pub_time desc");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if (mysqli_num_rows($result)!=0) {
-      while ($comments = $result->fetch_assoc()) {
-        echo "<div class='card'><p style='font-size:small;'><b>".$comments["displayname"]."</b>, ".date_format(date_create($comments["pub_time"]),"l, j F Y H:i:s").":</p><hr><p style='font-size:small;'>".$comments["content"]."</p></div>";
-      }
-    }
-    $stmt->close();
-    $result -> free_result();
-      }
-?>
+} ?>

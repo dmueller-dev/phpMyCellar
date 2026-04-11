@@ -1327,4 +1327,89 @@ function validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting
     
   return $errors;
 }
+
+// Function to render comments for a specific entity (blog, tnote, wine)
+function renderComments($conn, $id, $type) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+
+  $table_prefix = "";
+  $id_column = "";
+  if ($type == 'blog') {
+    $table_prefix = "x_comments_blogposts";
+    $id_column = "blog_id";
+  } elseif ($type == 'tnote') {
+    $table_prefix = "x_comments_tnotes";
+    $id_column = "note_id";
+  } elseif ($type == 'wine') {
+    $table_prefix = "x_comments_wines";
+    $id_column = "wine_id";
+  } else {
+    throw new Exception("Invalid comment type");
+  }
+
+  $sql = "select * from $table_prefix
+            left join comments on $table_prefix.comment_id=comments.comment_id
+            left join users on comments.user_id=users.user_id
+          where $table_prefix.$id_column=?
+          order by comments.pub_time desc";
+  
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
+  if ($result && mysqli_num_rows($result) != 0) {
+    while ($comments = $result->fetch_assoc()) {
+      echo "<div class='card'><p style='font-size:small;'><b>".$comments["displayname"]."</b>, ".date_format(date_create($comments["pub_time"]),"l, j F Y H:i:s").":</p><hr><p style='font-size:small;'>".$comments["content"]."</p></div>";
+    }
+  }
+  $stmt->close();
+  if ($result) {
+    $result->free_result();
+  }
+}
+
+// Function to render blog references for an entity (tnote, wine)
+function renderBlogReferences($conn, $id, $type, $title) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+
+  $table_prefix = "";
+  $id_column = "";
+  if ($type == 'tnote') {
+    $table_prefix = "x_blog_tnotes";
+    $id_column = "note_id";
+  } elseif ($type == 'wine') {
+    $table_prefix = "x_blog_wines";
+    $id_column = "wine_id";
+  } else {
+    throw new Exception("Invalid blog reference type");
+  }
+
+  $sql = "select * from $table_prefix
+            left join blogposts on $table_prefix.blog_id=blogposts.blog_id
+          where $table_prefix.$id_column=?
+          order by blogposts.pub_date desc";
+  
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
+  if ($result && mysqli_num_rows($result) != 0) {
+    echo "<div class='card'><h3>$title</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
+    while ($blog = $result->fetch_assoc()) {
+      echo "<li>".date_format(date_create($blog["pub_date"]),"d M Y").": <a href='/blogpost.php?id=".$blog['blog_id']."'>".$blog["title"]."</a></li>";
+    }
+    echo "</ul></p></div>";
+  }
+  $stmt->close();
+  if ($result) {
+    $result->free_result();
+  }
+}
+
 ?>

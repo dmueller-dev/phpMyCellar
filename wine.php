@@ -111,7 +111,7 @@
         ?>
       </ul></p>
     </div>
-    <?php getBlog($wineID); ?>
+    <?php renderBlogReferences($conn, $wineID, 'wine', 'Appears in these blog stories:'); ?>
     <?php
       if ($wine["region_desc"]!=null) {
         echo "<div class='card'><section><h3>About ".$wine["region"]."</h3>".$wine["region_desc"]."</section></div>";
@@ -231,7 +231,7 @@
         echo "<button type='submit'>Post comment</button>";
         echo "</form></details>";
         echo "</div>";
-        getComments($wineID);
+        renderComments($conn, $wineID, 'wine');
       }
     ?>
   </div>
@@ -265,7 +265,7 @@
     $result -> free_result();
   }
   $stmt->close();
-  } ?>
+} ?>
 
 <?php function latestNotes($id)
 {
@@ -296,30 +296,8 @@
   if (mysqli_num_rows($result)==0) { echo "<li>No tasting notes for this wine, yet.</li>"; }
   $stmt->close();
   $result -> free_result();
-  } ?>
-
-<?php function getBlog($id)
-{
-  global $mysqli, $conn;
-    // Perform query
-  $stmt = $mysqli->prepare("select * from x_blog_wines
-                              left join blogposts on x_blog_wines.blog_id=blogposts.blog_id
-                            where x_blog_wines.wine_id=?
-                            order by blogposts.pub_date desc");
-  $stmt->bind_param("i", $id);
-  $stmt->execute();
-  $result = $stmt->get_result();
-
-  if (mysqli_num_rows($result)!=0) {
-    echo "<div class='card'><h3>Appears in these blog stories:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
-    while ($blog = $result->fetch_assoc()) {
-      echo "<li>".date_format(date_create($blog["pub_date"]),"d M Y").": <a href='/blogpost.php?id=".$blog['blog_id']."'>".$blog["title"]."</a></li>";
-    }
-    echo "</ul></p></div>";
-  }
-  $stmt->close();
-  $result -> free_result();
-  } ?>
+}
+?>
 
 <?php function otherVintages($id, $master_id)
 {
@@ -347,28 +325,4 @@
   }
   $stmt->close();
   $result -> free_result();
-  } ?>
-
-<?php
-  function getComments($id)
-  {
-    global $mysqli, $conn;
-        // Perform query
-    $stmt = $mysqli->prepare("select * from x_comments_wines
-                                left join comments on x_comments_wines.comment_id=comments.comment_id
-                                left join users on comments.user_id=users.user_id
-                              where x_comments_wines.wine_id=?
-                              order by comments.pub_time desc");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if (mysqli_num_rows($result)!=0) {
-      while ($comments = $result->fetch_assoc()) {
-        echo "<div class='card'><p style='font-size:small;'><b>".$comments["displayname"]."</b>, ".date_format(date_create($comments["pub_time"]),"l, j F Y H:i:s").":</p><hr><p style='font-size:small;'>".$comments["content"]."</p></div>";
-      }
-    }
-    $stmt->close();
-    $result -> free_result();
-      }
-?>
+} ?>
