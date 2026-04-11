@@ -35,7 +35,27 @@
 <?php
   $page_title = 'Carte des vins - Wine menu';
   $meta_desc = 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
-  $extra_head = '<script> // Automatically update cellar filter on new selection by user\n    function updateCellarFilter() {\n      const cellarValue = document.getElementById(\'cellarToggle\').value;\n      const url = new URL(window.location.href);\n      \n      // Set or remove the cellar parameter\n      if (cellarValue) {\n        url.searchParams.set(\'cellar\', cellarValue);\n      } else {\n        url.searchParams.delete(\'cellar\');\n      }\n      \n      // Redirect to the new URL\n      window.location.href = url.toString();\n    }\n  </script>';
+
+  $extra_head = <<<HTML
+    <script>
+      // Automatically update cellar filter on new selection by user
+      function updateCellarFilter() {
+        const cellarValue = document.getElementById('cellarToggle').value;
+        const url = new URL(window.location.href);
+        
+        // Set or remove the cellar parameter
+        if (cellarValue) {
+          url.searchParams.set('cellar', cellarValue);
+        } else {
+          url.searchParams.delete('cellar');
+        }
+        
+        // Redirect to the new URL
+        window.location.href = url.toString();
+      }
+    </script>
+  HTML;
+  
   require_once 'includes/header.php';
 ?>
 
