@@ -95,7 +95,7 @@
     </div>
     <div class="card">
       <ul style="list-style-type:none;padding:0;margin:0;">
-        <?php getBottles($sort,$sqlOrderBy); ?>
+        <?php renderBottles($sort,$sqlOrderBy); ?>
       </ul>
     </div>
   </div>
@@ -110,7 +110,7 @@
 
 <?php require_once 'includes/footer.php'; ?>
 
-<?php function getBottles($sort,$sqlOrderBy)
+<?php function renderBottles($sort,$sqlOrderBy)
 {
   // Establish database connection
   global $mysqli, $conn;

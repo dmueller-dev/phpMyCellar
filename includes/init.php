@@ -27,4 +27,7 @@
 
   // Alias for backend compatibility
   $conn = $mysqli;
+
+  // Load backend and frontend helper functions
+  require_once __DIR__ . '/functions.php';
 ?>

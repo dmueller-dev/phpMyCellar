@@ -79,7 +79,7 @@
     </div>
     <div class="card">
       <ul style="list-style-type:none;padding:0;margin:0;">
-        <?php getBottles(10000,$sort,$sqlOrderBy); ?>
+        <?php renderBottles(10000,$sort,$sqlOrderBy); ?>
       </ul>
     </div>
   </div>
@@ -111,7 +111,7 @@
 
 </html>
 
-<?php function getBottles($num,$sort,$sqlOrderBy)
+<?php function renderBottles($num,$sort,$sqlOrderBy)
 {
   global $mysqli, $conn;
     $prevCountry="";
