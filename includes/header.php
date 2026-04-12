@@ -50,8 +50,14 @@
           echo "<li class='right'><a class='".(($currentPage == 'login.php') ? 'active ' : '')."' href='/login.php' title='Login'>Login</a></li>";
         } elseif (isset($_SESSION['user_id'])) {
           echo "<li><a class='".(($currentPage == 'winemenu.php') ? 'active ' : '')."' style='font-style:italic;' href='/winemenu.php' title='Carte des vins'>Carte des vins</a></li>";
-          echo "<li class='right'><a href='/logout.php' title='Logout'>Logout</a></li>";
-          echo "<li class='right'><a class='".(($currentPage == 'accountSettings.php') ? 'active ' : '')."' href='/accountSettings.php' title='My account'>My account</a></li>";
+          echo "<li class='dropdown right'>" .
+            "<a href='#' style='cursor:default;'>My account</a>" .
+            "<input type='checkbox' id='drop-account' class='drop-check'>" .
+            "<label for='drop-account' class='drop-icon'>&#9660;</label>" .
+            "<ul class='submenu'>" .
+            "<li><a class='" . (($currentPage == 'accountSettings.php') ? 'active ' : '') . "' href='/accountSettings.php' title='Account settings'>Settings</a></li>" .
+            "<li><a href='/logout.php' title='Logout'>Logout</a></li>" .
+            "</ul></li>";
         }
       ?>
     </ul>

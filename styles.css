@@ -18,6 +18,7 @@ header.navigation {
   position: -webkit-sticky;
   top: 0;
   z-index: 2;
+  background-color: #FFF3F3;
 }
 
 .footer {
@@ -130,15 +131,26 @@ a.filter-nav:hover {
 
 ul.top-menu {
   list-style-type: none;
-  margin-top: 25px;
-  margin-bottom: 10px;
+  margin-top: 15px;
+  margin-bottom: 15px;
   padding: 0;
-  overflow: hidden;
   background-color: indianred;
+}
+
+ul.top-menu::after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
 ul.top-menu li {
   float: left;
+  position: relative;
+}
+
+/* Hide mobile NAV dropdown mechanics on desktop */
+.drop-check, .drop-icon {
+  display: none;
 }
 
 ul.top-menu li a {
@@ -166,6 +178,50 @@ ul.top-menu li a.active {
 }
 
 ul.top-menu li.right {float: right;}
+
+/* Ensure right-aligned dropdowns don't bleed off the screen */
+ul.top-menu li.right ul.submenu {
+  left: auto;
+  right: 0;
+}
+
+ul.submenu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: indianred;
+  min-width: 180px;
+  z-index: 10;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+/* Show submenu on mouse hover */
+ul.top-menu li.dropdown:hover > ul.submenu {
+  display: block;
+}
+
+ul.submenu li {
+  float: none;
+  width: 100%;
+}
+
+ul.submenu li a {
+  text-align: left;
+  padding: 12px 16px;
+}
+
+/* Preserve hover effect for sub-items */
+ul.submenu li a:hover {
+  background-color: darkred;
+  padding-left: 13px; /* Adjusted to accommodate the border smoothly */
+  border-left-style: solid;
+  border-left-width: 3px;
+  border-left-color: mistyrose;
+}
 
 .row::after {
   content: "";
@@ -296,10 +352,59 @@ ul.top-menu li.right {float: right;}
 }
 
 @media screen and (max-width: 720px) {
-  .mobile-icon {display: block;}
-  .topnav {display: none;}
-  ul.top-menu li.right, 
-  ul.top-menu li {float: none;}
-  .column.side, .column.main {width: 100%}
-  img.logo {max-with: 50%;}
+
+  .mobile-icon {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 0px;
+  }
+
+  .topnav {
+    display: none;
+  }
+
+  ul.top-menu li.right, ul.top-menu li {
+    float: none;
+  }
+
+  .column.side, .column.main {
+    width: 100%;
+  }
+
+  img.logo {
+    max-with: 50%;
+  }
+
+  /* Ensure absolute positioning context for the arrow */
+  ul.top-menu li { 
+    position: relative; 
+  }
+
+  /* Reveal and position the toggle arrow */
+  .drop-icon {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 15px 20px;
+    color: white;
+    cursor: pointer;
+  }
+
+  /* The checkbox hack: Open submenu when arrow is tapped */
+  .drop-check:checked ~ ul.submenu {
+    display: block;
+  }
+
+  /* Mobile Submenu Styling */
+  ul.submenu {
+    position: static; /* Stack vertically instead of floating */
+    box-shadow: none;
+    /* Apply a very subtle darkening to group nested items together */
+    background-color: rgba(0, 0, 0, 0.1); 
+  }
+  
+  ul.submenu li a {
+    padding-left: 30px; /* Indent sub-items so the hierarchy is obvious */
+  }
 }
