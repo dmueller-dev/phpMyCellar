@@ -18,7 +18,7 @@
   <meta name="keywords" content="Dominik Mueller,wine database,wine tastings,tasting notes,fine wine,wine collection,wine cellar">
 
   <link rel="canonical" href="https://dmueller.com/">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/styles.css">
   <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
   <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
   <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
@@ -40,8 +40,11 @@
 
   <nav class="topnav">
     <ul class="top-menu">
-      <?php $currentPage = basename($_SERVER['SCRIPT_NAME']); ?>
-      <li><a class="<?php echo ($currentPage == 'index.php' || $currentPage == '') ? 'active' : ''; ?>" href="/index.php" title="Back to homepage">Home</a></li>
+      <?php 
+        $currentPage = basename($_SERVER['SCRIPT_NAME']); 
+        $currentPath = $_SERVER['SCRIPT_NAME'];
+      ?>
+      <li><a class="<?php echo ($currentPath == '/index.php' || $currentPath == '/') ? 'active' : ''; ?>" href="/index.php" title="Back to homepage">Home</a></li>
       <li><a class="<?php echo ($currentPage == 'wines.php' || $currentPage == 'wine.php') ? 'active' : ''; ?>" href="/wines.php" title="Wine database">Wine database</a></li>
       <li><a class="<?php echo ($currentPage == 'tnotes.php' || $currentPage == 'tnote.php') ? 'active' : ''; ?>" href="/tnotes.php" title="Fine wine tasting notes">Tasting notes</a></li>
       <li><a class="<?php echo ($currentPage == 'blog.php' || $currentPage == 'blogpost.php') ? 'active' : ''; ?>" href="/blog.php" title="My wine blog">Stories</a></li>
@@ -49,8 +52,6 @@
         if (!isset($_SESSION['user_id'])) {
           echo "<li class='right'><a class='".(($currentPage == 'login.php') ? 'active ' : '')."' href='/login.php' title='Login'>Login</a></li>";
         } elseif (isset($_SESSION['user_id'])) {
-          echo "<li><a class='".(($currentPage == 'winemenu.php') ? 'active ' : '')."' style='font-style:italic;' href='/winemenu.php' title='Carte des vins'>Carte des vins</a></li>";
-          
           echo "<li class='dropdown right'>" .
             "<a href='#' style='cursor:default;'>My account</a>" .
             "<input type='checkbox' id='drop-account' class='drop-check'>" .
@@ -68,10 +69,10 @@
               "<input type='checkbox' id='drop-admin' class='drop-check'>" .
               "<label for='drop-admin' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
-              "<li><a href='/backend/index.php' title='Dashboard'>Dashboard</a></li>" .
-              "<li><a href='/backend/addBottle.php' title='Add bottle'>Add bottle</a></li>" .
-              "<li><a href='/backend/addWine.php' title='Add wine'>Add wine</a></li>" .
-              "<li><a href='/backend/addUser.php' title='User management'>Add user</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/index.php') ? 'active' : '') . "' href='/backend/index.php' title='Dashboard'>Dashboard</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/addBottle.php') ? 'active' : '') . "' href='/backend/addBottle.php' title='Add bottle'>Add bottle</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/addWine.php') ? 'active' : '') . "' href='/backend/addWine.php' title='Add wine'>Add wine</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/addUser.php') ? 'active' : '') . "' href='/backend/addUser.php' title='User management'>Add user</a></li>" .
               "</ul></li>";
           }
 
@@ -81,9 +82,17 @@
               "<input type='checkbox' id='drop-contribute' class='drop-check'>" .
               "<label for='drop-contribute' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
-              "<li><a href='/backend/addTastingNote.php' title='New tasting note'>Tasting note</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/addTastingNote.php') ? 'active' : '') . "' href='/backend/addTastingNote.php' title='New tasting note'>Tasting note</a></li>" .
               "</ul></li>";
           }
+          
+          echo "<li class='dropdown right'>" .
+            "<a href='#' style='cursor:default;'>For friends</a>" .
+            "<input type='checkbox' id='drop-friends' class='drop-check'>" .
+            "<label for='drop-friends' class='drop-icon'>&#9660;</label>" .
+            "<ul class='submenu'>" .
+            "<li><a class='" . (($currentPage == 'winemenu.php') ? 'active ' : '') . "' href='/winemenu.php' title='Carte des vins'>Carte des vins</a></li>" .
+            "</ul></li>";
         }
       ?>
     </ul>

@@ -8,60 +8,10 @@
   require_once __DIR__ . '/../includes/init.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en-GB">
-
 <?php
-  if (empty($_GET['sort'])) {
-    $sort="region";
-  } else {
-    $sort=$_GET['sort'];
-  }
-  if ($sort=="region") {
-    $sqlOrderBy="order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,bottle_id asc";
-  } elseif ($sort=="producer") {
-    $sqlOrderBy="order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc,bottle_id asc";
-  } elseif ($sort=="vintage") {
-    $sqlOrderBy="order by vintage desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc,bottle_id asc";
-  } elseif ($sort=="variety") {
-    $sqlOrderBy="order by grape asc,country asc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc,bottle_id asc";
-  } elseif ($sort=="tenyearsold") {
-    $sqlOrderBy="where vintage is not null and year(curdate())-vintage=10 order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,bottle_id asc";
-  } elseif ($sort=="location") {
-    $sqlOrderBy="where status='in cellar' order by cellar_name asc,bin_name asc,country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,bottle_id asc";
-  }
+  $page_title = 'Dominik Mueller - Browse all wines';
+  require_once __DIR__ . '/../includes/header.php';
 ?>
-
-<head>
-  <title>Dominik Mueller - Browse all wines</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="author" content="Dominik Mueller">
-  <meta name="description" content="On this website, I share my wine cellar with a community of fellow fine wine enthusiasts."
-  <meta name="keywords" content="Dominik Mueller,wine database,wine tasting,tasting notes,fine wine,wine collection,wine cellar">
-  <link rel="canonical" href="https://dmueller.com/">
-  <link rel="stylesheet" href="../styles.css">
-  <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
-  <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
-  <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
-</head>
-
-<body>
-
-<header class="navigation">
-  <input class="mobile-menu" type="checkbox" id="mobile-menu">
-  <label class="mobile-icon" for="mobile-menu"><span class="mobile-icon-line"></span></label>
-
-  <nav class="topnav">
-    <ul class="top-menu">
-      <li><a href="index.php" title="Backend Home">Index</a></li>
-      <li><a href="browseWines.php" title="Show all wines">Wines</a></li>
-      <li><a class="active" href="browseBottles.php" title="Show all bottles">Bottles</a></li>
-      <li><a href="winemenu.php" title="Show wine menu">Wine menu</a></li>
-      <li class="right"><a href="https://dmueller.com" title="Frontend">Go to website</a></li>
-    </ul>
-  </nav>
-</header>
 
 <div class="row">
   <div class="column main">
@@ -92,24 +42,7 @@
   </div>
 </div>
 
-<div class="footer">
-  <footer>
-    <p style="float:right;margin-top:0;"><a href="/impressum.php" title="Impressum / Imprint">Impressum / Imprint</a></p>
-    <address>
-      Contact details:<br>
-      Dominik Mueller<br>
-      Muehlstr. 24<br>
-      76532 Baden-Baden<br>
-      GERMANY<br><br>
-      E-Mail: <a href="mailto:dm@dmueller.com" title="Contact me by email">dm@dmueller.com</a>
-    </address>
-    <p align="center"><small>This website uses <strong>no</strong> cookies. Have fun!</small></p>
-  </footer>
-</div>
-
-</body>
-
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
 
 <?php function renderBottles($num,$sort,$sqlOrderBy)
 {

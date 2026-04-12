@@ -83,37 +83,10 @@
   $csrf_token = generateCSRFToken();
 ?>
 
-<!DOCTYPE html>
-<html lang="en-GB">
-
-<head>
-  <title>Add blind tasting note</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="author" content="Dominik Mueller">
-  <link rel="canonical" href="https://dmueller.com/">
-  <link rel="stylesheet" href="https://dmueller.com/styles.css">
-  <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
-  <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
-  <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
-</head>
-
-<body>
-
-<header class="navigation">
-  <input class="mobile-menu" type="checkbox" id="mobile-menu">
-  <label class="mobile-icon" for="mobile-menu"><span class="mobile-icon-line"></span></label>
-
-  <nav class="topnav">
-    <ul class="top-menu">
-      <li><a href="index.php" title="Backend Home">Index</a></li>
-      <li><a href="browseWines.php" title="Show all wines">Wines</a></li>
-      <li><a href="browseBottles.php" title="Show all bottles">Bottles</a></li>
-      <li><a href="winemenu.php" title="Show wine menu">Wine menu</a></li>
-      <li class="right"><a href="https://dmueller.com" title="Frontend">Go to website</a></li>
-    </ul>
-  </nav>
-</header>
+<?php
+  $page_title = 'Add blind tasting note';
+  require_once __DIR__ . '/../includes/header.php';
+?>
 
 <div class="row">
   <div class="column main">
@@ -309,60 +282,4 @@
   </div>
 </div>
 
-<div class="footer">
-  <footer>
-    <p style="float:right;margin-top:0;"><a href="/impressum.php" title="Impressum / Imprint">Impressum / Imprint</a></p>
-    <address>
-      Contact details:<br>
-      Dominik Mueller<br>
-      Muehlstr. 24<br>
-      76532 Baden-Baden<br>
-      GERMANY<br><br>
-      E-Mail: <a href="mailto:dm@dmueller.com" title="Contact me by email">dm@dmueller.com</a>
-    </address>
-    <p align="center"><small>This website uses <strong>no</strong> cookies. Have fun!</small></p>
-  </footer>
-</div>
-
-<script>
-const wset_b = document.getElementById('wset_balance');
-const wset_l = document.getElementById('wset_length');
-const wset_i = document.getElementById('wset_intensity');
-const wset_c = document.getElementById('wset_complexity');
-const wsetpts = document.getElementById('wsetpts');
-const suggestedDMpts = document.getElementById('suggestedDMpts');
-
-function updateTotal() {
-  wsetpts.value = Number(wset_b.value) + Number(wset_l.value) + Number(wset_i.value) + Number(wset_c.value);
-  if (Number(wsetpts.value)==0) {
-    suggestedDMpts.innerHTML = "<small><em>Suggest points: 0 (\"poor\")</em></small>";
-  } else if (Number(wsetpts.value)==0.5) {
-    suggestedDMpts.innerHTML = "<small><em>Suggest points: 1 or 2 (\"subpar\")</em></small>";
-  } else if (Number(wsetpts.value)==1) {
-    suggestedDMpts.innerHTML = "<small><em>Suggest points: 3 or 4 (\"passable\")</em></small>";
-  } else if (Number(wsetpts.value)==1.5) {
-    suggestedDMpts.innerHTML = "<small><em>Suggest points: 5 or 6 (\"good\")</em></small>";
-  } else if (Number(wsetpts.value)==2) {
-    suggestedDMpts.innerHTML = "<small><em>Suggest points: 7 or 8 (\"good\")</em></small>";
-  } else if (Number(wsetpts.value)==2.5) {
-    suggestedDMpts.innerHTML = "<small><em>Suggest points: 9 or 10 (\"very good\")</em></small>";
-  } else if (Number(wsetpts.value)==3) {
-    suggestedDMpts.innerHTML = "<small><em>Suggest points: 11 or 12 (\"very good\")</em></small>";
-  } else if (Number(wsetpts.value)==3.5) {
-    suggestedDMpts.innerHTML = "<small><em>Suggest points: 13 or 14 (\"excellent\")</em></small>";
-  } else if (Number(wsetpts.value)==4) {
-    suggestedDMpts.innerHTML = "<small><em>Suggest points: 15 to 20 (\"excellent\", \"grand vin\", or \"one-of-a-kind\")</em></small>";
-  }
-}
-
-wset_b.addEventListener('change', updateTotal);
-wset_l.addEventListener('change', updateTotal);
-wset_i.addEventListener('change', updateTotal);
-wset_c.addEventListener('change', updateTotal);
-
-window.onload = updateTotal;
-</script>
-
-</body>
-
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

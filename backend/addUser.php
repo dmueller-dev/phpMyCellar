@@ -61,44 +61,10 @@
   }
 ?>
 
-<!DOCTYPE html>
-<html lang="en-GB">
-
-<head>
-  <title>Dominik Mueller - Wine is my hobby</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="author" content="Dominik Mueller">
-  <meta name="description" content="On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.">
-  <meta name="keywords" content="Dominik Mueller,wine database,wine tastings,tasting notes,fine wine,wine collection,wine cellar">
-  <link rel="canonical" href="https://dmueller.com/">
-  <link rel="stylesheet" href="https://dmueller.com/styles.css">
-  <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
-  <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
-  <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
-</head>
-
-<body>
-
-<header class="titles">
-  <h1 class="site-title">Dominik Mueller</h1>
-  <h2 class="sub-title">Wine is my hobby. Fine wine tasting notes and experiences.</h2>
-</header>
-
-<header class="navigation">
-  <input class="mobile-menu" type="checkbox" id="mobile-menu">
-  <label class="mobile-icon" for="mobile-menu"><span class="mobile-icon-line"></span></label>
-
-  <nav class="topnav">
-    <ul class="top-menu">
-      <li><a href="index.php" title="Backend Home">Index</a></li>
-      <li><a href="browseWines.php" title="Show all wines">Wines</a></li>
-      <li><a href="browseBottles.php" title="Show all bottles">Bottles</a></li>
-      <li><a href="winemenu.php" title="Show wine menu">Wine menu</a></li>
-      <li class="right"><a href="https://dmueller.com" title="Frontend">Go to website</a></li>
-    </ul>
-  </nav>
-</header>
+<?php
+  $page_title = 'Dominik Mueller - Wine is my hobby';
+  require_once __DIR__ . '/../includes/header.php';
+?>
 
 <div class="row">
   <div class="column main">
@@ -144,31 +110,7 @@
   </div>
 </div>
 
-<div class="footer">
-  <footer>
-    <p style="float:right;margin-top:0;">
-      <a href="/privacy.php" title="Privacy policy">Privacy policy</a>
-      <br><a href="/impressum.php" title="Impressum / Imprint">Impressum / Imprint</a>
-    </p>
-    <address>
-      Contact details:<br>
-      Dominik Mueller<br>
-      Muehlstr. 24<br>
-      76532 Baden-Baden<br>
-      GERMANY<br><br>
-      E-Mail: <a href="mailto:dm@dmueller.com" title="Contact me by email">dm@dmueller.com</a>
-    </address>
-    <p align="center">
-      <small><u>Cookie notice:</u><br>This website uses session cookies for members logging in only. Aside from that,<br>the
-      website uses <strong>no</strong> cookies. Refer to the <a href="/privacy.php" alt="Privacy policy">privacy policy</a>
-      for details. Have fun!</small>
-    </p>
-  </footer>
-</div>
-
-</body>
-
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
 
 <script>
   function togglePassword() {
