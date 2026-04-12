@@ -20,7 +20,7 @@
       $password = $_POST['password'];
 
       // Perform query using prepared statement to prevent SQL injection
-      $stmt = $mysqli->prepare("SELECT user_id, password FROM users WHERE username = ?");
+      $stmt = $mysqli->prepare("SELECT user_id, password, role FROM users WHERE username = ?");
       $stmt->bind_param("s", $username);
       $stmt->execute();
       $result = $stmt->get_result();
@@ -33,6 +33,7 @@
         // Verify the password
           if (password_verify($password, $hashedPassword)) {
               $_SESSION['user_id'] = $user['user_id'];
+              $_SESSION['role'] = $user['role'];
               $stmt->close();
               header("Location: index.php");
               exit();
