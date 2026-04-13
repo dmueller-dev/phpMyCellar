@@ -153,15 +153,18 @@ ul.top-menu li {
   display: none;
 }
 
-ul.top-menu li a {
+ul.top-menu li a,
+ul.top-menu li label.menu-label {
   display: block;
   color: white;
   text-align: center;
   text-decoration: none;
   padding: 15px;
+  cursor: pointer;
 }
 
-ul.top-menu li a:hover:not(.active) {
+ul.top-menu li a:hover:not(.active),
+ul.top-menu li label.menu-label:hover {
   background-color: darkred;
   padding-left: 12px;
   border-left-style: solid;
@@ -199,9 +202,11 @@ ul.submenu {
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 }
 
-/* Show submenu on mouse hover */
-ul.top-menu li.dropdown:hover > ul.submenu {
-  display: block;
+/* Show submenu on mouse hover (Desktop only) */
+@media screen and (min-width: 721px) {
+  ul.top-menu li.dropdown:hover > ul.submenu {
+    display: block;
+  }
 }
 
 ul.submenu li {
@@ -394,6 +399,11 @@ ul.submenu li a:hover {
   /* The checkbox hack: Open submenu when arrow is tapped */
   .drop-check:checked ~ ul.submenu {
     display: block;
+  }
+  
+  /* Rotate the arrow when open */
+  .drop-check:checked ~ .drop-icon {
+    transform: rotate(180deg);
   }
 
   /* Mobile Submenu Styling */

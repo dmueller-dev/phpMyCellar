@@ -53,7 +53,7 @@
           echo "<li class='right'><a class='".(($currentPage == 'login.php') ? 'active ' : '')."' href='/login.php' title='Login'>Login</a></li>";
         } elseif (isset($_SESSION['user_id'])) {
           echo "<li class='dropdown right'>" .
-            "<a href='#' style='cursor:default;'>My account</a>" .
+            "<label for='drop-account' class='menu-label'>My account</label>" .
             "<input type='checkbox' id='drop-account' class='drop-check'>" .
             "<label for='drop-account' class='drop-icon'>&#9660;</label>" .
             "<ul class='submenu'>" .
@@ -65,7 +65,7 @@
 
           if ($role === 'admin') {
             echo "<li class='dropdown right'>" .
-              "<a href='#' style='cursor:default;'>Admin</a>" .
+              "<label for='drop-admin' class='menu-label'>Admin</label>" .
               "<input type='checkbox' id='drop-admin' class='drop-check'>" .
               "<label for='drop-admin' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
@@ -78,16 +78,16 @@
 
           if ($role === 'write' || $role === 'admin') {
             echo "<li class='dropdown right'>" .
-              "<a href='#' style='cursor:default;'>Contribute</a>" .
+              "<label for='drop-contribute' class='menu-label'>Contribute</label>" .
               "<input type='checkbox' id='drop-contribute' class='drop-check'>" .
               "<label for='drop-contribute' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
               "<li><a class='" . (($currentPath == '/backend/addTastingNote.php') ? 'active' : '') . "' href='/backend/addTastingNote.php' title='New tasting note'>Tasting note</a></li>" .
               "</ul></li>";
           }
-          
+
           echo "<li class='dropdown right'>" .
-            "<a href='#' style='cursor:default;'>For friends</a>" .
+            "<label for='drop-friends' class='menu-label'>For friends</label>" .
             "<input type='checkbox' id='drop-friends' class='drop-check'>" .
             "<label for='drop-friends' class='drop-icon'>&#9660;</label>" .
             "<ul class='submenu'>" .

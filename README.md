@@ -2,15 +2,12 @@
 Personal wine database
 
 ## Fix
-### 1. Dropdown menu doesn't close on mobile
-1.1 Ignore hover on mobile (open/close on click)
+### 1. 'Write' users must be able to edit their own notes
+1.1 Give access to editTastingNote.php - only where user_id matches
 
-### 2. 'Write' users must be able to edit their own notes
-2.1 Give access to editTastingNote.php - only where user_id matches
+1.2 Give access to blind tasting note
 
-2.2 Give access to blind tasting note
-
-2.3 Include edit/blind tasting note in 'Contribute' menu
+1.3 Include edit/blind tasting note in 'Contribute' menu
 
 ## Improve
 ### 1. 'Write' users only allowed to add/edit drafts
