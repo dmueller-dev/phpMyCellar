@@ -32,3 +32,15 @@ Personal wine database
 4.2 Create .env file with user-defined credentials
 
 4.3 Create admin user
+
+### 5. WYSIWYG editor
+5.1 Editor for HTML tags (<p>, <em>, <b>, <h1>, <h2>, <h3> ...)
+
+### 6. Base functionality for wine.php, producers.php, tnote.php, blogpost.php
+6.1 Redirect user to wines.php if no parameter given to wine.php
+
+6.2 List all producers if no parameter given to producers.php
+
+6.3 Redirect user to tnotes.php if no parameter given to tnote.php
+
+6.4 Redirect user to blog.php if no parameter given to blogpost.php
