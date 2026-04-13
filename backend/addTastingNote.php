@@ -37,7 +37,7 @@
       $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
       $errorsDrinkDates = validateDrinkDatesInput($drink_from, $drink_through);
       $blind = sanitizeInput($_POST['blind']);
-      $status = sanitizeInput($_POST['status']);
+      $status = sanitizeInput($_POST['status'] ?? 'draft'); // Default to 'draft' if status not sent (i.e. for users with write privileges)
       $img = sanitizeInput($_POST['img']);
       $img_class = sanitizeInput($_POST['img_class']);
       if ($img_class == "null") { $img_class = null; }
@@ -248,9 +248,9 @@
             <br><br>
 	    <label for="status">Publish note?</label>
             <br>
-            <select name="status" id="status" required>
-              <option value="draft" <?php echo (isset($_POST['status']) && $_POST['status'] == 'draft') ? 'selected' : 'selected'; ?>>draft</option>
-              <option value="published" <?php echo (isset($_POST['status']) && $_POST['status'] == 'published') ? 'selected' : ''; ?>>published</option>
+            <select name="status" id="status" required <?php echo ($role === 'write') ? 'disabled' : ''; ?>>
+              <option value="draft" <?php echo ($role === 'write' || empty($_POST['status']) || (isset($_POST['status']) && $_POST['status'] == 'draft')) ? 'selected' : ''; ?>>draft</option>
+              <option value="published" <?php echo ($role !== 'write' && isset($_POST['status']) && $_POST['status'] == 'published') ? 'selected' : ''; ?>>published</option>
             </select>
             
             <br><br>
