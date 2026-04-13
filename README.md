@@ -34,7 +34,7 @@ Personal wine database
 4.3 Create admin user
 
 ### 5. WYSIWYG editor
-5.1 Editor for HTML tags (<p>, <em>, <b>, <h1>, <h2>, <h3> ...)
+5.1 Editor for HTML tags (p, em, b, h1, h2, h3 ...)
 
 ### 6. Base functionality for wine.php, producers.php, tnote.php, blogpost.php
 6.1 Redirect user to wines.php if no parameter given to wine.php
