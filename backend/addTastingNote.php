@@ -46,7 +46,7 @@
         // Start transaction
         $conn->begin_transaction();
         try {
-          if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $tasting_note, $flawed, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $status, $blind, $img, $img_class)) {
+          if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $status, $blind, $img, $img_class)) {
             $conn->commit();
             $success_message = "Note added successfully.";
           } else {
@@ -252,8 +252,10 @@
               <option value="draft" <?php echo ($role === 'write' || empty($_POST['status']) || (isset($_POST['status']) && $_POST['status'] == 'draft')) ? 'selected' : ''; ?>>draft</option>
               <option value="published" <?php echo ($role !== 'write' && isset($_POST['status']) && $_POST['status'] == 'published') ? 'selected' : ''; ?>>published</option>
             </select>
+            <?php if ($role === 'write'): ?>
+              <p><small><i>Note: Once an admin publishes your tasting note, it will be locked and can no longer be edited.</i></small></p>
+            <?php endif; ?>
             
-            <br><br>
             <input type="submit" name="postTastingNote" id="postTastingNote" value="Post tasting note">
           </form>
         <?php endif; ?>

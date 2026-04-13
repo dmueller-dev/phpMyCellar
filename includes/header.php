@@ -82,7 +82,9 @@
               "<input type='checkbox' id='drop-contribute' class='drop-check'>" .
               "<label for='drop-contribute' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
-              "<li><a class='" . (($currentPath == '/backend/addTastingNote.php') ? 'active' : '') . "' href='/backend/addTastingNote.php' title='New tasting note'>Tasting note</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/addTastingNote.php') ? 'active' : '') . "' href='/backend/addTastingNote.php' title='New tasting note'>Write tasting note</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/blindTasting.php') ? 'active' : '') . "' href='/backend/blindTasting.php' title='New blind tasting note'>Write <em>blind</em> tasting note</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/editTastingNote.php') ? 'active' : '') . "' href='/backend/editTastingNote.php' title='Edit tasting notes'>Edit tasting note</a></li>" .
               "</ul></li>";
           }
 

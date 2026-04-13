@@ -499,15 +499,17 @@ function getTastingNotes($conn) {
     throw new Exception("Invalid database connection");
   }
 
-  $sql = "select tnotes.note_id, tnotes.tasting_date, tnotes.dmpts, tnotes.blind,
-		wines.wine_id, wines.master_id, wines.vintage, wines_master.nameconvention, wines_master.name, wines_master.grape, producers.producer, regions.country, regions.region, vineyards.vineyard
+  $sql = "select tnotes.note_id, tnotes.user_id, tnotes.status, tnotes.tasting_date, tnotes.dmpts, tnotes.blind,
+    wines.wine_id, wines.master_id, wines.vintage, wines_master.nameconvention, wines_master.name,
+    wines_master.grape, producers.producer, regions.country, regions.region, vineyards.vineyard
           from tnotes
           left join wines on tnotes.wine_id=wines.wine_id
           left join wines_master on wines.master_id=wines_master.master_id
           left join producers on wines_master.producer_id=producers.producer_id
           left join regions on wines_master.region_id=regions.region_id
           left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-	  order by tnotes.tasting_date desc, regions.country asc, producers.producer asc, wines_master.grape asc, vineyards.vineyard asc, wines_master.name asc, wines.vintage desc";
+    order by tnotes.tasting_date desc, regions.country asc, producers.producer asc, wines_master.grape asc,
+      vineyards.vineyard asc, wines_master.name asc, wines.vintage desc";
   $result = $conn->query($sql);
 
   if ($result === false) {
@@ -924,9 +926,7 @@ function insertBottle($conn, $wine_id, $format, $bin_id = null, $store_id, $purc
 }
 
 // Function to insert a new tasting note
-function insertTastingNote($conn, $bottle_id = null, $wine_id, $tasting_date, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drinkwindow_min = null, $drinkwindow_max = null, $status, $blind, $img = null, $img_class = null) {
-  $user_id = 1;
-
+function insertTastingNote($conn, $bottle_id = null, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drinkwindow_min = null, $drinkwindow_max = null, $status, $blind, $img = null, $img_class = null) {
   // Check optional inputs
   if ($drinkwindow_min=="") { $drinkwindow_min=null; }
   if ($drinkwindow_max=="") { $drinkwindow_max=null; }

@@ -38,12 +38,23 @@
       $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
       $errorsDrinkDates = validateDrinkDatesInput($drink_from, $drink_through);
       $blind = sanitizeInput($_POST['blind']);
-      $status = sanitizeInput($_POST['status']);
+      $status = sanitizeInput($_POST['status'] ?? 'draft');
       $img = sanitizeInput($_POST['img']);
       $img_class = sanitizeInput($_POST['img_class']);
       if ($img_class == "null") { $img_class = null; }
       $errorsImg = validateImageInput($img, $img_class);
       $errors = validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $blind, $status, $img, $img_class);
+      
+      // Ownership and published check for 'write' users
+      if ($role === 'write') {
+        $check_note = getNoteDetails($conn, $note_id);
+        if (!$check_note || $check_note['user_id'] != $_SESSION['user_id']) {
+          $errors[] = "You do not have permission to edit this tasting note.";
+        } elseif ($check_note['status'] === 'published') {
+          $errors[] = "This tasting note has been published and can no longer be edited.";
+        }
+      }
+
       if (empty($errorsDrinkDates) && empty($errorsImg) && empty($errors)) {
         // Start transaction
         $conn->begin_transaction();
@@ -69,8 +80,16 @@
     }
   }
 
+  // List only their own tasting notes for 'write' users
+  $all_notes = getTastingNotes($conn);
+  $notes = [];
+  foreach ($all_notes as $n) {
+    if ($role === 'admin' || $n['user_id'] == $_SESSION['user_id']) {
+      $notes[] = $n;
+    }
+  }
+
   // Get all wines for the dropdown
-  $notes = getTastingNotes($conn);
   $wines = getWines($conn);
 
   // Get selected bottle details
@@ -116,17 +135,25 @@
             <option value="">Select a tasting note</option>
             <?php foreach ($notes as $note): ?>
               <option value="<?php echo $note['note_id']; ?>" <?php echo (isset($_GET['note_id']) && $_GET['note_id'] == $note['note_id']) ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($note['note_id'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($note['tasting_date'], ENT_QUOTES, 'UTF-8') . ": " . (!empty($note['dmpts']) ? 'DM' . htmlspecialchars($note['dmpts'], ENT_QUOTES, 'UTF-8') . ': ' : '') . (($note['blind']=='blind') ? 'Blind tasting' : getWineName($note['nameconvention'], $note['vintage'], $note['name'], $note['producer'], $note['grape'], $note['vineyard'])) ; ?>
+                <?php 
+                  $status_label = ($note['status'] === 'published') ? ' (Published)' : '';
+                  echo htmlspecialchars($note['note_id'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($note['tasting_date'], ENT_QUOTES, 'UTF-8') . ": " . (!empty($note['dmpts']) ? 'DM' . htmlspecialchars($note['dmpts'], ENT_QUOTES, 'UTF-8') . ': ' : '') . (($note['blind']=='blind') ? 'Blind tasting' : getWineName($note['nameconvention'], $note['vintage'], $note['name'], $note['producer'], $note['grape'], $note['vineyard'])) . $status_label; 
+                ?>
               </option>
             <?php endforeach; ?>
           </select>
         </form>
 
         <?php if ($selected_note): ?>
+          <?php if ($role === 'write' && $selected_note['status'] === 'published'): ?>
+            <div style="padding: 15px; margin-top: 20px; background-color: #f9f9f9; border-left: 4px solid #f39c12;">
+              <p><strong>Notice:</strong> This tasting note has been published and can no longer be edited. Please contact an admin if you need to make changes.</p>
+            </div>
+          <?php else: ?>
           <h3>Update Tasting Note</h3>
           <form method="POST" accept-charset="UTF-8">
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-            <input type="hidden" name="user_id" value="1">
+            <input type="hidden" name="user_id" value="<?php echo $selected_note['user_id']; ?>">
             <input type="hidden" name="note_id" value="<?php echo isset($_POST['note_id']) ? htmlspecialchars($_POST['note_id'], ENT_QUOTES, 'UTF-8') : $selected_note['note_id']; ?>">
           
             <hr><details>
@@ -146,11 +173,11 @@
             <br><input type="date" id="tasting_date" name="tasting_date" value="<?php echo $selected_note['tasting_date']; ?>" required>
 
             <br><br>
-	    <label for="tasting_note">Tasting note:</label>
+            <label for="tasting_note">Tasting note:</label>
             <br><textarea name="tasting_note" rows="20" cols="40" placeholder="<p>...</p>" required><?php echo $selected_note['tasting_note']; ?></textarea>
 
             <br><br>
-	    <label for="flawed_yn">Flawed?</label><br>
+            <label for="flawed_yn">Flawed?</label><br>
             <select name="flawed_yn" id="flawed_yn" required>
               <option value="no" <?php echo ($selected_note['flawed_yn'] == 'no') ? 'selected' : 'selected'; ?>>no</option>
               <option value="yes" <?php echo ($selected_note['flawed_yn'] == 'yes') ? 'selected' : ''; ?>>yes</option>
@@ -159,7 +186,7 @@
             <h3>Ratings</h3>
 
             WSET<br>
-	    <label for="wset_balance">Balance:</label>
+            <label for="wset_balance">Balance:</label>
             <select name="wset_balance" id="wset_balance">
               <option value="" <?php echo ($selected_note['wset_balance'] == null) ? 'selected' : 'selected'; ?>></option>
               <option value="0" <?php echo ($selected_note['wset_balance'] == '0') ? 'selected' : ''; ?>>0.0</option>
@@ -167,7 +194,7 @@
               <option value="1" <?php echo ($selected_note['wset_balance'] == '1') ? 'selected' : ''; ?>>1.0</option>
             </select>
             <br>
-	    <label for="wset_length">Length:</label>
+            <label for="wset_length">Length:</label>
             <select name="wset_length" id="wset_length">
               <option value="" <?php echo ($selected_note['wset_length'] == null) ? 'selected' : 'selected'; ?>></option>
               <option value="0" <?php echo ($selected_note['wset_length'] == '0') ? 'selected' : ''; ?>>0.0</option>
@@ -175,7 +202,7 @@
               <option value="1" <?php echo ($selected_note['wset_length'] == '1') ? 'selected' : ''; ?>>1.0</option>
             </select>
             <br>
-	    <label for="wset_intensity">Intensity:</label>
+            <label for="wset_intensity">Intensity:</label>
             <select name="wset_intensity" id="wset_intensity">
               <option value="" <?php echo ($selected_note['wset_intensity'] == null) ? 'selected' : 'selected'; ?>></option>
               <option value="0" <?php echo ($selected_note['wset_intensity'] == '0') ? 'selected' : ''; ?>>0.0</option>
@@ -183,7 +210,7 @@
               <option value="1" <?php echo ($selected_note['wset_intensity'] == '1') ? 'selected' : ''; ?>>1.0</option>
             </select>
             <br>
-	    <label for="wset_intensity">Complexity:</label>
+            <label for="wset_intensity">Complexity:</label>
             <select name="wset_complexity" id="wset_complexity">
               <option value="" <?php echo ($selected_note['wset_complexity'] == null) ? 'selected' : 'selected'; ?>></option>
               <option value="0" <?php echo ($selected_note['wset_complexity'] == '0') ? 'selected' : ''; ?>>0.0</option>
@@ -204,7 +231,7 @@
               <option value="4" <?php echo ($selected_note['wsetpts'] == '4') ? 'selected' : ''; ?>>4.0</option>
             </select>
 
-	    <br><br>
+            <br><br>
             <label for="dmpts">DM points:</label>
             <select name="dmpts" id="dmpts">
               <option value="" <?php echo ($selected_note['dmpts'] == null) ? 'selected' : 'selected'; ?>></option>
@@ -244,7 +271,7 @@
             </select>
 
             <br><br>
-	    <label for="blind">Tasted blind?</label><br>
+            <label for="blind">Tasted blind?</label><br>
             <select name="blind" id="blind" required>
               <option value="not blind" <?php echo ($selected_note['blind'] == 'not blind') ? 'selected' : 'selected'; ?>>not blind</option>
               <option value="blind" <?php echo ($selected_note['blind'] == 'blind') ? 'selected' : ''; ?>>blind</option>
@@ -255,7 +282,7 @@
             <label for="drink_through"> through</label> <input type="text" id="drink_through" name="drink_through" maxlength="4" size="5" value="<?php echo ($selected_note['drinkwindow_max']!=null) ? $selected_note['drinkwindow_max'] : ''; ?>"  placeholder="yyyy">
 
             <h3>Image and publication</h3>
-	    <label for="img">Image:</label>
+            <label for="img">Image:</label>
             <br><input type="text" size="40" name="img" placeholder="filename.jpg" value="<?php echo ($selected_note['img']!=null) ? htmlspecialchars(sanitizeInput($selected_note['img']), ENT_QUOTES, 'UTF-8') : ''; ?>">
             <br><label for="img_class">Image class:</label>
             <br>
@@ -266,16 +293,17 @@
             </select>
 
             <br><br>
-	    <label for="status">Publish note?</label>
+            <label for="status">Publish note?</label>
             <br>
-            <select name="status" id="status" required>
-              <option value="draft" <?php echo ($selected_note['status'] == 'draft') ? 'selected' : 'selected'; ?>>draft</option>
-              <option value="published" <?php echo ($selected_note['status'] == 'published') ? 'selected' : ''; ?>>published</option>
+            <select name="status" id="status" required <?php echo ($role === 'write') ? 'disabled' : ''; ?>>
+              <option value="draft" <?php echo ($role === 'write' || $selected_note['status'] == 'draft') ? 'selected' : ''; ?>>draft</option>
+              <option value="published" <?php echo ($role !== 'write' && $selected_note['status'] == 'published') ? 'selected' : ''; ?>>published</option>
             </select>
 
             <br><br>
             <input type="submit" name="update" value="Update Tasting Note">
           </form>
+          <?php endif; ?>
         <?php endif; ?>
       </section>
     </div>
