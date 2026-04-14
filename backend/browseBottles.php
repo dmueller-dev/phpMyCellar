@@ -6,9 +6,28 @@
 
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/../includes/init.php';
-?>
 
-<?php
+  // Get sort logic
+  if (empty($_GET['sort'])) {
+    $sort="region";
+  } else {
+    $sort=$_GET['sort'];
+  }
+  if ($sort=="region") {
+    $sqlOrderBy="order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,bottle_id asc";
+  } elseif ($sort=="producer") {
+    $sqlOrderBy="order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc,bottle_id asc";
+  } elseif ($sort=="vintage") {
+    $sqlOrderBy="order by vintage desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc,bottle_id asc";
+  } elseif ($sort=="variety") {
+    $sqlOrderBy="order by grape asc,country asc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc,bottle_id asc";
+  } elseif ($sort=="tenyearsold") {
+    $sqlOrderBy="where vintage is not null and year(curdate())-vintage=10 order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,bottle_id asc";
+  } elseif ($sort=="location") {
+    $sqlOrderBy="where status='in cellar' order by cellar_name asc,bin_name asc,country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,bottle_id asc";
+  }
+
+  // Include header
   $page_title = 'Dominik Mueller - Browse all wines';
   require_once __DIR__ . '/../includes/header.php';
 ?>

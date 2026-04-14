@@ -126,7 +126,7 @@
           <h3>Write tasting note</h3>
           <form method="POST" accept-charset="UTF-8">
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-            <input type="hidden" name="wine_id" value="<?php echo isset($_POST['wine_id']) ? htmlspecialchars($POST['wine_id'], ENT_QUOTES, 'UTF-8') : $selected_wine['wine_id']; ?>">
+            <input type="hidden" name="wine_id" value="<?php echo isset($_POST['wine_id']) ? htmlspecialchars($_POST['wine_id'], ENT_QUOTES, 'UTF-8') : $selected_wine['wine_id']; ?>">
 
             <label for="tasting_date">Tasting date:</label>
             <br><input type="date" id="tasting_date" name="tasting_date" value="<?php echo isset($_POST['tasting_date']) ? htmlspecialchars(sanitizeInput($_POST['tasting_date']), ENT_QUOTES, 'UTF-8') : ''; ?>" required>

@@ -134,6 +134,7 @@ function getVineyards($conn) {
   }
 }
 
+// Function to get all producers
 function getProducers($conn) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -160,6 +161,7 @@ function getProducers($conn) {
   }
 }
 
+// Function to get all wines
 function getWines($conn) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -189,6 +191,7 @@ function getWines($conn) {
   }
 }
 
+// Function to get all wine masters
 function getWineMasters($conn) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -217,6 +220,7 @@ function getWineMasters($conn) {
   }
 }
 
+// Function to get all vintages
 function getVintages($conn) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -333,7 +337,7 @@ function getBottlesInCellar($conn) {
 	left join producers on wines_master.producer_id=producers.producer_id
 	left join variety on wines_master.grape=variety.grape
 	left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-        where status='in cellar'
+  where status='in cellar'
 	order by bottles.bottle_id asc, producers.producer asc, wines_master.name asc, wines.vintage desc";
   $result = $conn->query($sql);
 
@@ -360,8 +364,8 @@ function getBottles($conn) {
 
   $sql = "select
 		bottles.bottle_id,
-                cellars.cellar_name,
-                storageBins.bin_name,
+    cellars.cellar_name,
+    storageBins.bin_name,
 		wines.wine_id,
 		wines_master.nameconvention,
 		wines.vintage,
@@ -375,8 +379,8 @@ function getBottles($conn) {
 	left join producers on wines_master.producer_id=producers.producer_id
 	left join variety on wines_master.grape=variety.grape
 	left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-        left join storageBins on bottles.storage_location=storageBins.bin_id
-        left join cellars on storageBins.cellar_id=cellars.cellar_id
+  left join storageBins on bottles.storage_location=storageBins.bin_id
+  left join cellars on storageBins.cellar_id=cellars.cellar_id
 	order by cellars.cellar_name asc, storageBins.bin_name asc, producers.producer asc, wines_master.name asc, wines.vintage desc";
   $result = $conn->query($sql);
 
@@ -494,6 +498,7 @@ function getStorageLocations($conn) {
   }
 }
 
+// Function to get all tasting notes
 function getTastingNotes($conn) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -633,26 +638,26 @@ function getBottleDetails($conn, $bottle_id) {
 		wines_master.grape,
 		wines_master.name,
 		vineyards.vineyard,
-                bottles.format,
-                bottles.storage_location,
-                bottles.purchased_from,
-                bottles.purchase_date,
-                bottles.purchase_price,
-                bottles.arrival_date,
-                bottles.status,
-                bottles.drink_from,
-                bottles.drink_through,
-                bottles.consumption_date,
-                bottles.consumption_note,
-                bottles.for_sale,
-                bottles.note_id
+    bottles.format,
+    bottles.storage_location,
+    bottles.purchased_from,
+    bottles.purchase_date,
+    bottles.purchase_price,
+    bottles.arrival_date,
+    bottles.status,
+    bottles.drink_from,
+    bottles.drink_through,
+    bottles.consumption_date,
+    bottles.consumption_note,
+    bottles.for_sale,
+    bottles.note_id
 	from bottles
 	left join wines on bottles.wine_id=wines.wine_id
 	left join wines_master on wines.master_id=wines_master.master_id
 	left join producers on wines_master.producer_id=producers.producer_id
 	left join variety on wines_master.grape=variety.grape
 	left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-        where bottle_id = ?";
+  where bottle_id = ?";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param("i", $bottle_id);
   $stmt->execute();
@@ -672,7 +677,7 @@ function getNoteDetails($conn, $note_id) {
 function checkCountryExists($conn, $country) {
   $sql = "select 1 from countries where country = ?";
   $stmt = $conn->prepare($sql);
-  $stmt->bind_param("i", $country);
+  $stmt->bind_param("s", $country);
   $stmt->execute();
   return $stmt->get_result()->num_rows > 0;
 }
