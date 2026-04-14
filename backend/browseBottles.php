@@ -72,50 +72,52 @@
   $prevVintage="";
   $prevLocation="";
   // Perform query
-  $result = $mysqli -> query("select
-                                bottles.bottle_id,
-                                bottles.status,
-                                bottles.drink_from,
-                                bottles.drink_through,
-                                bottles.for_sale,
-                                bottle_formats.format,
-                                bottle_formats.format_desc,
-                                cellars.cellar_name,
-                                storageBins.bin_name,
-                                wines.wine_id,
-                                wines.vintage,
-                                wines_master.master_id,
-                                wines_master.name,
-                                wines_master.nameconvention,
-                                wines_master.producer_id,
-                                wines_master.region_id,
-                                wines_master.subregion_id,
-                                wines_master.appellation_id,
-                                wines_master.vineyard_id,
-                                wines_master.grape,
-                                wines_master.colour,
-                                wines_master.style,
-                                producers.producer,
-                                producers.producer_desc,
-                                vineyards.vineyard,
-                                regions.region,
-                                regions.country,
-                                subregions.subregion,
-                                appellations.appellation,
-                                v.grape_desc
-                              from bottles
-                                left join bottle_formats on bottles.format=bottle_formats.format
-                                left join storageBins on bottles.storage_location=storageBins.bin_id
-                                left join cellars on storageBins.cellar_id=cellars.cellar_id
-                                left join wines on bottles.wine_id=wines.wine_id
-                                left join wines_master on wines.master_id=wines_master.master_id
-                                left join producers on wines_master.producer_id=producers.producer_id
-                                left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-                                left join regions on wines_master.region_id=regions.region_id
-                                left join subregions on wines_master.subregion_id=subregions.subregion_id
-                                left join appellations on wines_master.appellation_id=appellations.appellation_id
-                                left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
-                              ".$sqlOrderBy." limit 0,".$num);
+  $result = $mysqli -> query(
+    "select
+      bottles.bottle_id,
+      bottles.status,
+      bottles.drink_from,
+      bottles.drink_through,
+      bottles.for_sale,
+      bottle_formats.format,
+      bottle_formats.format_desc,
+      cellars.cellar_name,
+      storageBins.bin_name,
+      wines.wine_id,
+      wines.vintage,
+      wines_master.master_id,
+      wines_master.name,
+      wines_master.nameconvention,
+      wines_master.producer_id,
+      wines_master.region_id,
+      wines_master.subregion_id,
+      wines_master.appellation_id,
+      wines_master.vineyard_id,
+      wines_master.grape,
+      wines_master.colour,
+      wines_master.style,
+      producers.producer,
+      producers.producer_desc,
+      vineyards.vineyard,
+      regions.region,
+      regions.country,
+      subregions.subregion,
+      appellations.appellation,
+      v.grape_desc
+    from bottles
+      left join bottle_formats on bottles.format=bottle_formats.format
+      left join storageBins on bottles.storage_location=storageBins.bin_id
+      left join cellars on storageBins.cellar_id=cellars.cellar_id
+      left join wines on bottles.wine_id=wines.wine_id
+      left join wines_master on wines.master_id=wines_master.master_id
+      left join producers on wines_master.producer_id=producers.producer_id
+      left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
+      left join regions on wines_master.region_id=regions.region_id
+      left join subregions on wines_master.subregion_id=subregions.subregion_id
+      left join appellations on wines_master.appellation_id=appellations.appellation_id
+      left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape " .
+    $sqlOrderBy." limit 0,".$num
+  );
   if ($sort=="region") {
     echo "<p><small><i>Bottles sorted by country and region. Then by producer, wine and vintage.</i></small></p>";
   } elseif ($sort=="producer") {
@@ -133,20 +135,7 @@
     // Vintage NV?
     if ($wine["vintage"]==null) { $wine["vintage"]="NV"; }
     // Get wine name
-    if ($wine["nameconvention"]=="vintage_name") {
-      $wine_name=$wine["vintage"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_grape_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["grape"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_grape_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["grape"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["name"];
-    // ...else vintage_producer_name as default:
-    } else {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
-    }
+    $wine_name = getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']);
     // Output
     if($sort=="region" || $sort=="tenyearsold") {
       if($wine["country"]!=$prevCountry) {
@@ -163,9 +152,9 @@
       if ($wine["producer"]!=$prevProducer) {
         echo ($prevProducer!="") ? "</ul></details><br>" : "";
         if ($wine["producer_desc"]!=null) {
-          echo "<details><summary><b>".$wine["producer"]."</b></summary><hr><small>".$wine["producer_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8')."</b></summary><hr><small>".$wine["producer_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
         } else {
-          echo "<details><summary><b>".$wine["producer"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8')."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         }
       }
       echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small></li>";
