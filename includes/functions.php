@@ -1396,7 +1396,7 @@ function renderBlogReferences($conn, $id, $type, $title) {
 
   $sql = "select * from $table_prefix
             left join blogposts on $table_prefix.blog_id=blogposts.blog_id
-          where $table_prefix.$id_column=?
+          where $table_prefix.$id_column=? and blogposts.status='published'
           order by blogposts.pub_date desc";
   
   $stmt = $conn->prepare($sql);
@@ -1415,6 +1415,77 @@ function renderBlogReferences($conn, $id, $type, $title) {
   if ($result) {
     $result->free_result();
   }
+}
+
+// Function to validate blogpost input
+function validateBlogpostInput($title, $content, $status) {
+  $errors = [];
+
+  if (empty($title) || strlen($title) > 255) {
+    $errors[] = "Title is required and must be less than 255 characters.";
+  }
+
+  if (empty($content)) {
+    $errors[] = "Content is required.";
+  }
+
+  if (!is_string($status)) {
+    $errors[] = "Status must be a string.";
+  }
+
+  return $errors;
+}
+
+// Function to insert a new blogpost
+function insertBlogpost($conn, $user_id, $pub_date, $title, $content, $status) {
+  $sql = "INSERT INTO blogposts (user_id, pub_date, title, content, status) VALUES (?, ?, ?, ?, ?)";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("issss", $user_id, $pub_date, $title, $content, $status);
+  return $stmt->execute();
+}
+
+// Function to get all blogposts
+function getBlogposts($conn) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+
+  $sql = "select blogposts.blog_id, blogposts.user_id, blogposts.pub_date, blogposts.title, blogposts.status, users.displayname 
+          from blogposts 
+          left join users on blogposts.user_id=users.user_id
+          order by blogposts.pub_date desc, blogposts.blog_id desc";
+  $result = $conn->query($sql);
+
+  if ($result === false) {
+    throw new Exception("Query failed: " . $conn->error);
+  }
+
+  if (method_exists($result, 'fetch_all')) {
+    return $result->fetch_all(MYSQLI_ASSOC);
+  } else {
+    $rows = array();
+    while ($row = $result->fetch_assoc()) {
+      $rows[] = $row;
+    }
+    return $rows;
+  }
+}
+
+// Function to get blogpost details
+function getBlogpostDetails($conn, $blog_id) {
+  $sql = "select * from blogposts where blog_id = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $blog_id);
+  $stmt->execute();
+  return $stmt->get_result()->fetch_assoc();
+}
+
+// Function to update a blogpost
+function updateBlogpost($conn, $blog_id, $pub_date, $title, $content, $status) {
+  $sql = "UPDATE blogposts SET pub_date = ?, title = ?, content = ?, status = ? WHERE blog_id = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("ssssi", $pub_date, $title, $content, $status, $blog_id);
+  return $stmt->execute();
 }
 
 ?>

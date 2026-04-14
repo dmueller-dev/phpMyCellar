@@ -43,7 +43,7 @@
   global $mysqli, $conn;
     $prevYear="";
   // Perform query
-  $result = $mysqli -> query("select * from blogposts order by pub_date desc, blog_id desc limit 0,".$num);
+  $result = $mysqli -> query("select * from blogposts where status='published' order by pub_date desc, blog_id desc limit 0,".$num);
   // Output
   while ($blogs = $result->fetch_assoc()) {
     if (date_format(date_create($blogs["pub_date"]),"Y")!=$prevYear) {

@@ -117,7 +117,7 @@
 {
   global $mysqli, $conn;
     // Perform query
-  $result = $mysqli -> query("select * from blogposts order by pub_date desc limit 0,".$num);
+  $result = $mysqli -> query("select * from blogposts where status='published' order by pub_date desc limit 0,".$num);
   while ($blog = $result->fetch_assoc()) {
     echo "<li>".date_format(date_create($blog["pub_date"]),"d M y").": <a href='/blogpost.php?id=".$blog['blog_id']."'>".$blog["title"]."</a></li>";
   }

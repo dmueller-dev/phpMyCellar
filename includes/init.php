@@ -46,7 +46,7 @@
 
     if ($role === 'write') {
       // Write users only have access to specific scripts
-      $allowedScripts = ['addTastingNote.php', 'editTastingNote.php', 'blindTasting.php'];
+      $allowedScripts = ['addTastingNote.php', 'editTastingNote.php', 'blindTasting.php', 'addBlogpost.php', 'editBlogpost.php'];
       $currentScript = basename($_SERVER['SCRIPT_FILENAME']);
       if (!in_array($currentScript, $allowedScripts)) {
         header("Location: /index.php");

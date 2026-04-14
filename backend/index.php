@@ -71,6 +71,12 @@
           <li><a href="editVineyard.php" title="Edit vineyards">Edit vineyard</a></li>
         </ul>
         <hr>
+        <h3>Blog stories</h3>
+        <ul>
+          <li><a href="addBlogpost.php" title="Add new story">Write new story</a></li>
+          <li><a href="editBlogpost.php" title="Edit stories">Edit story</a></li>
+        </ul>
+        <hr>
         <h3>User management</h3>
         <ul>
           <li><a href="addUser.php" title="Add a new user">Add new user</a></li>

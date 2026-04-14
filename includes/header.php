@@ -87,6 +87,8 @@
               "<li><a class='" . (($currentPath == '/backend/addTastingNote.php') ? 'active' : '') . "' href='/backend/addTastingNote.php' title='New tasting note'>Write tasting note</a></li>" .
               "<li><a class='" . (($currentPath == '/backend/blindTasting.php') ? 'active' : '') . "' href='/backend/blindTasting.php' title='New blind tasting note'>Write <em>blind</em> tasting note</a></li>" .
               "<li><a class='" . (($currentPath == '/backend/editTastingNote.php') ? 'active' : '') . "' href='/backend/editTastingNote.php' title='Edit tasting notes'>Edit tasting note</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/addBlogpost.php') ? 'active' : '') . "' href='/backend/addBlogpost.php' title='Add new story'>Write story</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/editBlogpost.php') ? 'active' : '') . "' href='/backend/editBlogpost.php' title='Edit a blogpost'>Edit story</a></li>" .
               "</ul></li>";
           }
 
