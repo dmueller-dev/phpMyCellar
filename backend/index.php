@@ -26,12 +26,14 @@
         <hr>
         <h3>Cellar management</h3>
         <ul>
+          <li><a href="browseBottles.php" title="Browse all bottles">Browse all bottles</a></li>
           <li><a href="addBottle.php" title="Add a new bottle of wine">Add new bottle of wine</a></li>
           <li><a href="editBottle.php" title="Edit bottles">Edit bottle</a></li>
         </ul>
         <hr>
         <h3>Wines</h3>
         <ul>
+          <li><a href="browseWines.php" title="Browse all wines">Browse all wines</a></li>
           <li><a href="addWineMaster.php" title="Add a new wine master">Add new <strong>master</strong></a>
              | <a href="addWine.php" title="Add a new wine">Add new wine</a></li>
           <li><a href="editWineMaster.php" title="Edit wine masters">Edit wine master</a></li>

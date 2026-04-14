@@ -70,7 +70,9 @@
               "<label for='drop-admin' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
               "<li><a class='" . (($currentPath == '/backend/index.php') ? 'active' : '') . "' href='/backend/index.php' title='Dashboard'>Dashboard</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/browseBottles.php') ? 'active' : '') . "' href='/backend/browseBottles.php' title='Browse all bottles'>Browse bottles</a></li>" .
               "<li><a class='" . (($currentPath == '/backend/addBottle.php') ? 'active' : '') . "' href='/backend/addBottle.php' title='Add bottle'>Add bottle</a></li>" .
+              "<li><a class='" . (($currentPath == '/backend/browseWines.php') ? 'active' : '') . "' href='/backend/browseWines.php' title='Browse all wines'>Browse wines</a></li>" .
               "<li><a class='" . (($currentPath == '/backend/addWine.php') ? 'active' : '') . "' href='/backend/addWine.php' title='Add wine'>Add wine</a></li>" .
               "<li><a class='" . (($currentPath == '/backend/addUser.php') ? 'active' : '') . "' href='/backend/addUser.php' title='User management'>Add user</a></li>" .
               "</ul></li>";
