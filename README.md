@@ -2,20 +2,17 @@
 Personal wine database
 
 ## Fix
-### 1. 'Write' users must be able to edit their own notes
-1.1 Give access to editTastingNote.php - only where user_id matches
-
-1.2 Give access to blind tasting note
-
-1.3 Include edit/blind tasting note in 'Contribute' menu
+None
 
 ## Improve
-### 1. 'Write' users only allowed to add/edit drafts
-1.1 Disable status field in forms, unless 'admin' user
+### 1. Favourite wine
+1.1 Turn five-star wines into favourite wines
+
+1.2 Add filter to tasting notes and wine menu
 
 ## Add
 ### 1. Fuzzy search
-1.1 Integrate into wine DB and tasting notes (PHP / MySQL)
+1.1 Integrate into wine DB, tasting notes, and wine menu (PHP / MySQL)
 
 ### 2. Scan OCR text via handheld device
 2.1 Recognise text labels on bottle
@@ -41,3 +38,18 @@ Personal wine database
 6.3 Redirect user to tnotes.php if no parameter given to tnote.php
 
 6.4 Redirect user to blog.php if no parameter given to blogpost.php
+
+### 7. Allow selection of rating system
+7.1 Let admin choose which rating system to use (20 vs 100 points)
+
+7.2 Let admin turn additional five-star system on/off
+
+### 8. Add user initials to database table
+8.1 Initials to display before points
+
+### 9. Import Liv-Ex LWIN dataset
+9.1 Add LWIN7 ID to 'wines_master' table
+
+9.2 Add LWIN11 ID to 'wines' table
+
+9.3 Import data for comprehensive wine database

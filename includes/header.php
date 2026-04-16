@@ -18,7 +18,7 @@
   <meta name="keywords" content="Dominik Mueller,wine database,wine tastings,tasting notes,fine wine,wine collection,wine cellar">
 
   <link rel="canonical" href="https://dmueller.com/">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/includes/styles.css">
   <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
   <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
   <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
