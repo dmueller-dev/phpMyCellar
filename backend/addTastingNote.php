@@ -282,4 +282,43 @@
   </div>
 </div>
 
+<script>
+  const wset_b = document.getElementById('wset_balance');
+  const wset_l = document.getElementById('wset_length');
+  const wset_i = document.getElementById('wset_intensity');
+  const wset_c = document.getElementById('wset_complexity');
+  const wsetpts = document.getElementById('wsetpts');
+  const suggestedDMpts = document.getElementById('suggestedDMpts');
+
+  function updateTotal() {
+    wsetpts.value = Number(wset_b.value) + Number(wset_l.value) + Number(wset_i.value) + Number(wset_c.value);
+    if (Number(wsetpts.value)==0) {
+      suggestedDMpts.innerHTML = "<small><em>Suggest points: 0 (\"poor\")</em></small>";
+    } else if (Number(wsetpts.value)==0.5) {
+      suggestedDMpts.innerHTML = "<small><em>Suggest points: 1 or 2 (\"subpar\")</em></small>";
+    } else if (Number(wsetpts.value)==1) {
+      suggestedDMpts.innerHTML = "<small><em>Suggest points: 3 or 4 (\"passable\")</em></small>";
+    } else if (Number(wsetpts.value)==1.5) {
+      suggestedDMpts.innerHTML = "<small><em>Suggest points: 5 or 6 (\"good\")</em></small>";
+    } else if (Number(wsetpts.value)==2) {
+      suggestedDMpts.innerHTML = "<small><em>Suggest points: 7 or 8 (\"good\")</em></small>";
+    } else if (Number(wsetpts.value)==2.5) {
+      suggestedDMpts.innerHTML = "<small><em>Suggest points: 9 or 10 (\"very good\")</em></small>";
+    } else if (Number(wsetpts.value)==3) {
+      suggestedDMpts.innerHTML = "<small><em>Suggest points: 11 or 12 (\"very good\")</em></small>";
+    } else if (Number(wsetpts.value)==3.5) {
+      suggestedDMpts.innerHTML = "<small><em>Suggest points: 13 or 14 (\"excellent\")</em></small>";
+    } else if (Number(wsetpts.value)==4) {
+      suggestedDMpts.innerHTML = "<small><em>Suggest points: 15 to 20 (\"excellent\", \"grand vin\", or \"one-of-a-kind\")</em></small>";
+    }
+  }
+
+  wset_b.addEventListener('change', updateTotal);
+  wset_l.addEventListener('change', updateTotal);
+  wset_i.addEventListener('change', updateTotal);
+  wset_c.addEventListener('change', updateTotal);
+
+  window.onload = updateTotal;
+</script>
+
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
