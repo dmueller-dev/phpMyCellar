@@ -94,7 +94,14 @@
             <option value="">Select a master</option>
             <?php foreach ($masters as $master): ?>
               <option value="<?php echo $master['master_id']; ?>" <?php echo ($master['master_id'] == $master_id) ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($master['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($master['region'], ENT_QUOTES, 'UTF-8') . ": " .  htmlspecialchars($master['producer'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($master['grape'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($master['name'], ENT_QUOTES, 'UTF-8'); ?>
+                <?php echo
+                  htmlspecialchars($master['country'], ENT_QUOTES, 'UTF-8') . ": " .
+                  htmlspecialchars($master['region'], ENT_QUOTES, 'UTF-8') . ": " .
+                  htmlspecialchars($master['producer'], ENT_QUOTES, 'UTF-8') . ": " .
+                  htmlspecialchars($master['grape'], ENT_QUOTES, 'UTF-8') . ": " .
+                  (!empty($master['vineyard']) ? htmlspecialchars($master['vineyard'], ENT_QUOTES, 'UTF-8') . ": " : "") .
+                  htmlspecialchars($master['name'], ENT_QUOTES, 'UTF-8');
+                ?>
               </option>
             <?php endforeach; ?>
           </select>
