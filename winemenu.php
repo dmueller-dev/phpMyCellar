@@ -38,59 +38,116 @@
 
   $extra_head = <<<HTML
     <script>
+      // Check for focus flag when the new page loads
+      document.addEventListener("DOMContentLoaded", function() {
+        if (sessionStorage.getItem('returnFocusToSearch') === 'true') {
+          const searchBox = document.getElementById('searchBox');
+          if (searchBox) {
+            searchBox.focus();
+            // Push the cursor to the end of the text
+            const len = searchBox.value.length;
+            searchBox.setSelectionRange(len, len);
+          }
+          // Clean up the flag so it doesn't autofocus if normal refresh
+          sessionStorage.removeItem('returnFocusToSearch');
+        }
+      });
+
+      // Debounce function to delay search execution until user stopped typing
+      let searchTimeout;
+
       // Automatically update cellar filter on new selection by user
-      function updateCellarFilter() {
+      function updateFilters(triggeredBySearch = false) {
         const cellarValue = document.getElementById('cellarToggle').value;
+        const searchValue = document.getElementById('searchBox').value;
         const url = new URL(window.location.href);
-        
-        // Set or remove the cellar parameter
+
+        // Handle cellar
         if (cellarValue) {
           url.searchParams.set('cellar', cellarValue);
         } else {
           url.searchParams.delete('cellar');
         }
-        
+
+        // Handle search
+        if (searchValue) {
+          url.searchParams.set('q', searchValue);
+        } else {
+          url.searchParams.delete('q');
+        }
+
+        // Set memory flag if page reload caused by search box
+        if (triggeredBySearch) {
+          sessionStorage.setItem('returnFocusToSearch', 'true');
+        }
+ 
         // Redirect to the new URL
         window.location.href = url.toString();
       }
+
+      // Function to handle search delay
+      function triggerSearch() {
+        clearTimeout(searchTimeout);
+        // Pass 'true' to indicate the search box triggered the refresh
+        searchTimeout = setTimeout(() => updateFilters(true), 600); // 600ms delay
+      }
     </script>
   HTML;
-  
+
   require_once 'includes/header.php';
 ?>
 
 <div class="row">
   <div class="column main">
+    <!-- Cellar filter and search box -->
     <div class="card">
-      <p align="center" style="margin-top:0;margin-bottom:0;"><small>
-        Filter by cellar: 
-        <select id="cellarToggle" onchange="updateCellarFilter()" style="font-family: Georgia, serif; padding: 2px;">
-          <option value="">All cellars</option>
-          <?php
-            global $mysqli, $conn;
-            $cellarRes = $mysqli->query("SELECT cellar_id, cellar_name FROM cellars ORDER BY cellar_name ASC");
-            while($c = $cellarRes->fetch_assoc()) {
-              $selected = (isset($_GET['cellar']) && $_GET['cellar'] == $c['cellar_id']) ? 'selected' : '';
-              echo "<option value='{$c['cellar_id']}' $selected>{$c['cellar_name']}</option>";
-            }
-          ?>
-        </select>
-      </small></p>
+      <div class="filter-bar">
+        <div class="filter-item">
+          <label for="cellarToggle">Filter by cellar:</label>
+          <select id="cellarToggle" onchange="updateFilters()" style="font-family: Georgia, serif; padding: 2px;">
+            <option value="">All cellars</option>
+            <?php
+              global $mysqli, $conn;
+              $cellarRes = $mysqli->query("SELECT cellar_id, cellar_name FROM cellars ORDER BY cellar_name ASC");
+              while($c = $cellarRes->fetch_assoc()) {
+                $selected = (isset($_GET['cellar']) && $_GET['cellar'] == $c['cellar_id']) ? 'selected' : '';
+                echo "<option value='{$c['cellar_id']}' $selected>{$c['cellar_name']}</option>";
+              }
+            ?>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label for="searchBox">Search:</label>
+          <input type="text" id="searchBox" onkeyup="triggerSearch()"
+            value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8') : ''; ?>"
+            placeholder="e.g. 2015 Bordeaux"
+            style="font-family: Georgia, serif; padding: 2px; width: 160px; max-width: 100%;">
+        </div>
+      </div>
     </div>
+
+    <!-- Sort filters -->
     <div class="card">
       <p align="center" style="margin-top:0;margin-bottom:0;"><small>
         Sort by:
         <?php 
-          $cellarParam = !empty($_GET['cellar']) ? "&cellar=" . urlencode($_GET['cellar']) : ""; 
+          // Ensure BOTH cellar and search query are preserved when sorting!
+          $urlParams = "";
+          if (!empty($_GET['cellar'])) {
+            $urlParams .= "&cellar=" . urlencode($_GET['cellar']);
+          }
+          if (!empty($_GET['q'])) {
+            $urlParams .= "&q=" . urlencode($_GET['q']);
+          }
         ?>
-        <a class="filter-nav" href="/winemenu.php?sort=region<?php echo $cellarParam; ?>">Region</a>
-        <a class="filter-nav" href="/winemenu.php?sort=producer<?php echo $cellarParam; ?>">Producer</a>
-        <a class="filter-nav" href="/winemenu.php?sort=vintage<?php echo $cellarParam; ?>">Vintage</a>
-        <a class="filter-nav" href="/winemenu.php?sort=variety<?php echo $cellarParam; ?>">Variety</a>
-        <a class="filter-nav" href="/winemenu.php?sort=style<?php echo $cellarParam; ?>">Style</a>
-        <a class="filter-nav" href="/winemenu.php?sort=tenyearsold<?php echo $cellarParam; ?>">Aged 10 years</a>
-        <a class="filter-nav" href="/winemenu.php?sort=twentyplus<?php echo $cellarParam; ?>">Aged 20+ years</a>
-        <a class="filter-nav" href="/winemenu.php?sort=rand<?php echo $cellarParam; ?>">Random</a>
+        <a class="filter-nav" href="/winemenu.php?sort=region<?php echo $urlParams; ?>">Region</a>
+        <a class="filter-nav" href="/winemenu.php?sort=producer<?php echo $urlParams; ?>">Producer</a>
+        <a class="filter-nav" href="/winemenu.php?sort=vintage<?php echo $urlParams; ?>">Vintage</a>
+        <a class="filter-nav" href="/winemenu.php?sort=variety<?php echo $urlParams; ?>">Variety</a>
+        <a class="filter-nav" href="/winemenu.php?sort=style<?php echo $urlParams; ?>">Style</a>
+        <a class="filter-nav" href="/winemenu.php?sort=tenyearsold<?php echo $urlParams; ?>">Aged 10 years</a>
+        <a class="filter-nav" href="/winemenu.php?sort=twentyplus<?php echo $urlParams; ?>">Aged 20+ years</a>
+        <a class="filter-nav" href="/winemenu.php?sort=rand<?php echo $urlParams; ?>">Random</a>
       </small></p>
     </div>
     <div class="card">
@@ -114,7 +171,7 @@
 {
   // Establish database connection
   global $mysqli, $conn;
-  
+
   // Handle the cellar filter
   $cellarMsg = "all cellars"; // Variable to print selected cellar name;
                               // showing all cellars by default
@@ -126,6 +183,41 @@
         $cellarMsg = $cellarRow['cellar_name'];
     }
     $cellarConstraint = " AND cellars.cellar_id = '$cellarId' ";
+  }
+
+  // Search constraint
+  $searchConstraint = "";
+  if (!empty($_GET['q'])) {
+    // Escape the whole query for safety
+    $q = $mysqli->real_escape_string($_GET['q']);
+    
+    // Split the search string by spaces
+    $words = explode(' ', $q);
+    $conditions = [];
+    
+    foreach($words as $word) {
+      $word = trim($word);
+      if (!empty($word)) {
+        // We check multiple joined tables for the keyword
+        $conditions[] = "(
+          producers.producer LIKE '%$word%' OR
+          wines_master.name LIKE '%$word%' OR
+          regions.region LIKE '%$word%' OR
+          appellations.appellation LIKE '%$word%' OR
+          v.grape_desc LIKE '%$word%' OR
+          wines_master.grape LIKE '%$word%' OR
+          wines.vintage LIKE '%$word%' OR
+          vineyards.vineyard LIKE '%$word%' OR
+          wines_master.style LIKE '%$word%'
+        )";
+      }
+    }
+    
+    // If we have valid words, stitch them together with AND
+    // e.g. "2015 Pinot" must match 2015 AND Pinot somewhere in the row
+    if (!empty($conditions)) {
+      $searchConstraint = " AND " . implode(' AND ', $conditions) . " ";
+    }
   }
 
   // Initialise loop variables
@@ -214,6 +306,7 @@
       left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
     where status='in cellar' and (year(curdate())>=bottles.drink_from or bottles.drink_from is null)"
     .$cellarConstraint
+    .$searchConstraint
     .(
       ($sort=="tenyearsold") ? " and vintage is not null and (year(curdate())-vintage=10)" :
       (

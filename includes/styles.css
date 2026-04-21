@@ -66,6 +66,21 @@ h2.sub-title {
   margin-top: 20px;
 }
 
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  font-size: small;
+  margin: 0;
+}
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 img.inline {
   max-width: 50%;
   height: auto;
