@@ -204,6 +204,7 @@
         $conditions[] = "(
           producers.producer LIKE '%$word%' OR
           wines_master.name LIKE '%$word%' OR
+          regions.country LIKE '%$word%' OR
           regions.region LIKE '%$word%' OR
           appellations.appellation LIKE '%$word%' OR
           v.grape_desc LIKE '%$word%' OR
