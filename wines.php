@@ -11,7 +11,8 @@
   } else {
     $sort=$_GET['sort'];
   }
-  if ($sort=="region") {
+
+  if ($sort=="region" || $sort=="tenyearsold") {
     $sqlOrderBy="order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
   } elseif ($sort=="producer") {
     $sqlOrderBy="order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
@@ -19,27 +20,72 @@
     $sqlOrderBy="order by vintage desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc";
   } elseif ($sort=="variety") {
     $sqlOrderBy="order by grape asc,country asc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
-  } elseif ($sort=="tenyearsold") {
-    $sqlOrderBy="where vintage is not null and year(curdate())-vintage=10 order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
   }
 ?>
 
 <?php
   $page_title = 'Dominik Mueller - Browse all wines';
   
+  $extra_head = <<<HTML
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        if (sessionStorage.getItem('returnFocusToSearch') === 'true') {
+          const searchBox = document.getElementById('searchBox');
+          if (searchBox) {
+            searchBox.focus();
+            const len = searchBox.value.length;
+            searchBox.setSelectionRange(len, len);
+          }
+          sessionStorage.removeItem('returnFocusToSearch');
+        }
+      });
+
+      let searchTimeout;
+      function updateFilters(triggeredBySearch = false) {
+        const searchValue = document.getElementById('searchBox').value;
+        const url = new URL(window.location.href);
+        if (searchValue) {
+          url.searchParams.set('q', searchValue);
+        } else {
+          url.searchParams.delete('q');
+        }
+        if (triggeredBySearch) {
+          sessionStorage.setItem('returnFocusToSearch', 'true');
+        }
+        window.location.href = url.toString();
+      }
+
+      function triggerSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => updateFilters(true), 600);
+      }
+    </script>
+  HTML;
+
   require_once 'includes/header.php';
 ?>
 
 <div class="row">
   <div class="column main">
     <div class="card">
-      <h3 style="margin-bottom:0;">Browse all wines</h3>
+      <h3 style="margin-bottom:10px; margin-top:0;">Browse all wines</h3>
+
+      <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 15px;">
+        <label for="searchBox" style="font-size: small;">Search:</label>
+        <input type="text" id="searchBox" onkeyup="triggerSearch()"
+          value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8') : ''; ?>"
+          placeholder="e.g. 2015 Bordeaux"
+          style="font-family: Georgia, serif; padding: 2px; width: 200px; max-width: 100%;">
+      </div>
+
       <p style="margin-top:0;"><small>
-        Sort by: <a class="filter-nav" href="/wines.php?sort=region">Region</a>
-        <a class="filter-nav" href="/wines.php?sort=producer">Producer</a>
-        <a class="filter-nav" href="/wines.php?sort=vintage">Vintage</a>
-        <a class="filter-nav" href="/wines.php?sort=variety">Variety</a>
-        <a class="filter-nav" href="/wines.php?sort=tenyearsold">Ten years old</a>
+        Sort by:
+        <?php $urlParams = !empty($_GET['q']) ? "&q=" . urlencode($_GET['q']) : ""; ?>
+        <a class="filter-nav" href="/wines.php?sort=region<?php echo $urlParams; ?>">Region</a>
+        <a class="filter-nav" href="/wines.php?sort=producer<?php echo $urlParams; ?>">Producer</a>
+        <a class="filter-nav" href="/wines.php?sort=vintage<?php echo $urlParams; ?>">Vintage</a>
+        <a class="filter-nav" href="/wines.php?sort=variety<?php echo $urlParams; ?>">Variety</a>
+        <a class="filter-nav" href="/wines.php?sort=tenyearsold<?php echo $urlParams; ?>">Ten years old</a>
         <a class="filter-nav" href="/wines.php"><b>Reset</b></a>
       </small></p>
     </div>
@@ -63,10 +109,45 @@
 <?php function renderWines($num,$sort,$sqlOrderBy)
 {
   global $mysqli, $conn;
-    $prevCountry="";
+  $prevCountry="";
   $prevRegion="";
   $prevProducer="";
   $prevVintage="";
+
+  // Base WHERE condition
+  $sqlWhere = " WHERE 1=1 ";
+
+  // Logic for ten-year-old wines
+  if ($sort == "tenyearsold") {
+    $sqlWhere .= " AND wines.vintage is not null and year(curdate()) - wines.vintage = 10";
+  }
+
+  // Fuzzy search constraint
+  if (!empty($_GET['q'])) {
+    $q = $mysqli->real_escape_string($_GET['q']);
+    $words = explode(' ', $q);
+    $conditions = [];
+    foreach($words as $word) {
+      $word = trim($word);
+      if (!empty($word)) {
+        $conditions[] = "(
+          producers.producer LIKE '%$word%' OR
+          wines_master.name LIKE '%$word%' OR
+          regions.region LIKE '%$word%' OR
+          appellations.appellation LIKE '%$word%' OR
+          v.grape_desc LIKE '%$word%' OR
+          wines_master.grape LIKE '%$word%' OR
+          wines.vintage LIKE '%$word%' OR
+          vineyards.vineyard LIKE '%$word%' OR
+          wines_master.style LIKE '%$word%'
+        )";
+      }
+    }
+    if (!empty($conditions)) {
+      $sqlWhere .= " AND " . implode(' AND ', $conditions) . " ";
+    }
+  }
+
   // Perform query
   $result = $mysqli -> query("select
                                 wines.wine_id,
@@ -98,7 +179,23 @@
                                 left join subregions on wines_master.subregion_id=subregions.subregion_id
                                 left join appellations on wines_master.appellation_id=appellations.appellation_id
                                 left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
-                              ".$sqlOrderBy." limit 0,".$num);
+                                " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
+
+  // Display message if no results found
+  if ($result->num_rows == 0) {
+    // Determine what to display based on whether they searched or just filtered
+    $feedbackMsg = !empty($_GET['q']) 
+        ? "your search for '<strong>" . htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8') . "</strong>'"
+        : "your current filter selection";
+
+    echo "<div class='card' style='text-align:center; padding:30px 20px;'>
+      <p>I'm afraid no wines currently match {$feedbackMsg}.</p>
+      <p><small>Try adjusting your search terms or removing some filters to explore the database.</small></p>
+    </div>";
+
+    return; // Exit the function early so we don't print empty lists or sort text
+  }
+
   if ($sort=="region") {
     echo "<p><small><i>Wines sorted by country and region. Then by producer, wine and vintage.</i></small></p>";
   } elseif ($sort=="producer") {

@@ -116,6 +116,7 @@
             ?>
           </select>
         </div>
+
         <div class="filter-item">
           <label for="searchBox">Search:</label>
           <input type="text" id="searchBox" onkeyup="triggerSearch()"
@@ -148,6 +149,7 @@
         <a class="filter-nav" href="/winemenu.php?sort=tenyearsold<?php echo $urlParams; ?>">Aged 10 years</a>
         <a class="filter-nav" href="/winemenu.php?sort=twentyplus<?php echo $urlParams; ?>">Aged 20+ years</a>
         <a class="filter-nav" href="/winemenu.php?sort=rand<?php echo $urlParams; ?>">Random</a>
+        <a class="filter-nav" href="/winemenu.php"><b>Reset</b></a>
       </small></p>
     </div>
     <div class="card">

@@ -17,49 +17,95 @@
   } else {
     $sort=$_GET['sort'];
   }
-  if ($sort=="date") {
-    $sqlOrderBy="where status='published' order by tasting_date desc, note_id desc";
+
+  if ($sort=="date" || $sort=="tenyears") {
+    $sqlOrderBy="order by tasting_date desc, note_id desc";
   } elseif ($sort=="rating") {
-    $sqlOrderBy="where status='published' order by flawed_yn asc, dmpts desc, tasting_date desc, note_id desc";
+    $sqlOrderBy="order by flawed_yn asc, dmpts desc, tasting_date desc, note_id desc";
   } elseif ($sort=="stars") {
-    $sqlOrderBy="where status='published' order by flawed_yn asc, starpts desc, dmpts desc, producer asc, tasting_date desc, note_id desc";
+    $sqlOrderBy="order by flawed_yn asc, starpts desc, dmpts desc, producer asc, tasting_date desc, note_id desc";
   } elseif ($sort=="region") {
-    $sqlOrderBy="where status='published' order by country asc,region asc,dmpts desc,producer asc,vintage desc,subregion asc,appellation asc,vineyard asc,tasting_date desc";
+    $sqlOrderBy="order by country asc,region asc,dmpts desc,producer asc,vintage desc,subregion asc,appellation asc,vineyard asc,tasting_date desc";
   } elseif ($sort=="producer") {
-    $sqlOrderBy="where status='published' order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,tasting_date desc";
+    $sqlOrderBy="order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,tasting_date desc";
   } elseif ($sort=="vintage") {
-    $sqlOrderBy="where status='published' order by vintage desc,dmpts desc,tasting_date desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc";
+    $sqlOrderBy="order by vintage desc,dmpts desc,tasting_date desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc";
   } elseif ($sort=="variety") {
-    $sqlOrderBy="where status='published' order by grape asc,dmpts desc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,tasting_date desc";
-  } elseif ($sort=="tenyears") {
-    $sqlOrderBy="where status='published' and vintage is not null and year(tasting_date)-vintage=10 order by tasting_date desc, note_id desc";
+    $sqlOrderBy="order by grape asc,dmpts desc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,tasting_date desc";
   }
 ?>
 
 <?php
   $page_title = 'Dominik Mueller - Browse all wines';
   $meta_desc = 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
-  
+
+  $extra_head = <<<HTML
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        if (sessionStorage.getItem('returnFocusToSearch') === 'true') {
+          const searchBox = document.getElementById('searchBox');
+          if (searchBox) {
+            searchBox.focus();
+            const len = searchBox.value.length;
+            searchBox.setSelectionRange(len, len);
+          }
+          sessionStorage.removeItem('returnFocusToSearch');
+        }
+      });
+
+      let searchTimeout;
+      function updateFilters(triggeredBySearch = false) {
+        const searchValue = document.getElementById('searchBox').value;
+        const url = new URL(window.location.href);
+        if (searchValue) {
+          url.searchParams.set('q', searchValue);
+        } else {
+          url.searchParams.delete('q');
+        }
+        if (triggeredBySearch) {
+          sessionStorage.setItem('returnFocusToSearch', 'true');
+        }
+        window.location.href = url.toString();
+      }
+
+      function triggerSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => updateFilters(true), 600);
+      }
+    </script>
+  HTML;
+
   require_once 'includes/header.php';
 ?>
 
 <div class="row">
   <div class="column main">
     <div class="card">
-      <h3 style="margin-bottom:0;">Browse all tasting notes</h3>
+      <h3 style="margin-bottom:10px; margin-top:0;">Browse all tasting notes</h3>
+
+      <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 15px;">
+        <label for="searchBox" style="font-size: small;">Search:</label>
+        <input type="text" id="searchBox" onkeyup="triggerSearch()"
+          value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8') : ''; ?>"
+          placeholder="e.g. 2015 Bordeaux"
+          style="font-family: Georgia, serif; padding: 2px; width: 200px; max-width: 100%;">
+      </div>
+
       <p style="margin-top:0;"><small>
         Sort by:
-        <a class="filter-nav" href="/tnotes.php?sort=date">Tasting date</a>
-        <a class="filter-nav" href="/tnotes.php?sort=rating">DM points</a>
-        <a class="filter-nav" href="/tnotes.php?sort=stars">Stars</a>
-        <a class="filter-nav" href="/tnotes.php?sort=region">Region</a>
-        <a class="filter-nav" href="/tnotes.php?sort=producer">Producer</a>
-        <a class="filter-nav" href="/tnotes.php?sort=vintage">Vintage</a>
-	<a class="filter-nav" href="/tnotes.php?sort=variety">Variety</a>
-        <a class="filter-nav" href="/tnotes.php?sort=tenyears">Ten years on</a>
+        <?php $urlParams = !empty($_GET['q']) ? "&q=" . urlencode($_GET['q']) : ""; ?>
+        <a class="filter-nav" href="/tnotes.php?sort=date<?php echo $urlParams; ?>">Tasting date</a>
+        <a class="filter-nav" href="/tnotes.php?sort=rating<?php echo $urlParams; ?>">DM points</a>
+        <a class="filter-nav" href="/tnotes.php?sort=stars<?php echo $urlParams; ?>">Stars</a>
+        <a class="filter-nav" href="/tnotes.php?sort=region<?php echo $urlParams; ?>">Region</a>
+        <a class="filter-nav" href="/tnotes.php?sort=producer<?php echo $urlParams; ?>">Producer</a>
+        <a class="filter-nav" href="/tnotes.php?sort=vintage<?php echo $urlParams; ?>">Vintage</a>
+        <a class="filter-nav" href="/tnotes.php?sort=variety<?php echo $urlParams; ?>">Variety</a>
+        <a class="filter-nav" href="/tnotes.php?sort=tenyears<?php echo $urlParams; ?>">Ten years on</a>
         <a class="filter-nav" href="/tnotes.php"><b>Reset</b></a>
       </small></p>
     </div>
+
     <div class="card">
       <ul style="list-style-type:none;padding:0;margin:0;">
         <?php getNotes(1000,$sort,$sqlOrderBy); ?>
@@ -133,8 +179,43 @@
 <?php function getNotes($num,$sort,$sqlOrderBy)
 {
   global $mysqli, $conn;
-    $prevYear="";
+  $prevYear="";
   $prevRating="";
+
+  // Base WHERE condition
+  $sqlWhere = " WHERE tnotes.status='published' ";
+
+  // Ten-year-old wines
+  if ($sort == "tenyears") {
+    $sqlWhere .= " AND wines.vintage is not null and year(tnotes.tasting_date) - wines.vintage = 10 ";
+  }
+
+  // Fuzzy search constraint
+  if (!empty($_GET['q'])) {
+    $q = $mysqli->real_escape_string($_GET['q']);
+    $words = explode(' ', $q);
+    $conditions = [];
+    foreach($words as $word) {
+      $word = trim($word);
+      if (!empty($word)) {
+        $conditions[] = "(
+          producers.producer LIKE '%$word%' OR
+          wines_master.name LIKE '%$word%' OR
+          regions.region LIKE '%$word%' OR
+          appellations.appellation LIKE '%$word%' OR
+          v.grape_desc LIKE '%$word%' OR
+          wines_master.grape LIKE '%$word%' OR
+          wines.vintage LIKE '%$word%' OR
+          vineyards.vineyard LIKE '%$word%' OR
+          wines_master.style LIKE '%$word%'
+        )";
+      }
+    }
+    if (!empty($conditions)) {
+      $sqlWhere .= " AND " . implode(' AND ', $conditions) . " ";
+    }
+  }
+
   // Perform query
   $result = $mysqli -> query("select * from tnotes
                                 left join wines on tnotes.wine_id=wines.wine_id
@@ -144,10 +225,25 @@
                                 left join regions on wines_master.region_id=regions.region_id
                                 left join subregions on wines_master.subregion_id=subregions.subregion_id
                                 left join appellations on wines_master.appellation_id=appellations.appellation_id
-				left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
+                                left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
                                 left join (select pts as dpts, dmpts_desc from dmpts) d on tnotes.dmpts=d.dpts
                                 left join (select pts as spts, starpts_desc from starpts) s on tnotes.starpts=s.spts
-                              ".$sqlOrderBy." limit 0,".$num);
+                                " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
+
+  // Display message if no results found
+  if ($result->num_rows == 0) {
+    $feedbackMsg = !empty($_GET['q'])
+        ? "your search for '<strong>" . htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8') . "</strong>'"
+        : "your current filter selection";
+
+    echo "<div class='card' style='text-align:center; padding:30px 20px;'>
+      <p>I'm afraid no tasting notes currently match {$feedbackMsg}.</p>
+      <p><small>Try checking your spelling or using fewer keywords.</small></p>
+    </div>";
+ 
+    return; // Exit the function early
+  }
+
   if ($sort=="date") {
     echo "<p><small><i>Tasting notes sorted chronologically by tasting date.</i></small></p>";
   } elseif ($sort=="rating") {
