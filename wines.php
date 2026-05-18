@@ -12,7 +12,7 @@
     $sort=$_GET['sort'];
   }
 
-  if ($sort=="region" || $sort=="tenyearsold") {
+  if ($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus") {
     $sqlOrderBy="order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
   } elseif ($sort=="producer") {
     $sqlOrderBy="order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
@@ -85,7 +85,8 @@
         <a class="filter-nav" href="/wines.php?sort=producer<?php echo $urlParams; ?>">Producer</a>
         <a class="filter-nav" href="/wines.php?sort=vintage<?php echo $urlParams; ?>">Vintage</a>
         <a class="filter-nav" href="/wines.php?sort=variety<?php echo $urlParams; ?>">Variety</a>
-        <a class="filter-nav" href="/wines.php?sort=tenyearsold<?php echo $urlParams; ?>">Ten years old</a>
+        <a class="filter-nav" href="/wines.php?sort=tenyearsold<?php echo $urlParams; ?>">Aged 10 years</a>
+        <a class="filter-nav" href="/wines.php?sort=twentyplus<?php echo $urlParams; ?>">Aged 20+ years</a>
         <a class="filter-nav" href="/wines.php"><b>Reset</b></a>
       </small></p>
     </div>
@@ -117,9 +118,11 @@
   // Base WHERE condition
   $sqlWhere = " WHERE 1=1 ";
 
-  // Logic for ten-year-old wines
+  // Logic for ten-year-old and mature wines
   if ($sort == "tenyearsold") {
     $sqlWhere .= " AND wines.vintage is not null and year(curdate()) - wines.vintage = 10";
+  } elseif ($sort == "twentyplus") {
+    $sqlWhere .= " AND wines.vintage is not null and year(curdate()) - wines.vintage >= 20";
   }
 
   // Fuzzy search constraint
@@ -207,6 +210,8 @@
     echo "<p><small><i>Wines sorted by grape variety, then country, producer and wine.</i></small></p>";
   } elseif ($sort=="tenyearsold") {
     echo "<p><small><i>Ten-year-old wines sorted by country and region. Then by producer and wine.</i></small></p>";
+  } elseif ($sort=="twentyplus") {
+    echo "<p><small><i>Mature wines (20+ years) organised by country and region. Then by producer and wine.</i></small></p>";
   }
   while ($wine = $result->fetch_assoc()) {
     // Vintage NV?
@@ -227,7 +232,7 @@
       $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
     }
     // Output
-    if($sort=="region" || $sort=="tenyearsold") {
+    if($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus") {
       if($wine["country"]!=$prevCountry) {
         echo ($prevCountry!="") ? "</ul></details></li></ul></details><br>" : "";
         echo "<details><summary><b>".$wine["country"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
@@ -282,7 +287,7 @@
     $prevVintage=$wine["vintage"];
     $prevVariety=$wine["grape"];
   }
-  if($sort=="region" || $sort=="tenyearsold" || $sort=="vintage" || $sort=="variety") {
+  if($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus" || $sort=="vintage" || $sort=="variety") {
     echo "</ul></details></li></ul></details>";
   } elseif($sort=="producer") {
     echo "</ul></details>";
