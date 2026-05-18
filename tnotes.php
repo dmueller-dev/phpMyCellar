@@ -18,7 +18,7 @@
     $sort=$_GET['sort'];
   }
 
-  if ($sort=="date" || $sort=="tenyears") {
+  if ($sort=="date" || $sort=="tenyears" || $sort=="twentyplus") {
     $sqlOrderBy="order by tasting_date desc, note_id desc";
   } elseif ($sort=="rating") {
     $sqlOrderBy="order by flawed_yn asc, dmpts desc, tasting_date desc, note_id desc";
@@ -101,7 +101,8 @@
         <a class="filter-nav" href="/tnotes.php?sort=producer<?php echo $urlParams; ?>">Producer</a>
         <a class="filter-nav" href="/tnotes.php?sort=vintage<?php echo $urlParams; ?>">Vintage</a>
         <a class="filter-nav" href="/tnotes.php?sort=variety<?php echo $urlParams; ?>">Variety</a>
-        <a class="filter-nav" href="/tnotes.php?sort=tenyears<?php echo $urlParams; ?>">Ten years on</a>
+        <a class="filter-nav" href="/tnotes.php?sort=tenyears<?php echo $urlParams; ?>">Aged 10 years</a>
+        <a class="filter-nav" href="/tnotes.php?sort=twentyplus<?php echo $urlParams; ?>">Aged 20+ years</a>
         <a class="filter-nav" href="/tnotes.php"><b>Reset</b></a>
       </small></p>
     </div>
@@ -188,6 +189,8 @@
   // Ten-year-old wines
   if ($sort == "tenyears") {
     $sqlWhere .= " AND wines.vintage is not null and year(tnotes.tasting_date) - wines.vintage = 10 ";
+  } elseif ($sort == "twentyplus") {
+    $sqlWhere .= " AND wines.vintage is not null and year(tnotes.tasting_date) - wines.vintage >= 20 ";
   }
 
   // Fuzzy search constraint
@@ -261,6 +264,8 @@
     echo "<p><small><i>Tasting notes sorted by grape variety, then DM points, producer and tasting date. For <em>assemblages</em>, only the main grape variety is shown.</i></small></p>";
   } elseif ($sort=="tenyears") {
     echo "<p><small><i>&quot;Ten years on&quot; tasting notes sorted chronologically by tasting date.</i></small></p>";
+  } elseif ($sort=="twentyplus") {
+    echo "<p><small><i>Tasting notes for mature wines (20+ years) sorted chronologically by tasting date.</i></small></p>";
   }
   while ($tasting_note = $result->fetch_assoc()) {
     // Vintage NV?
@@ -296,7 +301,7 @@
       $stars="NR";
     }
     // Output
-    if ($sort=="date") {
+    if ($sort=="date" || $sort=="twentyplus") {
       if (date_format(date_create($tasting_note["tasting_date"]),"Y")!=$prevYear) {echo "<br><li><b>".date_format(date_create($tasting_note["tasting_date"]),"Y")."</b></li>";}
     } elseif ($sort=="rating") {
       if ($dmpts!=$prevRating) {
@@ -349,7 +354,7 @@
       if($tasting_note["vintage"]!=$prevVintage) {echo "<br><li><b>".$tasting_note["vintage"]."-".date_format(date_create($tasting_note["tasting_date"]),"y")."</b></li>";}
     }
     echo "<li>";
-    if ($sort=="date" or $sort=="rating" or $sort=="tenyears") {
+    if ($sort=="date" or $sort=="rating" or $sort=="tenyears" or $sort=="twentyplus") {
       echo date_format(date_create($tasting_note["tasting_date"]),"d M Y").": ";
     }
     if ($tasting_note["starpts"]==5) {
