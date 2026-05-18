@@ -7,15 +7,27 @@
   // Generate the token for the comments form
   $csrf_token = generateCSRFToken();
 
-  // Get tasting note ID
-  $wineID=$_GET['id'];
+  // Check if a wine ID parameter is provided; if not, redirect to wines.php
+  if (!isset($_GET['id']) || trim($_GET['id']) === '') {
+    header("Location: /wines.php");
+    exit;
+  }
+
+  // Get wine ID
+  $wineID = $_GET['id'];
 
   // Include the database configuration file
   global $mysqli, $conn;
-  
+
+  // Fetch the wine and ensure it exists before proceeding
+  getWine($wineID);
+  if (empty($wine)) {
+    header("Location: /wines.php");
+    exit;
+  }
+
   // Check if user is logged in
   if (isset($_SESSION['user_id'])) {
-    // --- FETCH USER DETAILS ---
     $user_id = $_SESSION['user_id'];
     $stmt = $mysqli->prepare("SELECT username, displayname FROM users WHERE user_id = ?");
     $stmt->bind_param('i', $user_id);
@@ -36,7 +48,7 @@
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate the token before processing the login
     if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
-        $error = "Security check failed. Please refresh the page and try again.";
+      $error = "Security check failed. Please refresh the page and try again.";
     } else {
       $comment = $_POST['comment'] ?? '';
       $mysqli->autocommit(FALSE);
@@ -61,10 +73,7 @@
       $post->close();
     }
   }
-?>
 
-<?php
-  getWine($wineID);
   // Vintage NV?
   if ($wine["vintage"]==null) { $wine["vintage"]="NV"; }
   // Get wine name
@@ -82,11 +91,10 @@
   } else {
     $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
   }
-?>
 
-<?php
+  // Page header
   $page_title = "Dominik Mueller - " . $wine_name . "";
-  
+
   require_once 'includes/header.php';
 ?>
 
@@ -97,7 +105,7 @@
     </div>
     <div class="card">
       <section>
-	<h3>Description</h3>
+        <h3>Description</h3>
         <p>
           <?php if ($wine["wine_desc"]==null) {
             echo "Sorry, no description on this wine yet.";
@@ -251,7 +259,7 @@
 <?php function getWine($wineID)
 {
   global $mysqli, $conn;
-  
+
   // Perform query
   $stmt = $mysqli->prepare("select * from wines
                             left join wines_master on wines.master_id=wines_master.master_id
