@@ -4,21 +4,12 @@
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/includes/init.php';
 
-  // Generate the token for the comments form
-  $csrf_token = generateCSRFToken();
-
-  // Get blog ID
-  $blogID=$_GET['id'];
-
-  // Include the database configuration file
-  global $mysqli, $conn;
-  
   // Check if user is not logged in
   if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
   } else {
-    // --- FETCH USER DETAILS ---
+    // Fetch user details
     $user_id = $_SESSION['user_id'];
     $stmt = $mysqli->prepare("SELECT username, displayname FROM users WHERE user_id = ?");
     $stmt->bind_param('i', $user_id);
@@ -30,6 +21,28 @@
     }
     $stmt->close();
   }
+
+  // Check if a blog ID parameter is provided; if not, redirect to blog.php
+  if (!isset($_GET['id']) || trim($_GET['id']) === '') {
+    header("Location: /blog.php");
+    exit;
+  }
+
+  // Get blog ID
+  $blogID = $_GET['id'];
+
+  // Include the database configuration file
+  global $mysqli, $conn;
+
+  // Fetch the blog post and ensure it exists before proceeding
+  getPost($blogID);
+  if (empty($blogpost)) {
+    header("Location: /blog.php");
+    exit;
+  }
+
+  // Generate the token for the comments form
+  $csrf_token = generateCSRFToken();
 
   // Initialize error and success messages
   $error = "";
@@ -64,15 +77,9 @@
       $post->close();
     }
   }
-?>
 
-<?php
-  getPost($blogID);
-?>
-
-<?php
+  // Page title and header
   $page_title = "Dominik Mueller - " . $blogpost["title"] . "";
-  
   require_once 'includes/header.php';
 ?>
 
