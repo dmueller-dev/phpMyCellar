@@ -3,16 +3,25 @@
   define('INCLUDED_VIA_APP', true);
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/includes/init.php';
-?>
 
-<?php
-  $producerID=$_GET['id'];
+  // Check if a producer ID parameter is provided; if not, redirect to wines.php?sort=producer
+  if (!isset($_GET['id']) || trim($_GET['id']) === '') {
+    header("Location: /wines.php?sort=producer");
+    exit;
+  }
+
+  // Get producer ID
+  $producerID = $_GET['id'];
+
+  // Fetch the producer and ensure it exists before proceeding
   getProducer($producerID);
-?>
+  if (empty($producer)) {
+    header("Location: /wines.php?sort=producer");
+    exit;
+  }
 
-<?php
+  // Page title and header
   $page_title = "Dominik Mueller - " . $producer["producer"] . "";
-  
   require_once 'includes/header.php';
 ?>
 
