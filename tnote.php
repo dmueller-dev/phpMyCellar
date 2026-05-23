@@ -4,32 +4,45 @@
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/includes/init.php';
 
-  // Generate the token for the form
-  $csrf_token = generateCSRFToken();
-
-  // Get tasting note ID
-  $noteID=$_GET['id'];
-
-  // Include the database configuration file
-  global $mysqli, $conn;
-  
   // Check if user is not logged in
   if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
-  } else {
-    // --- FETCH USER DETAILS ---
-    $user_id = $_SESSION['user_id'];
-    $stmt = $mysqli->prepare("SELECT username, displayname FROM users WHERE user_id = ?");
-    $stmt->bind_param('i', $user_id);
-    $stmt->execute();
-    $stmt->bind_result($username, $displayname);
-    if (!$stmt->fetch()) {
-      $stmt->close();
-      die("<h2>User not found.</h2>");
-    }
-    $stmt->close();
   }
+
+  // Check if a tasting note ID parameter is provided; if not, redirect to tnotes.php
+  if (!isset($_GET['id']) || trim($_GET['id']) === '') {
+    header("Location: /tnotes.php");
+    exit;
+  }
+
+  // Get tasting note ID
+  $noteID = $_GET['id'];
+
+  // Include the database configuration file
+  global $mysqli, $conn;
+
+  // Fetch the tasting note and ensure it exists before proceeding
+  getNote($noteID);
+  if (empty($tasting_note)) {
+    header("Location: /tnotes.php");
+    exit;
+  }
+
+  // Generate the token for the form
+  $csrf_token = generateCSRFToken();
+
+  // Fetch user details
+  $user_id = $_SESSION['user_id'];
+  $stmt = $mysqli->prepare("SELECT username, displayname FROM users WHERE user_id = ?");
+  $stmt->bind_param('i', $user_id);
+  $stmt->execute();
+  $stmt->bind_result($username, $displayname);
+  if (!$stmt->fetch()) {
+    $stmt->close();
+    die("<h2>User not found.</h2>");
+  }
+  $stmt->close();
 
   // Initialize error and success messages
   $error = "";
@@ -64,10 +77,7 @@
       $post->close();
     }
   }
-?>
 
-<?php
-  getNote($noteID);
   // Vintage NV?
   if ($tasting_note["vintage"]==null) { $tasting_note["vintage"]="NV"; }
   // Get wine name
@@ -85,11 +95,9 @@
   } else {
     $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["name"];
   }
-?>
 
-<?php
+  // Page title and header
   $page_title = "Dominik Mueller - " . $wine_name . "";
-  
   require_once 'includes/header.php';
 ?>
 
@@ -270,7 +278,7 @@
 <?php function getNote($noteID)
 {
   global $mysqli, $conn;
-  
+
   // Perform query
   $stmt = $mysqli->prepare("select * from tnotes
                                    left join users on tnotes.user_id=users.user_id
@@ -291,7 +299,7 @@
   $stmt->bind_param("i", $noteID);
   $stmt->execute();
   $result = $stmt->get_result();
-  
+
   if ($result)
   {
     $GLOBALS['tasting_note'] = $result -> fetch_assoc();
