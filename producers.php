@@ -140,7 +140,8 @@
     if ($tasting_note['flawed_yn']=="yes") {
       $dmpts="flawed";
     } elseif ($tasting_note['dmpts']!=null) {
-      $dmpts="DM".$tasting_note["dmpts"];
+      $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM';
+      $dmpts=$initials.$tasting_note["dmpts"];
     } else {
       $dmpts="NR";
     }

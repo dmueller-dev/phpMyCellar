@@ -14,10 +14,10 @@
   } else {
     // --- FETCH USER DETAILS ---
     $user_id = $_SESSION['user_id'];
-    $stmt = $mysqli->prepare("SELECT username, displayname, email, password FROM users WHERE user_id = ?");
+    $stmt = $mysqli->prepare("SELECT username, displayname, email, password, initials FROM users WHERE user_id = ?");
     $stmt->bind_param('i', $user_id);
     $stmt->execute();
-    $stmt->bind_result($username, $displayname, $email, $hashed_password);
+    $stmt->bind_result($username, $displayname, $email, $hashed_password, $initials);
     if (!$stmt->fetch()) {
       $stmt->close();
       die("<h2>User not found.</h2>");
@@ -88,7 +88,10 @@
         <br><br>
         <label for="displayname">Full name:</label>
         <input type="text" id="displayname" value="<?= htmlspecialchars($displayname, ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
-        <p>If you like to change your email address or full display name, please contact me via the details below.</p>
+        <br><br>
+        <label for="initials">Initials:</label>
+        <input type="text" id="initials" value="<?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
+        <p>If you like to change your email address, full display name or initials, please contact me via the details below.</p>
         <hr><br>
         <label for="old_password">Current Password:</label>
         <input type="password" name="old_password" id="old_password" required>

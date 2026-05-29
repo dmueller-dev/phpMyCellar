@@ -189,7 +189,7 @@
             </select>
 
 	    <br><br>
-            <label for="dmpts">DM points:</label>
+            <label for="dmpts"><?php echo htmlspecialchars(!empty($_SESSION['initials']) ? $_SESSION['initials'] : 'DM', ENT_QUOTES, 'UTF-8'); ?> points:</label>
             <select name="dmpts" id="dmpts">
               <option value="0" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '0') ? 'selected' : 'selected'; ?>>0</option>
               <option value="1" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '1') ? 'selected' : ''; ?>>1</option>

@@ -157,7 +157,7 @@
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join producers on wines_master.producer_id=producers.producer_id
                                 left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-                                left join (select note_id,wine_id as w_id,tasting_date,flawed_yn,dmpts,status from tnotes) tnotes on x_blog_wines.wine_id=tnotes.w_id
+                                left join (select note_id,wine_id as w_id,tasting_date,flawed_yn,dmpts,status,users.initials from tnotes left join users on tnotes.user_id=users.user_id) tnotes on x_blog_wines.wine_id=tnotes.w_id
                               where x_blog_wines.blog_id=?
                               order by producers.producer asc, wines_master.name asc, wines.vintage asc, tnotes.tasting_date desc");
   $stmt->bind_param("i", $id);
@@ -187,7 +187,7 @@
       echo "<li><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
       $prevWine=$wine_name;
     }
-    if ($wine['flawed_yn']=="yes") { $dmpts="flawed"; } elseif ($wine['dmpts']!=null) { $dmpts="DM".$wine["dmpts"]; } else { $dmpts="NR"; }
+    if ($wine['flawed_yn']=="yes") { $dmpts="flawed"; } elseif ($wine['dmpts']!=null) { $initials = !empty($wine['initials']) ? $wine['initials'] : 'DM'; $dmpts=$initials.$wine["dmpts"]; } else { $dmpts="NR"; }
     if ($wine["note_id"]!=null and $wine["status"]=="published") { echo "<ul><li>Tasted on ".date_format(date_create($wine["tasting_date"]),"d M Y").": <a href='/tnote.php?id=".$wine["note_id"]."'>".$dmpts."</a></li></ul>"; }
   }
   if (mysqli_num_rows($result)==0) { echo "<li>No wines were featured in this story.</li>"; }

@@ -306,7 +306,7 @@
 
   while ($tasting_note = $result->fetch_assoc()) {
     // DM points?
-    if ($tasting_note['flawed_yn']=="yes") { $dmpts="flawed"; } elseif ($tasting_note['dmpts']!=null) { $dmpts="DM".$tasting_note["dmpts"]; } else { $dmpts="NR"; }
+    if ($tasting_note['flawed_yn']=="yes") { $dmpts="flawed"; } elseif ($tasting_note['dmpts']!=null) { $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM'; $dmpts = $initials . $tasting_note["dmpts"]; } else { $dmpts="NR"; }
     // Output
     echo "<li>Tasted by ".$tasting_note["displayname"]." on ".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnote.php?id=".$tasting_note['note_id']."'>".$dmpts."</a></li>";
   }

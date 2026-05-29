@@ -137,7 +137,8 @@
               <option value="<?php echo $note['note_id']; ?>" <?php echo (isset($_GET['note_id']) && $_GET['note_id'] == $note['note_id']) ? 'selected' : ''; ?>>
                 <?php 
                   $status_label = ($note['status'] === 'published') ? ' (Published)' : '';
-                  echo htmlspecialchars($note['note_id'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($note['tasting_date'], ENT_QUOTES, 'UTF-8') . ": " . (!empty($note['dmpts']) ? 'DM' . htmlspecialchars($note['dmpts'], ENT_QUOTES, 'UTF-8') . ': ' : '') . (($note['blind']=='blind') ? 'Blind tasting' : getWineName($note['nameconvention'], $note['vintage'], $note['name'], $note['producer'], $note['grape'], $note['vineyard'])) . $status_label; 
+                  $initials = !empty($note['initials']) ? $note['initials'] : 'DM';
+                  echo htmlspecialchars($note['note_id'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($note['tasting_date'], ENT_QUOTES, 'UTF-8') . ": " . (!empty($note['dmpts']) ? $initials . htmlspecialchars($note['dmpts'], ENT_QUOTES, 'UTF-8') . ': ' : '') . (($note['blind']=='blind') ? 'Blind tasting' : getWineName($note['nameconvention'], $note['vintage'], $note['name'], $note['producer'], $note['grape'], $note['vineyard'])) . $status_label; 
                 ?>
               </option>
             <?php endforeach; ?>
@@ -232,7 +233,7 @@
             </select>
 
             <br><br>
-            <label for="dmpts">DM points:</label>
+            <label for="dmpts"><?php echo htmlspecialchars(!empty($_SESSION['initials']) ? $_SESSION['initials'] : 'DM', ENT_QUOTES, 'UTF-8'); ?> points:</label>
             <select name="dmpts" id="dmpts">
               <option value="" <?php echo ($selected_note['dmpts'] == null) ? 'selected' : 'selected'; ?>></option>
               <option value="0" <?php echo ($selected_note['dmpts'] == '0') ? 'selected' : ''; ?>>0</option>

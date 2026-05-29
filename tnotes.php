@@ -222,6 +222,7 @@
 
   // Perform query
   $result = $mysqli -> query("select * from tnotes
+                                left join users on tnotes.user_id=users.user_id
                                 left join wines on tnotes.wine_id=wines.wine_id
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join producers on wines_master.producer_id=producers.producer_id
@@ -290,7 +291,8 @@
       $dmpts="flawed";
       $stars="flawed";
     } elseif ($tasting_note['dmpts']!=null) {
-      $dmpts="DM".$tasting_note["dmpts"];
+      $initials = !empty($tasting_note["initials"]) ? $tasting_note["initials"] : 'DM';
+      $dmpts=$initials.$tasting_note["dmpts"];
       if ($tasting_note["starpts"]!=1) {
         $stars=$tasting_note["starpts"]." stars";
       } else {

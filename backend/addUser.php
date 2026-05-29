@@ -21,11 +21,14 @@
     $password    = $_POST['password'] ?? '';
     $email       = trim($_POST['email'] ?? '');
     $displayname = trim($_POST['displayname'] ?? '');
+    $initials    = strtoupper(trim($_POST['initials'] ?? ''));
     $role        = "read";
 
     // Basic validation
-    if (!$username || !$password || !$email || !$displayname || !$role) {
+    if (!$username || !$password || !$email || !$displayname || !$role || !$initials) {
       $error = "All fields are required.";
+    } elseif (!preg_match('/^[A-Z0-9]{2,3}$/', $initials)) {
+      $error = "Initials must be between 2 and 3 alphanumeric characters.";
     } else {
       if ($conn->connect_errno) {
         $error = "Failed to connect to MySQL: " . $conn->connect_error;
@@ -45,8 +48,8 @@
           $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
           // Insert new user
-          $stmt = $conn->prepare("INSERT INTO users (username, password, displayname, role, email) VALUES (?, ?, ?, ?, ?)");
-          $stmt->bind_param("sssss", $username, $password_hash, $displayname, $role, $email);
+          $stmt = $conn->prepare("INSERT INTO users (username, password, displayname, role, email, initials) VALUES (?, ?, ?, ?, ?, ?)");
+          $stmt->bind_param("ssssss", $username, $password_hash, $displayname, $role, $email, $initials);
           if ($stmt->execute()) {
             $conn->commit();
             $success = "User added successfully! They can now <a href='/login.php'>log in</a>.";
@@ -92,6 +95,9 @@
         <br><br>
         <label for="displayname">Display Name:</label>
         <input type="text" name="displayname" id="displayname" required maxlength="100">
+        <br><br>
+        <label for="initials">Initials (2-5 characters, alphanumeric):</label>
+        <input type="text" name="initials" id="initials" required minlength="2" maxlength="5" pattern="[A-Za-z0-9]{2,5}" title="2 to 5 alphanumeric characters" style="text-transform: uppercase;">
         <br><br>
         <input type="submit" value="Sign Up">
       </form>

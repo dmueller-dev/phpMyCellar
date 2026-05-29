@@ -506,8 +506,10 @@ function getTastingNotes($conn) {
 
   $sql = "select tnotes.note_id, tnotes.user_id, tnotes.status, tnotes.tasting_date, tnotes.dmpts, tnotes.blind,
     wines.wine_id, wines.master_id, wines.vintage, wines_master.nameconvention, wines_master.name,
-    wines_master.grape, producers.producer, regions.country, regions.region, vineyards.vineyard
+    wines_master.grape, producers.producer, regions.country, regions.region, vineyards.vineyard,
+    users.initials
           from tnotes
+          left join users on tnotes.user_id=users.user_id
           left join wines on tnotes.wine_id=wines.wine_id
           left join wines_master on wines.master_id=wines_master.master_id
           left join producers on wines_master.producer_id=producers.producer_id

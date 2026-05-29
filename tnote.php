@@ -133,7 +133,7 @@
         <table>
           <tr><td>Flawed?</td><td style="width:5px;"></td><td><?php echo $tasting_note["flawed_yn"];?></td></tr>
           <tr>
-            <td>DM:</td>
+            <td><?php echo htmlspecialchars($tasting_note["initials"] ?? 'DM', ENT_QUOTES, 'UTF-8'); ?>:</td>
             <td style="width:5px;"></td>
             <td>
               <?php
@@ -313,7 +313,8 @@
 {
   global $mysqli, $conn;
     // Perform query
-  $stmt = $mysqli->prepare("select * from tnotes 
+  $stmt = $mysqli->prepare("select tnotes.*, users.initials from tnotes
+                              left join users on tnotes.user_id=users.user_id
                               where tnotes.status='published' and tnotes.note_id<>? and tnotes.wine_id=?
                               order by tnotes.tasting_date desc");
   $stmt->bind_param("ii", $id, $wine_id);
@@ -326,7 +327,8 @@
       if ($moreNotes['flawed_yn']=="yes") {
         $dmpts="flawed";
       } elseif ($moreNotes['dmpts']!=null) {
-        $dmpts="DM".$moreNotes["dmpts"];
+        $initials = !empty($moreNotes['initials']) ? $moreNotes['initials'] : 'DM';
+        $dmpts=$initials.$moreNotes["dmpts"];
       } else {
         $dmpts="NR";
       }
@@ -342,9 +344,10 @@
 {
   global $mysqli, $conn;
     // Perform query
-  $stmt = $mysqli->prepare("select * from wines
+  $stmt = $mysqli->prepare("select wines.*, wines_master.*, tnotes.*, producers.*, vineyards.*, users.initials from wines
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join tnotes on wines.wine_id=tnotes.wine_id
+                                left join users on tnotes.user_id=users.user_id
                                 left join producers on wines_master.producer_id=producers.producer_id
                                 left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
                               where tnotes.status='published' and wines.wine_id<>? and wines.master_id=?
@@ -374,7 +377,8 @@
       if ($otherVintages['flawed_yn']=="yes") {
         $dmpts="flawed";
       } elseif ($otherVintages['dmpts']!=null) {
-        $dmpts="DM".$otherVintages["dmpts"];
+        $initials = !empty($otherVintages['initials']) ? $otherVintages['initials'] : 'DM';
+        $dmpts=$initials.$otherVintages["dmpts"];
       } else {
         $dmpts="NR";
       }
