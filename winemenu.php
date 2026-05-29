@@ -473,10 +473,10 @@
     if($wine["wine_id"]!=$prevWine) {
       $favIcon = "";
       if (isset($wine["is_favourite"]) && $wine["is_favourite"] > 0) {
-        $favIcon = "<span style='color:#e25555; font-size:0.9em; margin-right:4px; vertical-align:middle; display:inline-block;'>❤️</span>";
+        $favIcon = "<span style='color:#e25555; font-size:0.9em; margin-left:18px; margin-right:4px; vertical-align:middle; position:relative; top:-1px; display:inline-block;'>❤️</span>";
       }
       echo (($prevWine!="") ? "</ul></details></li>" : "") . "<li style='padding-left:" . (($sort!="producer") ? "43" : "35") .
-        "px;text-indent:-18px;'><details><summary style='list-style:none;'><img style='display:inline-block;vertical-align:middle;' src='/img/" .
+        "px;text-indent:-18px;'><details><summary style='list-style:none;'><img style='display:inline-block; vertical-align:middle; position:relative; top:-1px;' src='/img/" .
         $wine["colour"] . "_16px.gif'>" . $favIcon . $display_name . "<small style='color:Gray;'> - " . $wine["numWine"] . " btl" . 
         (($wine["numWine"]>1) ? "s." : ".") . "</small></summary>";
       echo (($wine["wine_desc"]!=null) ? "<div class='winemenu_wine_desc'><hr><small>" . $wine["wine_desc"] . "</small></div>" : "");
