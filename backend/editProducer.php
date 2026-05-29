@@ -119,7 +119,7 @@
             </select>
             
             <br><br>
-            <label for="address">Address:</label>
+            <label for="address">Address:</label><br>
             <textarea name="address" id="address" rows="6" cols="40" maxlength="200"><?php echo htmlspecialchars($selected_producer['address'], ENT_QUOTES, 'UTF-8'); ?></textarea>
 
             <br><br>

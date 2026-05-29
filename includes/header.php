@@ -23,6 +23,13 @@
   <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
   <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
 
+  <?php
+    // Dynamically load the WYSIWYG integration script for logged-in backend pages
+    if (isset($_SESSION['user_id']) && strpos($_SERVER['SCRIPT_NAME'], '/backend/') !== false) {
+      echo '<script src="/includes/wysiwyg.js" defer></script>' . "\n";
+    }
+  ?>
+
   <?php if (isset($extra_head)) echo $extra_head; ?>
 </head>
 

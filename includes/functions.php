@@ -982,7 +982,7 @@ function validateCSRFToken($token) {
 
 // Function to sanitize input
 function sanitizeInput($input) {
-  return strip_tags(trim($input),'<a><b><br><em><h1><h2><h3><h4><i><img><p><small><strong>');
+  return strip_tags(trim($input),'<a><b><br><em><h1><h2><h3><h4><i><img><p><small><strong><u><ul><ol><li>');
 }
 
 // Function to validate country input
