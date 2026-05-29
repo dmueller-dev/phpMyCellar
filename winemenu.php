@@ -60,6 +60,7 @@
       function updateFilters(triggeredBySearch = false) {
         const cellarValue = document.getElementById('cellarToggle').value;
         const searchValue = document.getElementById('searchBox').value;
+        const favouriteCheckbox = document.getElementById('favouriteToggle');
         const url = new URL(window.location.href);
 
         // Handle cellar
@@ -74,6 +75,13 @@
           url.searchParams.set('q', searchValue);
         } else {
           url.searchParams.delete('q');
+        }
+
+        // Handle favourite
+        if (favouriteCheckbox && favouriteCheckbox.checked) {
+          url.searchParams.set('favourite', 'yes');
+        } else {
+          url.searchParams.delete('favourite');
         }
 
         // Set memory flag if page reload caused by search box
@@ -124,6 +132,13 @@
             placeholder="e.g. 2015 Bordeaux"
             style="font-family: Georgia, serif; padding: 2px; width: 160px; max-width: 100%;">
         </div>
+
+        <div class="filter-item" style="display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" id="favouriteToggle" onchange="updateFilters()"
+            <?php echo (isset($_GET['favourite']) && $_GET['favourite'] == 'yes') ? 'checked' : ''; ?>
+            style="cursor: pointer; vertical-align: middle; margin: 0;">
+          <label for="favouriteToggle" style="font-size: small; cursor: pointer; user-select: none; margin: 0; line-height: 1;">Favourites only</label>
+        </div>
       </div>
     </div>
 
@@ -139,6 +154,9 @@
           }
           if (!empty($_GET['q'])) {
             $urlParams .= "&q=" . urlencode($_GET['q']);
+          }
+          if (isset($_GET['favourite']) && $_GET['favourite'] == 'yes') {
+            $urlParams .= "&favourite=yes";
           }
         ?>
         <a class="filter-nav" href="/winemenu.php?sort=region<?php echo $urlParams; ?>">Region</a>
@@ -257,6 +275,12 @@
     ) as random_wine on bottles.wine_id = random_wine.wine_id ";
   }
 
+  // Favourite constraint
+  $favouriteConstraint = "";
+  if (isset($_GET['favourite']) && $_GET['favourite'] == 'yes') {
+    $favouriteConstraint = " AND EXISTS (SELECT 1 FROM tnotes WHERE tnotes.wine_id = wines.wine_id AND tnotes.favourite = 'yes' AND tnotes.status = 'published') ";
+  }
+
   // Perform query
   $result = $mysqli -> query(
     "select
@@ -293,7 +317,8 @@
       appellations.appellation,
       v.grape_desc,
       sum(count(bottles.bottle_id)) over (partition by wines.wine_id, bottle_formats.format) as numWine,
-      count(bottles.bottle_id) as numWineBin
+      count(bottles.bottle_id) as numWineBin,
+      (SELECT COUNT(1) FROM tnotes WHERE tnotes.wine_id = wines.wine_id AND tnotes.favourite = 'yes' AND tnotes.status = 'published') AS is_favourite
     from bottles"
     .$randomWineConstraint
     ."left join bottle_formats on bottles.format=bottle_formats.format
@@ -310,6 +335,7 @@
     where status='in cellar' and (year(curdate())>=bottles.drink_from or bottles.drink_from is null)"
     .$cellarConstraint
     .$searchConstraint
+    .$favouriteConstraint
     .(
       ($sort=="tenyearsold") ? " and vintage is not null and (year(curdate())-vintage=10)" :
       (
@@ -445,9 +471,13 @@
 
     // Print wine
     if($wine["wine_id"]!=$prevWine) {
+      $favIcon = "";
+      if (isset($wine["is_favourite"]) && $wine["is_favourite"] > 0) {
+        $favIcon = "<span style='color:#e25555; font-size:0.9em; margin-right:4px; vertical-align:middle; display:inline-block;'>❤️</span>";
+      }
       echo (($prevWine!="") ? "</ul></details></li>" : "") . "<li style='padding-left:" . (($sort!="producer") ? "43" : "35") .
         "px;text-indent:-18px;'><details><summary style='list-style:none;'><img style='display:inline-block;vertical-align:middle;' src='/img/" .
-        $wine["colour"] . "_16px.gif'>" . $display_name . "<small style='color:Gray;'> - " . $wine["numWine"] . " btl" . 
+        $wine["colour"] . "_16px.gif'>" . $favIcon . $display_name . "<small style='color:Gray;'> - " . $wine["numWine"] . " btl" . 
         (($wine["numWine"]>1) ? "s." : ".") . "</small></summary>";
       echo (($wine["wine_desc"]!=null) ? "<div class='winemenu_wine_desc'><hr><small>" . $wine["wine_desc"] . "</small></div>" : "");
       echo "<ul style='list-style-type:none;padding:0;margin-top:2px;margin-bottom:8px;'>";

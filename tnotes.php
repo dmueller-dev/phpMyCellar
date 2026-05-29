@@ -56,11 +56,17 @@
       let searchTimeout;
       function updateFilters(triggeredBySearch = false) {
         const searchValue = document.getElementById('searchBox').value;
+        const favouriteCheckbox = document.getElementById('favouriteToggle');
         const url = new URL(window.location.href);
         if (searchValue) {
           url.searchParams.set('q', searchValue);
         } else {
           url.searchParams.delete('q');
+        }
+        if (favouriteCheckbox && favouriteCheckbox.checked) {
+          url.searchParams.set('favourite', 'yes');
+        } else {
+          url.searchParams.delete('favourite');
         }
         if (triggeredBySearch) {
           sessionStorage.setItem('returnFocusToSearch', 'true');
@@ -83,17 +89,30 @@
     <div class="card">
       <h3 style="margin-bottom:10px; margin-top:0;">Browse all tasting notes</h3>
 
-      <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 15px;">
-        <label for="searchBox" style="font-size: small;">Search:</label>
-        <input type="text" id="searchBox" onkeyup="triggerSearch()"
-          value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8') : ''; ?>"
-          placeholder="e.g. 2015 Bordeaux"
-          style="font-family: Georgia, serif; padding: 2px; width: 200px; max-width: 100%;">
+      <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <label for="searchBox" style="font-size: small;">Search:</label>
+          <input type="text" id="searchBox" onkeyup="triggerSearch()"
+            value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8') : ''; ?>"
+            placeholder="e.g. 2015 Bordeaux"
+            style="font-family: Georgia, serif; padding: 2px; width: 200px; max-width: 100%;">
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <input type="checkbox" id="favouriteToggle" onchange="updateFilters()"
+            <?php echo (isset($_GET['favourite']) && $_GET['favourite'] == 'yes') ? 'checked' : ''; ?>
+            style="cursor: pointer; vertical-align: middle;">
+          <label for="favouriteToggle" style="font-size: small; cursor: pointer; user-select: none;">Only show Favourites</label>
+        </div>
       </div>
 
       <p style="margin-top:0;"><small>
         Sort by:
-        <?php $urlParams = !empty($_GET['q']) ? "&q=" . urlencode($_GET['q']) : ""; ?>
+        <?php 
+          $urlParams = !empty($_GET['q']) ? "&q=" . urlencode($_GET['q']) : ""; 
+          if (isset($_GET['favourite']) && $_GET['favourite'] == 'yes') {
+            $urlParams .= "&favourite=yes";
+          }
+        ?>
         <a class="filter-nav" href="/tnotes.php?sort=date<?php echo $urlParams; ?>">Tasting date</a>
         <a class="filter-nav" href="/tnotes.php?sort=rating<?php echo $urlParams; ?>">DM points</a>
         <a class="filter-nav" href="/tnotes.php?sort=stars<?php echo $urlParams; ?>">Stars</a>
@@ -185,6 +204,11 @@
 
   // Base WHERE condition
   $sqlWhere = " WHERE tnotes.status='published' ";
+
+  // Favourites filter
+  if (isset($_GET['favourite']) && $_GET['favourite'] == 'yes') {
+    $sqlWhere .= " AND tnotes.favourite = 'yes' ";
+  }
 
   // Ten-year-old wines
   if ($sort == "tenyears") {
@@ -359,8 +383,8 @@
     if ($sort=="date" or $sort=="rating" or $sort=="tenyears" or $sort=="twentyplus") {
       echo date_format(date_create($tasting_note["tasting_date"]),"d M Y").": ";
     }
-    if ($tasting_note["starpts"]==5) {
-      echo "<img src='/img/5stars_16px.gif'>";
+    if (isset($tasting_note["favourite"]) && $tasting_note["favourite"] == 'yes') {
+      echo "<span style='color:#e25555; margin-right:4px; font-size:0.9em;'>❤️</span>";
     }
     echo "<a href='/tnote.php?id=".$tasting_note['note_id']."'>".$wine_name."</a> (".$dmpts.")</li>";
     // Set previous values

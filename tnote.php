@@ -158,6 +158,19 @@
               ?>
             </td>
           </tr>
+          <tr>
+            <td>Favourite:</td>
+            <td style="width:5px;"></td>
+            <td>
+              <?php
+                if(isset($tasting_note["favourite"]) && $tasting_note["favourite"] == 'yes') {
+                  echo "<span style='color:#e25555; font-size:0.9em;'>❤️ Yes</span>";
+                } else {
+                  echo "No";
+                }
+              ?>
+            </td>
+          </tr>
         </table>
       </p>
       <?php if ($tasting_note["blind"]=="blind") { echo "<p><em>Tasted blind.</em></p>"; } ?>

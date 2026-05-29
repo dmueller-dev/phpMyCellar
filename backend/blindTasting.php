@@ -33,6 +33,7 @@
       $wset_complexity = number_format(filter_input(INPUT_POST, 'wset_complexity', FILTER_VALIDATE_FLOAT),1,'.','');
       $wsetpts=number_format($wset_balance+$wset_length+$wset_intensity+$wset_complexity, 1, '.', '');
       $starpts = filter_input(INPUT_POST, 'starpts', FILTER_VALIDATE_INT);
+      $favourite = sanitizeInput($_POST['favourite'] ?? 'no');
       $drink_from = filter_input(INPUT_POST, 'drink_from', FILTER_VALIDATE_INT);
       $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
       $errorsDrinkDates = validateDrinkDatesInput($drink_from, $drink_through);
@@ -46,7 +47,7 @@
         // Start transaction
         $conn->begin_transaction();
         try {
-          if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $status, $blind, $img, $img_class)) {
+          if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite)) {
             $conn->commit();
             $success_message = "Note added successfully.";
           } else {
@@ -226,7 +227,14 @@
             </select>
 
             <br><br>
-	    <label for="blind">Tasted blind?</label><br>
+            <label for="favourite">Favourite?</label><br>
+            <select name="favourite" id="favourite" required>
+              <option value="no" <?php echo (isset($_POST['favourite']) && $_POST['favourite'] == 'no') ? 'selected' : 'selected'; ?>>no</option>
+              <option value="yes" <?php echo (isset($_POST['favourite']) && $_POST['favourite'] == 'yes') ? 'selected' : ''; ?>>yes</option>
+            </select>
+
+            <br><br>
+            <label for="blind">Tasted blind?</label><br>
             <select name="blind" id="blind" required>
               <option value="not blind" <?php echo (isset($_POST['blind']) && $_POST['blind'] == 'not blind') ? 'selected' : 'selected'; ?>>not blind</option>
               <option value="blind" <?php echo (isset($_POST['blind']) && $_POST['blind'] == 'blind') ? 'selected' : ''; ?>>blind</option>
@@ -237,7 +245,7 @@
             <label for="drink_through"> through</label> <input type="text" id="drink_through" name="drink_through" maxlength="4" size="5" value="<?php echo isset($_POST['drink_through']) ? filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT) : ''; ?>"  placeholder="yyyy">
 
             <h3>Image and publication</h3>
-	    <label for="img">Image:</label>
+            <label for="img">Image:</label>
             <br><input type="text" size="40" name="img" placeholder="filename.jpg" value="<?php echo isset($_POST['img']) ? htmlspecialchars(sanitizeInput($_POST['img']), ENT_QUOTES, 'UTF-8') : ''; ?>">
             <br><label for="img_class">Image class:</label>
             <br>
@@ -248,7 +256,7 @@
             </select>
 
             <br><br>
-	    <label for="status">Publish note?</label>
+            <label for="status">Publish note?</label>
             <br>
             <select name="status" id="status" required <?php echo ($role === 'write') ? 'disabled' : ''; ?>>
               <option value="draft" <?php echo ($role === 'write' || empty($_POST['status']) || (isset($_POST['status']) && $_POST['status'] == 'draft')) ? 'selected' : ''; ?>>draft</option>
