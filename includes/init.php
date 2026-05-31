@@ -32,7 +32,7 @@
   if (strpos($_SERVER['SCRIPT_FILENAME'], '/backend/') !== false) {
     if (!isset($_SESSION['user_id'])) {
       // Not logged in, redirect to login
-      header("Location: /login.php");
+      header("Location: /login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
       exit();
     }
 

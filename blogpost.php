@@ -6,7 +6,7 @@
 
   // Check if user is not logged in
   if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
     exit();
   } else {
     // Fetch user details

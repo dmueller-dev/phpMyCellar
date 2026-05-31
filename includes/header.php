@@ -57,7 +57,11 @@
       <li><a class="<?php echo ($currentPage == 'blog.php' || $currentPage == 'blogpost.php') ? 'active' : ''; ?>" href="/blog.php" title="My wine blog">Stories</a></li>
       <?php
         if (!isset($_SESSION['user_id'])) {
-          echo "<li class='right'><a class='".(($currentPage == 'login.php') ? 'active ' : '')."' href='/login.php' title='Login'>Login</a></li>";
+          $redirect_param = '';
+          if ($currentPage !== 'login.php' && $currentPage !== 'logout.php') {
+            $redirect_param = '?redirect=' . urlencode($_SERVER['REQUEST_URI']);
+          }
+          echo "<li class='right'><a class='".(($currentPage == 'login.php') ? 'active ' : '')."' href='/login.php" . $redirect_param . "' title='Login'>Login</a></li>";
         } elseif (isset($_SESSION['user_id'])) {
           echo "<li class='dropdown right'>" .
             "<label for='drop-account' class='menu-label'>My account</label>" .

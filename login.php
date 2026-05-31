@@ -36,7 +36,31 @@
               $_SESSION['role'] = $user['role'];
               $_SESSION['initials'] = $user['initials'];
               $stmt->close();
-              header("Location: index.php");
+
+              // Determine where to redirect the user
+              $redirect_url = 'index.php';
+              if (!empty($_GET['redirect'])) {
+                $redirect_url = $_GET['redirect'];
+              } elseif (!empty($_SERVER['HTTP_REFERER'])) {
+                $referer = $_SERVER['HTTP_REFERER'];
+                $referer_parts = parse_url($referer);
+                $current_host = $_SERVER['HTTP_HOST'] ?? '';
+                
+                if (!isset($referer_parts['host']) || $referer_parts['host'] === $current_host) {
+                  $path = $referer_parts['path'] ?? '';
+                  $query = isset($referer_parts['query']) ? '?' . $referer_parts['query'] : '';
+                  $referer_local = $path . $query;
+                  
+                  if (basename($path) !== 'login.php' && basename($path) !== 'logout.php') {
+                      $redirect_url = $referer_local;
+                  }
+                }
+              }
+              
+              // Validate and sanitize the redirect URL to prevent Open Redirect vulnerabilities
+              $redirect_url = getSafeRedirectUrl($redirect_url);
+              
+              header("Location: " . $redirect_url);
               exit();
           } else {
               $error = "Invalid username or password";

@@ -985,6 +985,33 @@ function sanitizeInput($input) {
   return strip_tags(trim($input),'<a><b><br><em><h1><h2><h3><h4><i><img><p><small><strong><u><ul><ol><li>');
 }
 
+// Function to validate and sanitize a redirect URL to prevent Open Redirect vulnerabilities
+function getSafeRedirectUrl($url) {
+  if (empty($url)) {
+    return 'index.php';
+  }
+  
+  // Parse the URL
+  $parts = parse_url($url);
+  
+  // To be safe, we only allow local redirects (no host, no scheme)
+  if (isset($parts['host']) || isset($parts['scheme'])) {
+    return 'index.php';
+  }
+  
+  // Ensure it doesn't start with // or \ to prevent protocol-relative redirects
+  if (preg_match('/^\/\//', $url) || preg_match('/^\\\\/', $url)) {
+    return 'index.php';
+  }
+  
+  // Ensure it doesn't contain a colon (prevent javascript: scheme, etc.)
+  if (strpos($url, ':') !== false) {
+    return 'index.php';
+  }
+  
+  return $url;
+}
+
 // Function to validate country input
 function validateCountryInput($country, $country_desc) {
   $errors = [];
