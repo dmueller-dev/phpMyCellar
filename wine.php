@@ -96,6 +96,7 @@
   $page_title = "Dominik Mueller - " . $wine_name . "";
 
   require_once 'includes/header.php';
+  $has_contribution_rights = isset($_SESSION['user_id']) && (($_SESSION['role'] ?? 'read') === 'write' || ($_SESSION['role'] ?? 'read') === 'admin');
 ?>
 
 <div class="row">
@@ -116,7 +117,12 @@
       </section>
     </div>
     <div class="card">
-      <h3>Tasting notes on this wine</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="margin: 0;">Tasting notes on this wine</h3>
+        <?php if ($has_contribution_rights): ?>
+          <a class="filter-nav" href="/backend/addTastingNote.php?wine_id=<?php echo $wine['wine_id']; ?>" title="Add a tasting note" style="margin: 0;">+ Add tasting note</a>
+        <?php endif; ?>
+      </div>
       <p><ul style="list-style-type:none;padding:0;margin:0;">
         <?php
           if (!isset($_SESSION['user_id'])) {

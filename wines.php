@@ -114,6 +114,7 @@
   $prevRegion="";
   $prevProducer="";
   $prevVintage="";
+  $has_contribution_rights = isset($_SESSION['user_id']) && (($_SESSION['role'] ?? 'read') === 'write' || ($_SESSION['role'] ?? 'read') === 'admin');
 
   // Base WHERE condition
   $sqlWhere = " WHERE 1=1 ";
@@ -231,6 +232,13 @@
     } else {
       $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
     }
+
+    // Generate shortcut link if user is authorized to contribute
+    $add_note_link = "";
+    if ($has_contribution_rights) {
+      $add_note_link = " <a href='/backend/addTastingNote.php?wine_id=" . $wine["wine_id"] . "' title='Add a tasting note for this wine' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
+    }
+
     // Output
     if($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus") {
       if($wine["country"]!=$prevCountry) {
@@ -242,7 +250,7 @@
         echo ($prevRegion!="") ? "</ul></details></li>" : "";
         echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["region"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
     } elseif($sort=="producer") {
       if ($wine["producer"]!=$prevProducer) {
         echo ($prevProducer!="") ? "</ul></details><br>" : "";
@@ -252,7 +260,7 @@
           echo "<details><summary><b>".$wine["producer"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         }
       }
-      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
+      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
     } elseif($sort=="vintage") {
       if($wine["vintage"]!=$prevVintage) {
         echo ($prevVintage!="") ? "</ul></details></li></ul></details><br>" : "";
@@ -263,7 +271,7 @@
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
         echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
     } elseif($sort=="variety") {
       if($wine["grape"]!=$prevVariety) {
         echo ($prevVariety!="") ? "</ul></details></li></ul></details><br>" : "";
@@ -278,7 +286,7 @@
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
         echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
     }
     // Set previous values
     $prevCountry=$wine["country"];

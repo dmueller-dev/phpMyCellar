@@ -105,6 +105,7 @@
 
           if (!empty($success_message)) {
             echo "<div style='color: green;'>" . $success_message . "</div>";
+            echo "<p><a href='/backend/browseBottles.php'>Return to browse bottles</a></p>";
             echo "<p><a href='https://dmueller.com/backend/blindTasting.php'>New blind tasting note.</a></p>";
           }
         ?>

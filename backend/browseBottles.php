@@ -66,11 +66,13 @@
 <?php function renderBottles($num,$sort,$sqlOrderBy)
 {
   global $mysqli, $conn;
-    $prevCountry="";
+  $prevCountry="";
   $prevRegion="";
   $prevProducer="";
   $prevVintage="";
   $prevLocation="";
+  $is_admin = isset($_SESSION['user_id']) && ($_SESSION['role'] ?? 'read') === 'admin';
+
   // Perform query
   $result = $mysqli -> query(
     "select
@@ -136,6 +138,13 @@
     if ($wine["vintage"]==null) { $wine["vintage"]="NV"; }
     // Get wine name
     $wine_name = getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']);
+
+    // Generate shortcut link if user is admin
+    $blind_taste_link = "";
+    if ($is_admin) {
+      $blind_taste_link = " <a href='/backend/blindTasting.php?bottle_id=" . $wine["bottle_id"] . "' title='Write blind tasting note' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
+    }
+
     // Output
     if($sort=="region" || $sort=="tenyearsold") {
       if($wine["country"]!=$prevCountry) {
@@ -147,7 +156,7 @@
         echo ($prevRegion!="") ? "</ul></details></li>" : "";
         echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["region"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small></li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small>" . $blind_taste_link . "</li>";
     } elseif($sort=="producer") {
       if ($wine["producer"]!=$prevProducer) {
         echo ($prevProducer!="") ? "</ul></details><br>" : "";
@@ -157,7 +166,7 @@
           echo "<details><summary><b>".htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8')."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         }
       }
-      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small></li>";
+      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small>" . $blind_taste_link . "</li>";
     } elseif($sort=="vintage") {
       if($wine["vintage"]!=$prevVintage) {
         echo ($prevVintage!="") ? "</ul></details></li></ul></details><br>" : "";
@@ -168,7 +177,7 @@
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
         echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small></li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small>" . $blind_taste_link . "</li>";
     } elseif($sort=="variety") {
       if($wine["grape"]!=$prevVariety) {
         echo ($prevVariety!="") ? "</ul></details></li></ul></details><br>" : "";
@@ -183,13 +192,13 @@
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
         echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small></li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small>" . $blind_taste_link . "</li>";
     } elseif($sort=="location") {
       if($wine["cellar_name"].$wine["bin_name"]!=$prevLocation) {
         echo ($prevLocation!="") ? "</ul></details><br>" : "";
         echo "<details><summary><b>".$wine["cellar_name"]." / ".$wine["bin_name"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small></li>";
+      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/editBottle.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a> - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small>" . $blind_taste_link . "</li>";
     }
     // Set previous values
     $prevCountry=$wine["country"];

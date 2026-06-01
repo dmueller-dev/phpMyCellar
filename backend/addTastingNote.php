@@ -107,6 +107,10 @@
 
           if (!empty($success_message)) {
             echo "<div style='color: green;'>" . $success_message . "</div>";
+            if (isset($_GET['wine_id']) || isset($_POST['wine_id'])) {
+              $back_wine_id = isset($_POST['wine_id']) ? (int)$_POST['wine_id'] : (int)$_GET['wine_id'];
+              echo "<p><a href='/wine.php?id=" . $back_wine_id . "'>View updated wine page</a></p>";
+            }
             echo "<p><a href='https://dmueller.com/backend/addTastingNote.php'>New tasting note.</a></p>";
           }
         ?>
