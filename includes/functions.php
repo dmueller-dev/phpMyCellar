@@ -774,6 +774,31 @@ function updateBottle($conn, $bottle_id, $wine_id, $format, $bin_id, $store_id, 
   return $stmt->execute();
 }
 
+// Mark bottle as consumed
+function markBottleAsConsumed($conn, $bottle_id, $consumption_date, $note_id = null) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+  if (empty($note_id) || $note_id === "") { $note_id = null; }
+
+  if ($note_id !== null) {
+    $sql = "UPDATE bottles SET status = 'consumed', consumption_date = ?, storage_location = NULL, note_id = ? WHERE bottle_id = ?";
+    $stmt = $conn->prepare($sql);
+    if ($stmt === false) {
+      return false;
+    }
+    $stmt->bind_param("sii", $consumption_date, $note_id, $bottle_id);
+  } else {
+    $sql = "UPDATE bottles SET status = 'consumed', consumption_date = ?, storage_location = NULL WHERE bottle_id = ?";
+    $stmt = $conn->prepare($sql);
+    if ($stmt === false) {
+      return false;
+    }
+    $stmt->bind_param("si", $consumption_date, $bottle_id);
+  }
+  return $stmt->execute();
+}
+
 function updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $starpts = null, $drink_from = null, $drink_through = null, $blind, $status, $img = null, $img_class = null, $favourite = 'no') {
 
   if (empty($dmpts) || $dmpts=="") { $dmpts=null; }

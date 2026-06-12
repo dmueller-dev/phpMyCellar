@@ -12,6 +12,7 @@
 
   $errors = [];
   $success_message = '';
+  $tasting_note_id = null;
 
   // Handle form submission
   if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -48,6 +49,7 @@
         $conn->begin_transaction();
         try {
           if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite)) {
+            $tasting_note_id = $conn->insert_id; // Retrieve note ID from database
             $conn->commit();
             $success_message = "Note added successfully.";
           } else {
@@ -64,6 +66,24 @@
         } elseif (!empty($errorsDrinkDates)) {
           $errors[]=$errorsDrinkDates[0];
         }
+      }
+    } elseif (isset($_POST['confirmConsume'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      $consume_bottle_id = filter_input(INPUT_POST, 'consume_bottle_id', FILTER_VALIDATE_INT);
+      $consumption_date = sanitizeInput($_POST['consumption_date']);
+      $tasting_note_id = filter_input(INPUT_POST, 'tasting_note_id', FILTER_VALIDATE_INT);
+      
+      if ($consume_bottle_id && !empty($consumption_date)) {
+        if (markBottleAsConsumed($conn, $consume_bottle_id, $consumption_date, $tasting_note_id)) {
+          $success_message = "Bottle #" . $consume_bottle_id . " marked as consumed.";
+        } else {
+          $errors[] = "Error marking bottle as consumed.";
+        }
+      } else {
+        $errors[] = "Invalid inputs for marking bottle as consumed.";
       }
     }
   }
@@ -104,9 +124,26 @@
           }
 
           if (!empty($success_message)) {
-            echo "<div style='color: green;'>" . $success_message . "</div>";
+            echo "<div style='color: green; font-weight: bold; margin-bottom: 15px;'>" . $success_message . "</div>";
+            
+            if (isset($bottle_id) && $bottle_id && isset($tasting_date) && !empty($tasting_date) && $success_message === "Note added successfully.") {
+              echo "<div style='margin: 20px 0; padding: 15px; border: 1px solid indianred; background-color: #fff8f8; border-radius: 4px;'>";
+              echo "  <p style='margin-top: 0; color: #333;'>Would you like to mark bottle <strong>#" . htmlspecialchars($bottle_id, ENT_QUOTES, 'UTF-8') . "</strong> as consumed on <strong>" . htmlspecialchars($tasting_date, ENT_QUOTES, 'UTF-8') . "</strong>?</p>";
+              echo "  <form method='POST' style='display: inline;'>";
+              echo "    <input type='hidden' name='csrf_token' value='" . $csrf_token . "'>";
+              echo "    <input type='hidden' name='consume_bottle_id' value='" . htmlspecialchars($bottle_id, ENT_QUOTES, 'UTF-8') . "'>";
+              echo "    <input type='hidden' name='consumption_date' value='" . htmlspecialchars($tasting_date, ENT_QUOTES, 'UTF-8') . "'>";
+              if (isset($tasting_note_id) && $tasting_note_id) {
+                echo "    <input type='hidden' name='tasting_note_id' value='" . htmlspecialchars($tasting_note_id, ENT_QUOTES, 'UTF-8') . "'>";
+              }
+              echo "    <input type='submit' name='confirmConsume' value='Yes' style='background-color: indianred; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: bold; margin-right: 10px;'>";
+              echo "  </form>";
+              echo "  <a href='/backend/blindTasting.php' style='text-decoration: none;'><button type='button' style='background-color: #ccc; color: #333; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: bold;'>No</button></a>";
+              echo "</div>";
+            }
+            
             echo "<p><a href='/backend/browseBottles.php'>Return to browse bottles</a></p>";
-            echo "<p><a href='https://dmueller.com/backend/blindTasting.php'>New blind tasting note.</a></p>";
+            echo "<p><a href='/backend/blindTasting.php'>New blind tasting note.</a></p>";
           }
         ?>
 
