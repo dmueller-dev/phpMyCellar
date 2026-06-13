@@ -78,6 +78,96 @@
 
 <?php
   $page_title = 'Edit bottle';
+
+  $extra_head = <<<HTML
+    <script>
+      let allBottles = [];
+      let allWines = [];
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const bottleSelect = document.getElementById('bottle_id');
+        if (bottleSelect) {
+          for (let i = 1; i < bottleSelect.options.length; i++) {
+            const opt = bottleSelect.options[i];
+            allBottles.push({
+              value: opt.value,
+              text: opt.textContent,
+              selected: opt.selected
+            });
+          }
+        }
+
+        const wineSelect = document.getElementById('wine_id');
+        if (wineSelect) {
+          for (let i = 1; i < wineSelect.options.length; i++) {
+            const opt = wineSelect.options[i];
+            allWines.push({
+              value: opt.value,
+              text: opt.textContent,
+              selected: opt.selected
+            });
+          }
+        }
+      });
+
+      function filterBottles() {
+        const query = document.getElementById('searchBottleBox').value.toLowerCase().trim();
+        const select = document.getElementById('bottle_id');
+        if (!select) return;
+        
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+
+        while (select.options.length > 1) {
+          select.remove(1);
+        }
+
+        allBottles.forEach(b => {
+          const textLower = b.text.toLowerCase();
+          const matches = terms.every(term => textLower.includes(term));
+
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = b.value;
+            opt.textContent = b.text;
+            if (b.value === currentValue) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          }
+        });
+      }
+
+      function filterWines() {
+        const query = document.getElementById('searchWineBox').value.toLowerCase().trim();
+        const select = document.getElementById('wine_id');
+        if (!select) return;
+        
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+
+        while (select.options.length > 1) {
+          select.remove(1);
+        }
+
+        allWines.forEach(w => {
+          const textLower = w.text.toLowerCase();
+          const matches = terms.every(term => textLower.includes(term));
+
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = w.value;
+            opt.textContent = w.text;
+            if (w.value === currentValue) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          }
+        });
+      }
+    </script>
+  HTML;
+
   require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -101,15 +191,22 @@
         ?>
 
         <form method="GET">
-          <label for="bottle_id">Select Bottle:</label>
-          <select name="bottle_id" id="bottle_id" onchange="this.form.submit()">
-            <option value="">Select a bottle</option>
-            <?php foreach ($bottles as $bottle): ?>
-              <option value="<?php echo $bottle['bottle_id']; ?>" <?php echo (isset($_GET['bottle_id']) && $_GET['bottle_id'] == $bottle['bottle_id']) ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($bottle['bottle_id'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($bottle['cellar_name'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($bottle['bin_name'], ENT_QUOTES, 'UTF-8') . ": " . getWineName($bottle['nameconvention'], $bottle['vintage'], $bottle['name'], $bottle['producer'], $bottle['grape'], $bottle['vineyard']) ; ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
+          <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Select Bottle:</label>
+          <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+            <input type="text" id="searchBottleBox" onkeyup="filterBottles()"
+              placeholder="🔍 Search bottle..."
+              style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+              autocomplete="off">
+            <select name="bottle_id" id="bottle_id" onchange="this.form.submit()"
+              style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+              <option value="">Select a bottle</option>
+              <?php foreach ($bottles as $bottle): ?>
+                <option value="<?php echo $bottle['bottle_id']; ?>" <?php echo (isset($_GET['bottle_id']) && $_GET['bottle_id'] == $bottle['bottle_id']) ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($bottle['bottle_id'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($bottle['cellar_name'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($bottle['bin_name'], ENT_QUOTES, 'UTF-8') . ": " . getWineName($bottle['nameconvention'], $bottle['vintage'], $bottle['name'], $bottle['producer'], $bottle['grape'], $bottle['vineyard']) ; ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
         </form>
 
         <?php if ($selected_bottle): ?>
@@ -118,15 +215,22 @@
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
             <input type="hidden" name="bottle_id" value="<?php echo isset($_POST['bottle_id']) ? htmlspecialchars($_POST['bottle_id'], ENT_QUOTES, 'UTF-8') : $selected_bottle['bottle_id']; ?>">
             
-            <label for="wine_id">Wine:</label><br>
-            <select name="wine_id" id="wine_id" required>
-              <option value="">Select a wine</option>
-              <?php foreach ($wines as $wine): ?>
-                <option value="<?php echo $wine['wine_id']; ?>" <?php echo ($wine['wine_id'] == $selected_bottle['wine_id']) ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($wine['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($wine['region'], ENT_QUOTES, 'UTF-8') . ": " . getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']) ; ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+            <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Wine:</label>
+            <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+              <input type="text" id="searchWineBox" onkeyup="filterWines()"
+                placeholder="🔍 Search wine..."
+                style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+                autocomplete="off">
+              <select name="wine_id" id="wine_id" required
+                style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+                <option value="">Select a wine</option>
+                <?php foreach ($wines as $wine): ?>
+                  <option value="<?php echo $wine['wine_id']; ?>" <?php echo ($wine['wine_id'] == $selected_bottle['wine_id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($wine['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($wine['region'], ENT_QUOTES, 'UTF-8') . ": " . getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']) ; ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
 
             <br><br>
             <label for="format">Format:</label><br>

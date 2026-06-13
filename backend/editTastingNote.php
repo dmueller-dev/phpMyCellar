@@ -108,6 +108,58 @@
 
 <?php
   $page_title = 'Edit tasting note';
+
+  $extra_head = <<<HTML
+    <script>
+      let allNotes = [];
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const select = document.getElementById('note_id');
+        if (select) {
+          // Cache all options on page load (except the placeholder)
+          for (let i = 1; i < select.options.length; i++) {
+            const opt = select.options[i];
+            allNotes.push({
+              value: opt.value,
+              text: opt.textContent,
+              selected: opt.selected
+            });
+          }
+        }
+      });
+
+      function filterNotes() {
+        const query = document.getElementById('searchNoteBox').value.toLowerCase().trim();
+        const select = document.getElementById('note_id');
+        if (!select) return;
+        
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+
+        // Clear options, preserving the placeholder
+        while (select.options.length > 1) {
+          select.remove(1);
+        }
+
+        // Re-populate with matching options
+        allNotes.forEach(n => {
+          const textLower = n.text.toLowerCase();
+          const matches = terms.every(term => textLower.includes(term));
+
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = n.value;
+            opt.textContent = n.text;
+            if (n.value === currentValue) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          }
+        });
+      }
+    </script>
+  HTML;
+
   require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -131,19 +183,26 @@
         ?>
 
         <form method="GET">
-          <label for="note_id">Select tasting note:</label>
-          <select name="note_id" id="note_id" onchange="this.form.submit()" required>
-            <option value="">Select a tasting note</option>
-            <?php foreach ($notes as $note): ?>
-              <option value="<?php echo $note['note_id']; ?>" <?php echo (isset($_GET['note_id']) && $_GET['note_id'] == $note['note_id']) ? 'selected' : ''; ?>>
-                <?php 
-                  $status_label = ($note['status'] === 'published') ? ' (Published)' : '';
-                  $initials = !empty($note['initials']) ? $note['initials'] : 'DM';
-                  echo htmlspecialchars($note['note_id'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($note['tasting_date'], ENT_QUOTES, 'UTF-8') . ": " . (!empty($note['dmpts']) ? $initials . htmlspecialchars($note['dmpts'], ENT_QUOTES, 'UTF-8') . ': ' : '') . (($note['blind']=='blind') ? 'Blind tasting' : getWineName($note['nameconvention'], $note['vintage'], $note['name'], $note['producer'], $note['grape'], $note['vineyard'])) . $status_label; 
-                ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
+          <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Select tasting note:</label>
+          <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+            <input type="text" id="searchNoteBox" onkeyup="filterNotes()"
+              placeholder="🔍 Search note ID or wine name..."
+              style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+              autocomplete="off">
+            <select name="note_id" id="note_id" onchange="this.form.submit()" required
+              style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+              <option value="">Select a tasting note</option>
+              <?php foreach ($notes as $note): ?>
+                <option value="<?php echo $note['note_id']; ?>" <?php echo (isset($_GET['note_id']) && $_GET['note_id'] == $note['note_id']) ? 'selected' : ''; ?>>
+                  <?php 
+                    $status_label = ($note['status'] === 'published') ? ' (Published)' : '';
+                    $initials = !empty($note['initials']) ? $note['initials'] : 'DM';
+                    echo htmlspecialchars($note['note_id'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($note['tasting_date'], ENT_QUOTES, 'UTF-8') . ": " . (!empty($note['dmpts']) ? $initials . htmlspecialchars($note['dmpts'], ENT_QUOTES, 'UTF-8') . ': ' : '') . (($note['blind']=='blind') ? 'Blind tasting' : getWineName($note['nameconvention'], $note['vintage'], $note['name'], $note['producer'], $note['grape'], $note['vineyard'])) . $status_label; 
+                  ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
         </form>
 
         <?php if ($selected_note): ?>

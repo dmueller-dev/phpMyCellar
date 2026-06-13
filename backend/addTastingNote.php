@@ -88,6 +88,58 @@
 
 <?php
   $page_title = 'Add tasting note';
+
+  $extra_head = <<<HTML
+    <script>
+      let allWines = [];
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const select = document.getElementById('wine_id');
+        if (select) {
+          // Cache all options on page load (except the placeholder)
+          for (let i = 1; i < select.options.length; i++) {
+            const opt = select.options[i];
+            allWines.push({
+              value: opt.value,
+              text: opt.textContent,
+              search: (opt.dataset.search || '').toLowerCase() + " " + opt.textContent.toLowerCase(),
+              selected: opt.selected
+            });
+          }
+        }
+      });
+
+      function filterWines() {
+        const query = document.getElementById('searchWineBox').value.toLowerCase().trim();
+        const select = document.getElementById('wine_id');
+        if (!select) return;
+        
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+
+        // Clear options, preserving the placeholder
+        while (select.options.length > 1) {
+          select.remove(1);
+        }
+
+        // Re-populate with matching options
+        allWines.forEach(w => {
+          const matches = terms.every(term => w.search.includes(term));
+
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = w.value;
+            opt.textContent = w.text;
+            if (w.value === currentValue) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          }
+        });
+      }
+    </script>
+  HTML;
+
   require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -116,15 +168,36 @@
         ?>
 
         <form method="GET">
-          <label for="wine_id">Select Wine:</label>
-          <select name="wine_id" id="wine_id" onchange="this.form.submit()">
-            <option value="">Select a wine</option>
-            <?php foreach ($wines as $wine): ?>
-            <option value="<?php echo $wine['wine_id']; ?>" <?php echo (isset($_GET['wine_id']) && $_GET['wine_id'] == $wine['wine_id']) ? 'selected' : ''; ?>>
-              <?php echo htmlspecialchars($wine['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($wine['region'], ENT_QUOTES, 'UTF-8') . ": " . getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']) ; ?>
-            </option>
-            <?php endforeach; ?>
-          </select>
+          <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Select Wine:</label>
+          <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+            <input type="text" id="searchWineBox" onkeyup="filterWines()"
+              placeholder="🔍 Search wine..."
+              style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+              autocomplete="off">
+            <select name="wine_id" id="wine_id" onchange="this.form.submit()"
+              style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+              <option value="">Select a wine</option>
+              <?php foreach ($wines as $wine): ?>
+              <?php 
+                $search_terms = [
+                  $wine['country'],
+                  $wine['region'],
+                  $wine['producer'],
+                  $wine['vintage'] ? $wine['vintage'] : 'NV',
+                  $wine['name'],
+                  $wine['grape'],
+                  $wine['vineyard']
+                ];
+                $search_string = implode(' ', array_filter(array_map('trim', $search_terms)));
+              ?>
+              <option value="<?php echo $wine['wine_id']; ?>" 
+                      data-search="<?php echo htmlspecialchars($search_string, ENT_QUOTES, 'UTF-8'); ?>"
+                      <?php echo (isset($_GET['wine_id']) && $_GET['wine_id'] == $wine['wine_id']) ? 'selected' : ''; ?>>
+                <?php echo htmlspecialchars($wine['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($wine['region'], ENT_QUOTES, 'UTF-8') . ": " . getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']) ; ?>
+              </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
         </form>
 
         <?php if ($selected_wine && empty($success_message)): ?>

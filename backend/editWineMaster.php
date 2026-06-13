@@ -80,6 +80,176 @@
 
 <?php
   $page_title = 'Edit master';
+
+  $extra_head = <<<HTML
+    <script>
+      let allMasters = [];
+      let allProducers = [];
+      let allRegions = [];
+      let allSubregions = [];
+      let allAppellations = [];
+      let allVineyards = [];
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const masterSelect = document.getElementById('master_id');
+        if (masterSelect) {
+          for (let i = 1; i < masterSelect.options.length; i++) {
+            const opt = masterSelect.options[i];
+            allMasters.push({ value: opt.value, text: opt.textContent, selected: opt.selected });
+          }
+        }
+
+        const producerSelect = document.getElementById('producer_id');
+        if (producerSelect) {
+          for (let i = 1; i < producerSelect.options.length; i++) {
+            const opt = producerSelect.options[i];
+            allProducers.push({ value: opt.value, text: opt.textContent, selected: opt.selected });
+          }
+        }
+
+        const regionSelect = document.getElementById('region_id');
+        if (regionSelect) {
+          for (let i = 1; i < regionSelect.options.length; i++) {
+            const opt = regionSelect.options[i];
+            allRegions.push({ value: opt.value, text: opt.textContent, selected: opt.selected });
+          }
+        }
+
+        const subregionSelect = document.getElementById('subregion_id');
+        if (subregionSelect) {
+          for (let i = 1; i < subregionSelect.options.length; i++) {
+            const opt = subregionSelect.options[i];
+            allSubregions.push({ value: opt.value, text: opt.textContent, selected: opt.selected });
+          }
+        }
+
+        const appellationSelect = document.getElementById('appellation_id');
+        if (appellationSelect) {
+          for (let i = 1; i < appellationSelect.options.length; i++) {
+            const opt = appellationSelect.options[i];
+            allAppellations.push({ value: opt.value, text: opt.textContent, selected: opt.selected });
+          }
+        }
+
+        const vineyardSelect = document.getElementById('vineyard_id');
+        if (vineyardSelect) {
+          for (let i = 1; i < vineyardSelect.options.length; i++) {
+            const opt = vineyardSelect.options[i];
+            allVineyards.push({ value: opt.value, text: opt.textContent, selected: opt.selected });
+          }
+        }
+      });
+
+      function filterMasters() {
+        const query = document.getElementById('searchMasterBox').value.toLowerCase().trim();
+        const select = document.getElementById('master_id');
+        if (!select) return;
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+        while (select.options.length > 1) select.remove(1);
+        allMasters.forEach(r => {
+          const matches = terms.every(term => r.text.toLowerCase().includes(term));
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = r.value; opt.textContent = r.text;
+            if (r.value === currentValue) opt.selected = true;
+            select.appendChild(opt);
+          }
+        });
+      }
+
+      function filterProducers() {
+        const query = document.getElementById('searchProducerBox').value.toLowerCase().trim();
+        const select = document.getElementById('producer_id');
+        if (!select) return;
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+        while (select.options.length > 1) select.remove(1);
+        allProducers.forEach(r => {
+          const matches = terms.every(term => r.text.toLowerCase().includes(term));
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = r.value; opt.textContent = r.text;
+            if (r.value === currentValue) opt.selected = true;
+            select.appendChild(opt);
+          }
+        });
+      }
+
+      function filterRegions() {
+        const query = document.getElementById('searchRegionBox').value.toLowerCase().trim();
+        const select = document.getElementById('region_id');
+        if (!select) return;
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+        while (select.options.length > 1) select.remove(1);
+        allRegions.forEach(r => {
+          const matches = terms.every(term => r.text.toLowerCase().includes(term));
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = r.value; opt.textContent = r.text;
+            if (r.value === currentValue) opt.selected = true;
+            select.appendChild(opt);
+          }
+        });
+      }
+
+      function filterSubregions() {
+        const query = document.getElementById('searchSubregionBox').value.toLowerCase().trim();
+        const select = document.getElementById('subregion_id');
+        if (!select) return;
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+        while (select.options.length > 1) select.remove(1);
+        allSubregions.forEach(r => {
+          const matches = terms.every(term => r.text.toLowerCase().includes(term));
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = r.value; opt.textContent = r.text;
+            if (r.value === currentValue) opt.selected = true;
+            select.appendChild(opt);
+          }
+        });
+      }
+
+      function filterAppellations() {
+        const query = document.getElementById('searchAppellationBox').value.toLowerCase().trim();
+        const select = document.getElementById('appellation_id');
+        if (!select) return;
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+        while (select.options.length > 1) select.remove(1);
+        allAppellations.forEach(r => {
+          const matches = terms.every(term => r.text.toLowerCase().includes(term));
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = r.value; opt.textContent = r.text;
+            if (r.value === currentValue) opt.selected = true;
+            select.appendChild(opt);
+          }
+        });
+      }
+
+      function filterVineyards() {
+        const query = document.getElementById('searchVineyardBox').value.toLowerCase().trim();
+        const select = document.getElementById('vineyard_id');
+        if (!select) return;
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+        while (select.options.length > 1) select.remove(1);
+        allVineyards.forEach(r => {
+          const matches = terms.every(term => r.text.toLowerCase().includes(term));
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = r.value; opt.textContent = r.text;
+            if (r.value === currentValue) opt.selected = true;
+            select.appendChild(opt);
+          }
+        });
+      }
+    </script>
+HTML;
+
   require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -103,22 +273,29 @@
         ?>
 
         <form method="GET">
-          <label for="master_id">Select Wine Master:</label>
-          <select name="master_id" id="master_id" onchange="this.form.submit()">
-            <option value="">Select a wine</option>
-            <?php foreach ($masters as $master): ?>
-            <option value="<?php echo $master['master_id']; ?>" <?php echo (isset($_GET['master_id']) && $_GET['master_id'] == $master['master_id']) ? 'selected' : ''; ?>>
-              <?php echo
-                htmlspecialchars($master['country'], ENT_QUOTES, 'UTF-8') . ": " .
-                htmlspecialchars($master['region'], ENT_QUOTES, 'UTF-8') . ": " .
-                htmlspecialchars($master['producer'], ENT_QUOTES, 'UTF-8') . ": " .
-                htmlspecialchars($master['grape'], ENT_QUOTES, 'UTF-8') . ": " .
-                (!empty($master['vineyard']) ? htmlspecialchars($master['vineyard'], ENT_QUOTES, 'UTF-8') . ": " : "") .
-                htmlspecialchars($master['name'], ENT_QUOTES, 'UTF-8');
-              ?>
-            </option>
-            <?php endforeach; ?>
-          </select>
+          <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Select Wine Master:</label>
+          <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+            <input type="text" id="searchMasterBox" onkeyup="filterMasters()"
+              placeholder="🔍 Search wine master..."
+              style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+              autocomplete="off">
+            <select name="master_id" id="master_id" onchange="this.form.submit()"
+              style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+              <option value="">Select a wine</option>
+              <?php foreach ($masters as $master): ?>
+              <option value="<?php echo $master['master_id']; ?>" <?php echo (isset($_GET['master_id']) && $_GET['master_id'] == $master['master_id']) ? 'selected' : ''; ?>>
+                <?php echo
+                  htmlspecialchars($master['country'], ENT_QUOTES, 'UTF-8') . ": " .
+                  htmlspecialchars($master['region'], ENT_QUOTES, 'UTF-8') . ": " .
+                  htmlspecialchars($master['producer'], ENT_QUOTES, 'UTF-8') . ": " .
+                  htmlspecialchars($master['grape'], ENT_QUOTES, 'UTF-8') . ": " .
+                  (!empty($master['vineyard']) ? htmlspecialchars($master['vineyard'], ENT_QUOTES, 'UTF-8') . ": " : "") .
+                  htmlspecialchars($master['name'], ENT_QUOTES, 'UTF-8');
+                ?>
+              </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
         </form>
 
         <?php if ($selected_wine): ?>
@@ -127,59 +304,90 @@
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
             <input type="hidden" name="master_id" value="<?php echo $selected_wine['master_id']; ?>">
             
-            <label for="producer_id">Producer:</label><br>
-            <select name="producer_id" id="producer_id" required>
-              <option value="">Select a producer</option>
-              <?php foreach ($producers as $producer): ?>
-                <option value="<?php echo $producer['producer_id']; ?>" <?php echo ($selected_wine['producer_id'] == $producer['producer_id']) ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($producer['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($producer['region'], ENT_QUOTES, 'UTF-8') . ": " .  htmlspecialchars($producer['producer'], ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+            <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Producer:</label>
+            <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+              <input type="text" id="searchProducerBox" onkeyup="filterProducers()"
+                placeholder="🔍 Search producer..."
+                style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+                autocomplete="off">
+              <select name="producer_id" id="producer_id" required
+                style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+                <option value="">Select a producer</option>
+                <?php foreach ($producers as $producer): ?>
+                  <option value="<?php echo $producer['producer_id']; ?>" <?php echo ($selected_wine['producer_id'] == $producer['producer_id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($producer['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($producer['region'], ENT_QUOTES, 'UTF-8') . ": " .  htmlspecialchars($producer['producer'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
 
-            <br><br>
-            <label for="region_id">Region:</label><br>
-            <select name="region_id" id="region_id" required>
-              <option value="">Select a region</option>
-              <?php foreach ($regions as $region): ?>
-                <option value="<?php echo $region['region_id']; ?>" <?php echo ($selected_wine['region_id'] == $region['region_id']) ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($region['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($region['region'], ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+            <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Region:</label>
+            <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+              <input type="text" id="searchRegionBox" onkeyup="filterRegions()"
+                placeholder="🔍 Search region..."
+                style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+                autocomplete="off">
+              <select name="region_id" id="region_id" required
+                style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+                <option value="">Select a region</option>
+                <?php foreach ($regions as $region): ?>
+                  <option value="<?php echo $region['region_id']; ?>" <?php echo ($selected_wine['region_id'] == $region['region_id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($region['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($region['region'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
 
-            <br><br>
-            <label for="subregion_id">Subregion:</label><br>
-            <select name="subregion_id" id="subregion_id">
-              <option value="" selected>Select a subregion</option>
-              <?php foreach ($subregions as $subregion): ?>
-                <option value="<?php echo $subregion['subregion_id']; ?>" <?php echo ($selected_wine['subregion_id'] == $subregion['subregion_id']) ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($subregion['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($subregion['region'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($subregion['subregion'], ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+            <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Subregion (optional):</label>
+            <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+              <input type="text" id="searchSubregionBox" onkeyup="filterSubregions()"
+                placeholder="🔍 Search subregion..."
+                style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+                autocomplete="off">
+              <select name="subregion_id" id="subregion_id"
+                style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+                <option value="" <?php echo (empty($selected_wine['subregion_id'])) ? 'selected' : ''; ?>>Select a subregion</option>
+                <?php foreach ($subregions as $subregion): ?>
+                  <option value="<?php echo $subregion['subregion_id']; ?>" <?php echo ($selected_wine['subregion_id'] == $subregion['subregion_id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($subregion['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($subregion['region'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($subregion['subregion'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
 
-            <br><br>
-            <label for="appellation_id">Appellation:</label><br>
-            <select name="appellation_id" id="appellation_id">
-              <option value="" selected>Select an appellation</option>
-              <?php foreach ($appellations as $appellation): ?>
-                <option value="<?php echo $appellation['appellation_id']; ?>" <?php echo ($selected_wine['appellation_id'] == $appellation['appellation_id']) ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($appellation['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($appellation['region'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($appellation['appellation'], ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+            <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Appellation (optional):</label>
+            <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+              <input type="text" id="searchAppellationBox" onkeyup="filterAppellations()"
+                placeholder="🔍 Search appellation..."
+                style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+                autocomplete="off">
+              <select name="appellation_id" id="appellation_id"
+                style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+                <option value="" <?php echo (empty($selected_wine['appellation_id'])) ? 'selected' : ''; ?>>Select an appellation</option>
+                <?php foreach ($appellations as $appellation): ?>
+                  <option value="<?php echo $appellation['appellation_id']; ?>" <?php echo ($selected_wine['appellation_id'] == $appellation['appellation_id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($appellation['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($appellation['region'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($appellation['appellation'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
 
-            <br><br>
-            <label for="vineyard_id">Vineyard:</label><br>
-            <select name="vineyard_id" id="vineyard_id">
-              <option value="" selected>Select a vineyard</option>
-              <?php foreach ($vineyards as $vineyard): ?>
-                <option value="<?php echo $vineyard['vineyard_id']; ?>" <?php echo ($selected_wine['vineyard_id'] == $vineyard['vineyard_id']) ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($vineyard['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($vineyard['region'], ENT_QUOTES, 'UTF-8') . ": " . (($vineyard['appellation']!=null) ? htmlspecialchars($vineyard['appellation'], ENT_QUOTES, 'UTF-8') . ": " : "") . htmlspecialchars($vineyard['vineyard'], ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+            <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Vineyard (optional):</label>
+            <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+              <input type="text" id="searchVineyardBox" onkeyup="filterVineyards()"
+                placeholder="🔍 Search vineyard..."
+                style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+                autocomplete="off">
+              <select name="vineyard_id" id="vineyard_id"
+                style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+                <option value="" <?php echo (empty($selected_wine['vineyard_id'])) ? 'selected' : ''; ?>>Select a vineyard</option>
+                <?php foreach ($vineyards as $vineyard): ?>
+                  <option value="<?php echo $vineyard['vineyard_id']; ?>" <?php echo ($selected_wine['vineyard_id'] == $vineyard['vineyard_id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($vineyard['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($vineyard['region'], ENT_QUOTES, 'UTF-8') . ": " . (($vineyard['appellation']!=null) ? htmlspecialchars($vineyard['appellation'], ENT_QUOTES, 'UTF-8') . ": " : "") . htmlspecialchars($vineyard['vineyard'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
 
             <br><br>
             <label for="cuvee_yn">Cuvée yes/no:</label><br>
