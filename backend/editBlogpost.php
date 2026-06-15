@@ -49,6 +49,40 @@
         $conn->begin_transaction();
         try {
           if (updateBlogpost($conn, $blog_id, $pub_date, $title, $content, $status)) {
+            // Delete existing linked wines
+            $stmt = $conn->prepare("DELETE FROM x_blog_wines WHERE blog_id = ?");
+            $stmt->bind_param("i", $blog_id);
+            $stmt->execute();
+            $stmt->close();
+
+            // Link selected wines
+            if (isset($_POST['wines']) && is_array($_POST['wines'])) {
+              foreach ($_POST['wines'] as $wine_id) {
+                $wine_id = (int)$wine_id;
+                $stmt = $conn->prepare("INSERT INTO x_blog_wines (blog_id, wine_id) VALUES (?, ?)");
+                $stmt->bind_param("ii", $blog_id, $wine_id);
+                $stmt->execute();
+                $stmt->close();
+              }
+            }
+
+            // Delete existing linked tasting notes
+            $stmt = $conn->prepare("DELETE FROM x_blog_tnotes WHERE blog_id = ?");
+            $stmt->bind_param("i", $blog_id);
+            $stmt->execute();
+            $stmt->close();
+
+            // Link selected tasting notes
+            if (isset($_POST['tnotes']) && is_array($_POST['tnotes'])) {
+              foreach ($_POST['tnotes'] as $note_id) {
+                $note_id = (int)$note_id;
+                $stmt = $conn->prepare("INSERT INTO x_blog_tnotes (blog_id, note_id) VALUES (?, ?)");
+                $stmt->bind_param("ii", $blog_id, $note_id);
+                $stmt->execute();
+                $stmt->close();
+              }
+            }
+
             $conn->commit();
             $success_message = "Story updated successfully.";
           } else {
@@ -83,6 +117,43 @@
 
   // Generate CSRF token
   $csrf_token = generateCSRFToken();
+
+  // Get all wines and tasting notes
+  $wines = getWines($conn);
+  $tasting_notes = getTastingNotes($conn);
+
+  // Fetch currently linked elements or handle POST state on validation error
+  $linked_wines = [];
+  $linked_tnotes = [];
+  
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['wines']) && is_array($_POST['wines'])) {
+      $linked_wines = array_map('intval', $_POST['wines']);
+    }
+    if (isset($_POST['tnotes']) && is_array($_POST['tnotes'])) {
+      $linked_tnotes = array_map('intval', $_POST['tnotes']);
+    }
+  } elseif ($selected_post) {
+    // Fetch linked wines from DB
+    $stmt = $conn->prepare("SELECT wine_id FROM x_blog_wines WHERE blog_id = ?");
+    $stmt->bind_param("i", $selected_post['blog_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+      $linked_wines[] = $row['wine_id'];
+    }
+    $stmt->close();
+
+    // Fetch linked tasting notes from DB
+    $stmt = $conn->prepare("SELECT note_id FROM x_blog_tnotes WHERE blog_id = ?");
+    $stmt->bind_param("i", $selected_post['blog_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+      $linked_tnotes[] = $row['note_id'];
+    }
+    $stmt->close();
+  }
 ?>
 
 <?php
@@ -158,6 +229,96 @@
               <?php endif; ?>
               
               <br><br>
+              <label style="font-weight: bold;">Link Wines:</label>
+              <div style="border: 1px solid #ccc; border-radius: 4px; padding: 10px; background: white; margin-top: 5px; margin-bottom: 15px;">
+                <input type="text" id="searchWines" onkeyup="filterWines()" placeholder="🔍 Search wines..." style="width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: Georgia, serif; font-size: small;">
+                <div id="winesList" style="max-height: 200px; overflow-y: auto; padding: 5px; border: 1px solid #eee; border-radius: 4px;">
+                  <?php foreach ($wines as $wine): ?>
+                    <?php 
+                      $search_text = implode(' ', array_filter([
+                        $wine['country'],
+                        $wine['region'],
+                        $wine['producer'],
+                        $wine['vintage'] ? $wine['vintage'] : 'NV',
+                        $wine['name'],
+                        $wine['grape'],
+                        $wine['vineyard']
+                      ]));
+                      $wine_label = htmlspecialchars($wine['country'] . ": " . $wine['region'] . ": " . getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']), ENT_QUOTES, 'UTF-8');
+                      $checked = in_array($wine['wine_id'], $linked_wines) ? 'checked' : '';
+                    ?>
+                    <div class="wine-item" data-search="<?php echo htmlspecialchars(strtolower($search_text), ENT_QUOTES, 'UTF-8'); ?>" style="margin-bottom: 5px;">
+                      <label style="font-weight: normal; cursor: pointer;">
+                        <input type="checkbox" name="wines[]" value="<?php echo $wine['wine_id']; ?>" <?php echo $checked; ?>>
+                        <?php echo $wine_label; ?>
+                      </label>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+
+              <label style="font-weight: bold;">Link Tasting Notes:</label>
+              <div style="border: 1px solid #ccc; border-radius: 4px; padding: 10px; background: white; margin-top: 5px; margin-bottom: 15px;">
+                <input type="text" id="searchTnotes" onkeyup="filterTnotes()" placeholder="🔍 Search tasting notes..." style="width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: Georgia, serif; font-size: small;">
+                <div id="tnotesList" style="max-height: 200px; overflow-y: auto; padding: 5px; border: 1px solid #eee; border-radius: 4px;">
+                  <?php foreach ($tasting_notes as $tnote): ?>
+                    <?php 
+                      $search_text = implode(' ', array_filter([
+                        $tnote['tasting_date'],
+                        $tnote['country'],
+                        $tnote['region'],
+                        $tnote['producer'],
+                        $tnote['vintage'] ? $tnote['vintage'] : 'NV',
+                        $tnote['name'],
+                        $tnote['grape'],
+                        $tnote['vineyard'],
+                        $tnote['dmpts'] ? 'DM'.$tnote['dmpts'] : ''
+                      ]));
+                      $wine_name = getWineName($tnote['nameconvention'], $tnote['vintage'], $tnote['name'], $tnote['producer'], $tnote['grape'], $tnote['vineyard']);
+                      $score = $tnote['dmpts'] ? ' (DM' . $tnote['dmpts'] . ')' : '';
+                      $tnote_label = htmlspecialchars($tnote['tasting_date'] . " - " . $tnote['producer'] . " " . $wine_name . $score, ENT_QUOTES, 'UTF-8');
+                      $checked = in_array($tnote['note_id'], $linked_tnotes) ? 'checked' : '';
+                    ?>
+                    <div class="tnote-item" data-search="<?php echo htmlspecialchars(strtolower($search_text), ENT_QUOTES, 'UTF-8'); ?>" style="margin-bottom: 5px;">
+                      <label style="font-weight: normal; cursor: pointer;">
+                        <input type="checkbox" name="tnotes[]" value="<?php echo $tnote['note_id']; ?>" <?php echo $checked; ?>>
+                        <?php echo $tnote_label; ?>
+                      </label>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+
+              <script>
+              function filterWines() {
+                var input = document.getElementById('searchWines');
+                var filter = input.value.toLowerCase();
+                var items = document.querySelectorAll('.wine-item');
+                items.forEach(function(item) {
+                  var text = item.getAttribute('data-search') || '';
+                  if (text.indexOf(filter) > -1) {
+                    item.style.display = "";
+                  } else {
+                    item.style.display = "none";
+                  }
+                });
+              }
+
+              function filterTnotes() {
+                var input = document.getElementById('searchTnotes');
+                var filter = input.value.toLowerCase();
+                var items = document.querySelectorAll('.tnote-item');
+                items.forEach(function(item) {
+                  var text = item.getAttribute('data-search') || '';
+                  if (text.indexOf(filter) > -1) {
+                    item.style.display = "";
+                  } else {
+                    item.style.display = "none";
+                  }
+                });
+              }
+              </script>
+              <br>
               <input type="submit" name="updateBlogpost" id="updateBlogpost" value="Update story">
             </form>
           <?php endif; ?>
