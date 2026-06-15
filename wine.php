@@ -219,7 +219,8 @@
           </td>
         </tr>
         <tr style="height:10px;"><td></td></tr>
-        <tr><td colspan="2"><?php echo ($wine["ct_id"]!==null) ? "<a href='https://www.cellartracker.com/wine.asp?iWine=".$wine["ct_id"]."' target='_blanc'>View this wine on CellarTracker.</a>" : "";?></td></tr>
+        <tr><td colspan="2"><?php echo ($wine["ct_id"]!==null) ? "<a href='https://www.cellartracker.com/wine.asp?iWine=".$wine["ct_id"]."' target='_blank' rel='noopener noreferrer'>View this wine on CellarTracker.</a>" : "";?></td></tr>
+        <tr><td colspan="2"><a href="<?php echo getWineSearcherUrl($wine_name); ?>" target="_blank" rel="noopener noreferrer">Find this wine on Wine-Searcher.</a></td></tr>
       </table>
     </p>
     </div>

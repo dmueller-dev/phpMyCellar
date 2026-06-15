@@ -557,6 +557,11 @@ function getWineName($nameconvention,$vintage,$name,$producer,$grape,$vineyard) 
   return $wine_name;
 }
 
+// Function to generate Wine-Searcher search URL from a full wine name
+function getWineSearcherUrl($wine_name) {
+  return "https://www.wine-searcher.com/find/" . urlencode($wine_name);
+}
+
 // Function to get country details
 function getCountryDetails($conn, $country) {
   $sql = "select * from countries where country = ?";
