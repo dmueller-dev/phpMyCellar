@@ -66,13 +66,20 @@
         if ($post->execute()) {
           $success = "Thank you! Comment posted successfully.";
           $mysqli->commit();
+          $mysqli->autocommit(TRUE);
+          
+          // Auto-subscribe the commenter and notify existing subscribers
+          autoSubscribe($mysqli, $user_id, $noteID, 'tnote');
+          createNotificationsForComment($mysqli, $user_id, $noteID, 'tnote', $last_id);
         } else {
           $error = "Failed to post comment. Please try again.";
           $mysqli->rollback();
+          $mysqli->autocommit(TRUE);
         }
       } else {
         $error = "Failed to post comment. Please try again.";
         $mysqli->rollback();
+        $mysqli->autocommit(TRUE);
       }
       $post->close();
     }
@@ -263,27 +270,84 @@
     </div>
     <?php moreNotes($noteID, $tasting_note["wine_id"], $wine_name); ?>
     <?php if ($tasting_note["vintage"]!="NV") { otherVintages($tasting_note["wine_id"], $tasting_note["master_id"]); } ?>
-    <div class="card">
-      <details><summary><h3 style="display:inline;margin:0;">Post a comment</h3></summary>
+    <?php if (isset($_SESSION['user_id'])): ?>
       <?php
-        if ($error!="") {
-          echo "<div style='color:red;'>$error</div>";
-        } elseif ($success!="") {
-          echo "<div style='color:green;'>$success</div>";
-        }
+        $is_subbed = isSubscribed($conn, $_SESSION['user_id'], $noteID, 'tnote');
       ?>
-      <form method="post" autocomplete="off" accept-charset="UTF-8" style="margin-bottom:10px;">
-        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-        <label for="username">Your name:</label>
-        <br><input type="text" id="username" value="<?= htmlspecialchars($displayname ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
-        <br><br>
-        <label for="comment">Your comment:</label>
-        <br><textarea name="comment" id="comment" rows="15" cols="35" maxlength="2000" placeholder="..."></textarea>
-        <br><br>
-        <button type="submit">Post comment</button>
-      </form></details>
-    </div>
-    <?php renderComments($conn, $noteID, 'tnote'); ?>
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div><h3 style="margin:0;">Discussion</h3></div>
+        <div class="subscription-container" style="margin:0;">
+          <?php if ($is_subbed): ?>
+            <button id="btn-sub-toggle" class="btn-subscription subscribed" onclick="toggleSubscriptionAjax(<?= $noteID ?>, 'tnote')">🔕 Unsubscribe</button>
+          <?php else: ?>
+            <button id="btn-sub-toggle" class="btn-subscription" onclick="toggleSubscriptionAjax(<?= $noteID ?>, 'tnote')">🔔 Subscribe to discussion</button>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <div class="card">
+        <details><summary><h3 style="display:inline;margin:0;">Post a comment</h3></summary>
+        <?php
+          if ($error!="") {
+            echo "<div style='color:red;'>$error</div>";
+          } elseif ($success!="") {
+            echo "<div style='color:green;'>$success</div>";
+          }
+        ?>
+        <form method="post" autocomplete="off" accept-charset="UTF-8" style="margin-bottom:10px;">
+          <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+          <label for="username">Your name:</label>
+          <br><input type="text" id="username" value="<?= htmlspecialchars($displayname ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
+          <br><br>
+          <label for="comment">Your comment:</label>
+          <br><textarea name="comment" id="comment" rows="15" cols="35" maxlength="2000" placeholder="..."></textarea>
+          <br><br>
+          <button type="submit">Post comment</button>
+        </form></details>
+      </div>
+      <?php renderComments($conn, $noteID, 'tnote'); ?>
+
+      <script>
+      function toggleSubscriptionAjax(id, type) {
+        const btn = document.getElementById('btn-sub-toggle');
+        if (!btn) return;
+        
+        btn.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('type', type);
+        formData.append('csrf_token', '<?= $csrf_token ?>');
+        
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/toggle_subscription.php', true);
+        xhr.onload = function() {
+          btn.disabled = false;
+          if (xhr.status === 200) {
+            try {
+              const res = JSON.parse(xhr.responseText);
+              if (res.status === 'success') {
+                if (res.action === 'subscribed') {
+                  btn.textContent = '🔕 Unsubscribe';
+                  btn.className = 'btn-subscription subscribed';
+                } else {
+                  btn.textContent = '🔔 Subscribe to discussion';
+                  btn.className = 'btn-subscription';
+                }
+              } else {
+                alert(res.message);
+              }
+            } catch (e) {
+              alert('An error occurred. Please try again.');
+            }
+          } else {
+            alert('An error occurred. Please try again.');
+          }
+        };
+        xhr.send(formData);
+      }
+      </script>
+    <?php endif; ?>
   </div>
 </div>
 

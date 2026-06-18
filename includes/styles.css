@@ -433,3 +433,154 @@ ul.submenu li a:hover {
     padding-left: 30px; /* Indent sub-items so the hierarchy is obvious */
   }
 }
+
+/* --- NOTIFICATION SYSTEM STYLES --- */
+.notification-bell {
+  position: relative;
+  display: inline-block;
+}
+.notification-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: darkred;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 1;
+  border: 1px solid white;
+}
+@media screen and (max-width: 720px) {
+  .notification-badge {
+    position: relative;
+    top: -2px;
+    right: auto;
+    left: 5px;
+    display: inline-block;
+  }
+}
+
+.subscription-container {
+  margin: 15px 0;
+}
+.btn-subscription {
+  background-color: indianred;
+  color: white !important;
+  border: none;
+  padding: 8px 15px;
+  font-size: 13px;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  border-radius: 4px;
+  text-decoration: none !important;
+  display: inline-block;
+  transition: background-color 0.2s;
+}
+.btn-subscription:hover {
+  background-color: darkred;
+}
+.btn-subscription.subscribed {
+  background-color: #6c757d;
+}
+.btn-subscription.subscribed:hover {
+  background-color: #5a6268;
+}
+
+/* Notifications Hub Styles */
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.btn-action {
+  background-color: indianred;
+  color: white !important;
+  border: none;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  border-radius: 4px;
+  text-decoration: none !important;
+}
+.btn-action:hover {
+  background-color: darkred;
+}
+.btn-action.btn-secondary {
+  background-color: #6c757d;
+}
+.btn-action.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.notification-item {
+  border-left: 4px solid indianred;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  background-color: white;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  position: relative;
+}
+.notification-item.read {
+  border-left-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+.notification-meta {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 5px;
+}
+.notification-snippet {
+  font-style: italic;
+  font-size: 13px;
+  color: #475569;
+  margin: 8px 0;
+  padding-left: 10px;
+  border-left: 2px solid #e2e8f0;
+}
+.notification-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+.notification-link {
+  font-weight: bold;
+  text-decoration: none !important;
+}
+.notification-link:hover {
+  text-decoration: underline !important;
+}
+.action-link {
+  font-size: 12px;
+  color: #64748b !important;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.action-link:hover {
+  color: darkred !important;
+  text-decoration: none;
+}
+
+/* Settings Subscriptions Table */
+.settings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 14px;
+}
+.settings-table th, .settings-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+.settings-table th {
+  background-color: #f1f5f9;
+  font-weight: bold;
+}
+

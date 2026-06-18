@@ -1430,7 +1430,7 @@ function renderComments($conn, $id, $type) {
   
   if ($result && mysqli_num_rows($result) != 0) {
     while ($comments = $result->fetch_assoc()) {
-      echo "<div class='card'><p style='font-size:small;'><b>".$comments["displayname"]."</b>, ".date_format(date_create($comments["pub_time"]),"l, j F Y H:i:s").":</p><hr><p style='font-size:small;'>".$comments["content"]."</p></div>";
+      echo "<div class='card' id='comment-".$comments["comment_id"]."'><p style='font-size:small;'><b>".$comments["displayname"]."</b>, ".date_format(date_create($comments["pub_time"]),"l, j F Y H:i:s").":</p><hr><p style='font-size:small;'>".$comments["content"]."</p></div>";
     }
   }
   $stmt->close();
@@ -1549,6 +1549,261 @@ function updateBlogpost($conn, $blog_id, $pub_date, $title, $content, $status) {
   $stmt = $conn->prepare($sql);
   $stmt->bind_param("ssssi", $pub_date, $title, $content, $status, $blog_id);
   return $stmt->execute();
+}
+
+// Check if user is subscribed to an item (wine or tnote)
+function isSubscribed($conn, $user_id, $item_id, $item_type) {
+  if (!($conn instanceof mysqli)) {
+    return false;
+  }
+  try {
+    $stmt = $conn->prepare("SELECT 1 FROM subscriptions WHERE user_id = ? AND item_id = ? AND item_type = ?");
+    if (!$stmt) {
+      return false;
+    }
+    $stmt->bind_param("iis", $user_id, $item_id, $item_type);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $subscribed = ($result && $result->num_rows > 0);
+    $stmt->close();
+    return $subscribed;
+  } catch (Throwable $e) {
+    return false;
+  }
+}
+
+// Toggle a user's subscription to an item (returns 'subscribed' or 'unsubscribed')
+function toggleSubscription($conn, $user_id, $item_id, $item_type) {
+  if (!($conn instanceof mysqli)) {
+    return 'unsubscribed';
+  }
+  try {
+    if (isSubscribed($conn, $user_id, $item_id, $item_type)) {
+      $stmt = $conn->prepare("DELETE FROM subscriptions WHERE user_id = ? AND item_id = ? AND item_type = ?");
+      if (!$stmt) {
+        return 'unsubscribed';
+      }
+      $stmt->bind_param("iis", $user_id, $item_id, $item_type);
+      $stmt->execute();
+      $stmt->close();
+      return 'unsubscribed';
+    } else {
+      $stmt = $conn->prepare("INSERT IGNORE INTO subscriptions (user_id, item_id, item_type) VALUES (?, ?, ?)");
+      if (!$stmt) {
+        return 'unsubscribed';
+      }
+      $stmt->bind_param("iis", $user_id, $item_id, $item_type);
+      $stmt->execute();
+      $stmt->close();
+      return 'subscribed';
+    }
+  } catch (Throwable $e) {
+    return 'unsubscribed';
+  }
+}
+
+// Silently auto-subscribe a user when they comment
+function autoSubscribe($conn, $user_id, $item_id, $item_type) {
+  if (!($conn instanceof mysqli)) {
+    return;
+  }
+  try {
+    $stmt = $conn->prepare("INSERT IGNORE INTO subscriptions (user_id, item_id, item_type) VALUES (?, ?, ?)");
+    if (!$stmt) {
+      return;
+    }
+    $stmt->bind_param("iis", $user_id, $item_id, $item_type);
+    $stmt->execute();
+    $stmt->close();
+  } catch (Throwable $e) {
+    // Fail silently
+  }
+}
+
+// Get the count of unread notifications for a user (for the header badge)
+function getUnreadNotificationCount($conn, $user_id) {
+  if (!($conn instanceof mysqli)) {
+    return 0;
+  }
+  try {
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
+    if (!$stmt) {
+      return 0;
+    }
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+    return $count;
+  } catch (Throwable $e) {
+    return 0;
+  }
+}
+
+// Create notification records for all subscribers of an item, and email them if opted-in
+function createNotificationsForComment($conn, $sender_id, $item_id, $item_type, $comment_id) {
+  if (!($conn instanceof mysqli)) {
+    return;
+  }
+
+  try {
+    // 1. Get all other subscribed users
+    $stmt = $conn->prepare("SELECT user_id FROM subscriptions WHERE item_id = ? AND item_type = ? AND user_id <> ?");
+    if (!$stmt) {
+      return;
+    }
+    $stmt->bind_param("isi", $item_id, $item_type, $sender_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $subscribers = [];
+    if ($result) {
+      while ($row = $result->fetch_assoc()) {
+        $subscribers[] = $row['user_id'];
+      }
+    }
+    $stmt->close();
+
+    if (empty($subscribers)) {
+      return;
+    }
+
+    // 2. Fetch sender display name
+    $stmt = $conn->prepare("SELECT displayname FROM users WHERE user_id = ?");
+    if (!$stmt) {
+      return;
+    }
+    $stmt->bind_param("i", $sender_id);
+    $stmt->execute();
+    $stmt->bind_result($sender_name);
+    $stmt->fetch();
+    $stmt->close();
+
+    // 3. Fetch item name and build direct link
+    $item_name = "";
+    $item_url = "";
+    if ($item_type === 'wine') {
+      $stmt = $conn->prepare("SELECT wines.vintage, wines_master.name, producers.producer 
+                              FROM wines 
+                              LEFT JOIN wines_master ON wines.master_id = wines_master.master_id 
+                              LEFT JOIN producers ON wines_master.producer_id = producers.producer_id 
+                              WHERE wines.wine_id = ?");
+      if ($stmt) {
+        $stmt->bind_param("i", $item_id);
+        $stmt->execute();
+        $stmt->bind_result($vintage, $w_name, $producer);
+        if ($stmt->fetch()) {
+          $vintage = $vintage ?? 'NV';
+          $item_name = trim("$vintage $producer $w_name");
+        } else {
+          $item_name = "Wine #" . $item_id;
+        }
+        $stmt->close();
+      } else {
+        $item_name = "Wine #" . $item_id;
+      }
+      $item_url = "https://dmueller.com/wine.php?id=" . $item_id . "#comment-" . $comment_id;
+    } elseif ($item_type === 'tnote') {
+      $stmt = $conn->prepare("SELECT wines.vintage, wines_master.name, producers.producer 
+                              FROM tnotes 
+                              LEFT JOIN wines ON tnotes.wine_id = wines.wine_id 
+                              LEFT JOIN wines_master ON wines.master_id = wines_master.master_id 
+                              LEFT JOIN producers ON wines_master.producer_id = producers.producer_id 
+                              WHERE tnotes.note_id = ?");
+      if ($stmt) {
+        $stmt->bind_param("i", $item_id);
+        $stmt->execute();
+        $stmt->bind_result($vintage, $w_name, $producer);
+        if ($stmt->fetch()) {
+          $vintage = $vintage ?? 'NV';
+          $item_name = "Tasting note on " . trim("$vintage $producer $w_name");
+        } else {
+          $item_name = "Tasting Note #" . $item_id;
+        }
+        $stmt->close();
+      } else {
+        $item_name = "Tasting Note #" . $item_id;
+      }
+      $item_url = "https://dmueller.com/tnote.php?id=" . $item_id . "#comment-" . $comment_id;
+    } elseif ($item_type === 'blog') {
+      $stmt = $conn->prepare("SELECT title FROM blogposts WHERE blog_id = ?");
+      if ($stmt) {
+        $stmt->bind_param("i", $item_id);
+        $stmt->execute();
+        $stmt->bind_result($b_title);
+        if ($stmt->fetch()) {
+          $item_name = "Story: " . trim($b_title);
+        } else {
+          $item_name = "Story #" . $item_id;
+        }
+        $stmt->close();
+      } else {
+        $item_name = "Story #" . $item_id;
+      }
+      $item_url = "https://dmueller.com/blogpost.php?id=" . $item_id . "#comment-" . $comment_id;
+    }
+
+    // 4. Fetch comment snippet
+    $stmt = $conn->prepare("SELECT content FROM comments WHERE comment_id = ?");
+    if (!$stmt) {
+      return;
+    }
+    $stmt->bind_param("i", $comment_id);
+    $stmt->execute();
+    $stmt->bind_result($comment_content);
+    $stmt->fetch();
+    $stmt->close();
+    
+    $comment_snippet = mb_strimwidth(strip_tags($comment_content), 0, 150, "...");
+
+    // 5. Create notifications and send emails
+    foreach ($subscribers as $recipient_id) {
+      // Insert notification record
+      $stmt_notif = $conn->prepare("INSERT INTO notifications (user_id, sender_id, item_id, item_type, comment_id) VALUES (?, ?, ?, ?, ?)");
+      if ($stmt_notif) {
+        $stmt_notif->bind_param("iiisi", $recipient_id, $sender_id, $item_id, $item_type, $comment_id);
+        $stmt_notif->execute();
+        $stmt_notif->close();
+      }
+
+      // Fetch recipient settings
+      $stmt_pref = $conn->prepare("SELECT email, displayname, email_notifications FROM users WHERE user_id = ?");
+      if ($stmt_pref) {
+        $stmt_pref->bind_param("i", $recipient_id);
+        $stmt_pref->execute();
+        $stmt_pref->bind_result($recipient_email, $recipient_name, $email_notifications);
+        if ($stmt_pref->fetch() && $email_notifications == 1) {
+          sendNotificationEmail($recipient_email, $recipient_name, $item_name, $item_url, $sender_name, $comment_snippet);
+        }
+        $stmt_pref->close();
+      }
+    }
+  } catch (Throwable $e) {
+    // Fail silently
+  }
+}
+
+// Mail helper function using standard PHP mail() with dm@dmueller.com sender
+function sendNotificationEmail($to_email, $displayname, $item_name, $item_url, $comment_author, $comment_snippet) {
+  $subject = "[Dominik Mueller Fine Wine] New comment on \"" . $item_name . "\"";
+  
+  $message = "Hello " . $displayname . ",\n\n" .
+             $comment_author . " has posted a new comment on \"" . $item_name . "\", which you are following.\n\n" .
+             "---\n" .
+             "\"" . $comment_snippet . "\"\n" .
+             "---\n\n" .
+             "You can read the full comment and reply here:\n" .
+             $item_url . "\n\n" .
+             "To manage your subscriptions or unsubscribe from this discussion, visit your Account Settings:\n" .
+             "https://dmueller.com/accountSettings.php\n\n" .
+             "Best regards,\n" .
+             "Dominik Mueller";
+  
+  $headers = "From: dm@dmueller.com\r\n" .
+             "Reply-To: dm@dmueller.com\r\n" .
+             "X-Mailer: PHP/" . phpversion();
+  
+  @mail($to_email, $subject, $message, $headers);
 }
 
 ?>

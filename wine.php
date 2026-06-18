@@ -62,13 +62,20 @@
         if ($post->execute()) {
           $success = "Thank you! Comment posted successfully.";
           $mysqli->commit();
+          $mysqli->autocommit(TRUE);
+          
+          // Auto-subscribe the commenter and notify existing subscribers
+          autoSubscribe($mysqli, $user_id, $wineID, 'wine');
+          createNotificationsForComment($mysqli, $user_id, $wineID, 'wine', $last_id);
         } else {
           $error = "Failed to post comment. Please try again.";
           $mysqli->rollback();
+          $mysqli->autocommit(TRUE);
         }
       } else {
         $error = "Failed to post comment. Please try again.";
         $mysqli->rollback();
+        $mysqli->autocommit(TRUE);
       }
       $post->close();
     }
@@ -238,6 +245,18 @@
     <?php
       // Check if user is logged in
       if (isset($_SESSION['user_id'])) {
+        // Fetch subscription state and display toggle button
+        $is_subbed = isSubscribed($conn, $_SESSION['user_id'], $wineID, 'wine');
+        echo "<div class='card' style='display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;'>";
+        echo "<div><h3 style='margin:0;'>Discussion</h3></div>";
+        echo "<div class='subscription-container' style='margin:0;'>";
+        if ($is_subbed) {
+          echo "<button id='btn-sub-toggle' class='btn-subscription subscribed' onclick='toggleSubscriptionAjax($wineID, \"wine\")'>🔕 Unsubscribe</button>";
+        } else {
+          echo "<button id='btn-sub-toggle' class='btn-subscription' onclick='toggleSubscriptionAjax($wineID, \"wine\")'>🔔 Subscribe to discussion</button>";
+        }
+        echo "</div></div>";
+
         echo "<div class='card'><details><summary><h3 style='display:inline;margin:0;'>Post a comment</h3></summary>";
         if ($error!="") {
           echo "<div style='color:red;'>$error</div>";
@@ -255,8 +274,51 @@
         echo "<button type='submit'>Post comment</button>";
         echo "</form></details>";
         echo "</div>";
-        renderComments($conn, $wineID, 'wine');
+        ?>
+        
+        <script>
+        function toggleSubscriptionAjax(id, type) {
+          const btn = document.getElementById('btn-sub-toggle');
+          if (!btn) return;
+          
+          btn.disabled = true;
+          
+          const formData = new FormData();
+          formData.append('id', id);
+          formData.append('type', type);
+          formData.append('csrf_token', '<?= $csrf_token ?>');
+          
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/toggle_subscription.php', true);
+          xhr.onload = function() {
+            btn.disabled = false;
+            if (xhr.status === 200) {
+              try {
+                const res = JSON.parse(xhr.responseText);
+                if (res.status === 'success') {
+                  if (res.action === 'subscribed') {
+                    btn.textContent = '🔕 Unsubscribe';
+                    btn.className = 'btn-subscription subscribed';
+                  } else {
+                    btn.textContent = '🔔 Subscribe to discussion';
+                    btn.className = 'btn-subscription';
+                  }
+                } else {
+                  alert(res.message);
+                }
+              } catch (e) {
+                alert('An error occurred. Please try again.');
+              }
+            } else {
+              alert('An error occurred. Please try again.');
+            }
+          };
+          xhr.send(formData);
+        }
+        </script>
+        <?php
       }
+      renderComments($conn, $wineID, 'wine');
     ?>
   </div>
 </div>

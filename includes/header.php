@@ -72,6 +72,13 @@
             "<li><a href='/logout.php' title='Logout'>Logout</a></li>" .
             "</ul></li>";
 
+          // Fetch unread notification count and render the notification bell
+          $unread_count = getUnreadNotificationCount($conn, $_SESSION['user_id']);
+          $badge_html = ($unread_count > 0) ? " <span class='notification-badge'>$unread_count</span>" : "";
+          echo "<li class='right'>" .
+            "<a class='notification-bell " . (($currentPage == 'notifications.php') ? 'active ' : '') . "' href='/notifications.php' title='Notifications'>🔔" . $badge_html . "</a>" .
+            "</li>";
+
           $role = $_SESSION['role'] ?? 'read';
 
           if ($role === 'admin') {
