@@ -35,8 +35,9 @@
         $conn->begin_transaction();
         try {
           if (insertProducer($conn, $producer, $region_id, $address, $producer_desc)) {
+            $inserted_producer_id = $conn->insert_id;
             $conn->commit();
-            $success_message = "Producer inserted successfully";
+            $success_message = "Producer inserted successfully. <a href='addWineMaster.php?producer_id=" . $inserted_producer_id . "&region_id=" . $region_id . "'>Add a wine master for " . htmlspecialchars($producer, ENT_QUOTES, 'UTF-8') . "</a>";
             // Clear the form values on successful submission
             $producer = '';
             $region_id = '';
@@ -51,6 +52,10 @@
           $errors[] = "Error updating producer: " . $e->getMessage();
         }
       }
+    }
+  } else {
+    if (isset($_GET['region_id'])) {
+      $region_id = filter_input(INPUT_GET, 'region_id', FILTER_VALIDATE_INT);
     }
   }
 

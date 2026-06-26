@@ -35,8 +35,11 @@
         $conn->begin_transaction();
         try {
           if (insertWine($conn, $master_id, $ct_id, $vintage, $wine_desc)) {
+            $inserted_wine_id = $conn->insert_id;
             $conn->commit();
-            $success_message = "Wine inserted successfully";
+            $success_message = "Wine inserted successfully. You can now:<br>" .
+              "• <a href='addBottle.php?wine_id=" . $inserted_wine_id . "'>Add bottles of this wine</a><br>" .
+              "• <a href='addTastingNote.php?wine_id=" . $inserted_wine_id . "'>Add a tasting note for this wine</a>";
             // Clear the form values on successful submission
             $master_id = '';
             $ct_id = '';
@@ -51,6 +54,10 @@
           $errors[] = "Error updating wine: " . $e->getMessage();
         }
       }
+    }
+  } else {
+    if (isset($_GET['master_id'])) {
+      $master_id = filter_input(INPUT_GET, 'master_id', FILTER_VALIDATE_INT);
     }
   }
 

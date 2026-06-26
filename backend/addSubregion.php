@@ -33,8 +33,9 @@
         $conn->begin_transaction();
         try {
           if (insertSubregion($conn, $subregion, $region_id, $subregion_desc)) {
+            $inserted_subregion_id = $conn->insert_id;
             $conn->commit();
-            $success_message = "Subregion inserted successfully";
+            $success_message = "Subregion inserted successfully. <a href='addWineMaster.php?subregion_id=" . $inserted_subregion_id . "&region_id=" . $region_id . "'>Add a wine master in this subregion</a>";
             // Clear the form values on successful submission
             $subregion = '';
             $region_id = '';
@@ -48,6 +49,10 @@
           $errors[] = "Error updating subregion: " . $e->getMessage();
         }
       }
+    }
+  } else {
+    if (isset($_GET['region_id'])) {
+      $region_id = filter_input(INPUT_GET, 'region_id', FILTER_VALIDATE_INT);
     }
   }
 

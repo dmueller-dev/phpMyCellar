@@ -60,7 +60,9 @@
             if (insertBottle($conn, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id)) {
               $conn->commit();
               if ($n>=$numBottles) {
-                $success_message = $numBottles . " bottle(s) inserted successfully";
+                $success_message = $numBottles . " bottle(s) inserted successfully. You can now:<br>" .
+                  "• <a href='addTastingNote.php?wine_id=" . $wine_id . "'>Add a tasting note for this wine</a><br>" .
+                  "• <a href='browseBottles.php'>Browse bottles</a>";
                 // Clear the form values on successful submission
                 $numBottles = '';
                 $wine_id = '';
@@ -88,6 +90,10 @@
           $errors[] = "Error inserting bottles: " . $e->getMessage();
         }
       }
+    }
+  } else {
+    if (isset($_GET['wine_id'])) {
+      $wine_id = filter_input(INPUT_GET, 'wine_id', FILTER_VALIDATE_INT);
     }
   }
 

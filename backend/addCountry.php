@@ -32,7 +32,7 @@
         try {
           if (insertCountry($conn, $country, $country_desc)) {
             $conn->commit();
-            $success_message = "Country inserted successfully";
+            $success_message = "Country inserted successfully. <a href='addRegion.php?country=" . urlencode($country) . "'>Add a region for " . htmlspecialchars($country, ENT_QUOTES, 'UTF-8') . "</a>";
             // Clear the form values on successful submission
             $country = '';
             $country_desc = '';

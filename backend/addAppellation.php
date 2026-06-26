@@ -33,8 +33,11 @@
         $conn->begin_transaction();
         try {
           if (insertAppellation($conn, $appellation, $region_id, $appellation_desc)) {
+            $inserted_appellation_id = $conn->insert_id;
             $conn->commit();
-            $success_message = "Appellation inserted successfully";
+            $success_message = "Appellation inserted successfully. You can now:<br>" .
+              "• <a href='addVineyard.php?appellation_id=" . $inserted_appellation_id . "&region_id=" . $region_id . "'>Add a vineyard in this appellation</a><br>" .
+              "• <a href='addWineMaster.php?appellation_id=" . $inserted_appellation_id . "&region_id=" . $region_id . "'>Add a wine master with this appellation</a>";
             // Clear the form values on successful submission
             $appellation = '';
             $region_id = '';
@@ -48,6 +51,10 @@
           $errors[] = "Error updating appellation: " . $e->getMessage();
         }
       }
+    }
+  } else {
+    if (isset($_GET['region_id'])) {
+      $region_id = filter_input(INPUT_GET, 'region_id', FILTER_VALIDATE_INT);
     }
   }
 

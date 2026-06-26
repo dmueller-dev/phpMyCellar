@@ -35,8 +35,9 @@
         $conn->begin_transaction();
         try {
           if (insertVineyard($conn, $vineyard, $region_id, $appellation_id, $vineyard_desc)) {
+            $inserted_vineyard_id = $conn->insert_id;
             $conn->commit();
-            $success_message = "Vineyard inserted successfully";
+            $success_message = "Vineyard inserted successfully. <a href='addWineMaster.php?vineyard_id=" . $inserted_vineyard_id . "&region_id=" . $region_id . ($appellation_id ? "&appellation_id=" . $appellation_id : "") . "'>Add a wine master with " . htmlspecialchars($vineyard, ENT_QUOTES, 'UTF-8') . "</a>";
             // Clear the form values on successful submission
             $vineyard = '';
             $region_id = '';
@@ -51,6 +52,13 @@
           $errors[] = "Error updating vineyard: " . $e->getMessage();
         }
       }
+    }
+  } else {
+    if (isset($_GET['region_id'])) {
+      $region_id = filter_input(INPUT_GET, 'region_id', FILTER_VALIDATE_INT);
+    }
+    if (isset($_GET['appellation_id'])) {
+      $appellation_id = filter_input(INPUT_GET, 'appellation_id', FILTER_VALIDATE_INT);
     }
   }
 

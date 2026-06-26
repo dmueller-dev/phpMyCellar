@@ -49,8 +49,9 @@
         $conn->begin_transaction();
         try {
           if (insertWineMaster($conn, $name, $nameconvention, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id, $grape, $cuvee_yn, $colour, $style)) {
+            $inserted_master_id = $conn->insert_id;
             $conn->commit();
-            $success_message = "Wine master inserted successfully";
+            $success_message = "Wine master inserted successfully. <a href='addWine.php?master_id=" . $inserted_master_id . "'>Add a wine based on this master</a>";
             // Clear the form values on successful submission
             $producer_id = '';
             $region_id = '';
@@ -72,6 +73,22 @@
           $errors[] = "Error updating wine master: " . $e->getMessage();
         }
       }
+    }
+  } else {
+    if (isset($_GET['producer_id'])) {
+      $producer_id = filter_input(INPUT_GET, 'producer_id', FILTER_VALIDATE_INT);
+    }
+    if (isset($_GET['region_id'])) {
+      $region_id = filter_input(INPUT_GET, 'region_id', FILTER_VALIDATE_INT);
+    }
+    if (isset($_GET['subregion_id'])) {
+      $subregion_id = filter_input(INPUT_GET, 'subregion_id', FILTER_VALIDATE_INT);
+    }
+    if (isset($_GET['appellation_id'])) {
+      $appellation_id = filter_input(INPUT_GET, 'appellation_id', FILTER_VALIDATE_INT);
+    }
+    if (isset($_GET['vineyard_id'])) {
+      $vineyard_id = filter_input(INPUT_GET, 'vineyard_id', FILTER_VALIDATE_INT);
     }
   }
 

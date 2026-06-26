@@ -33,8 +33,12 @@
         $conn->begin_transaction();
         try {
           if (insertRegion($conn, $region, $country, $region_desc)) {
+            $inserted_region_id = $conn->insert_id;
             $conn->commit();
-            $success_message = "Region inserted successfully";
+            $success_message = "Region inserted successfully. You can now:<br>" .
+              "• <a href='addSubregion.php?region_id=" . $inserted_region_id . "'>Add a subregion for " . htmlspecialchars($region, ENT_QUOTES, 'UTF-8') . "</a><br>" .
+              "• <a href='addAppellation.php?region_id=" . $inserted_region_id . "'>Add an appellation for " . htmlspecialchars($region, ENT_QUOTES, 'UTF-8') . "</a><br>" .
+              "• <a href='addProducer.php?region_id=" . $inserted_region_id . "'>Add a producer in " . htmlspecialchars($region, ENT_QUOTES, 'UTF-8') . "</a>";
             // Clear the form values on successful submission
             $region = '';
             $country = '';
@@ -48,6 +52,10 @@
           $errors[] = "Error updating region: " . $e->getMessage();
         }
       }
+    }
+  } else {
+    if (isset($_GET['country'])) {
+      $country = sanitizeInput($_GET['country']);
     }
   }
 
