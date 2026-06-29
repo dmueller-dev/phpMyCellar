@@ -1,0 +1,5 @@
+# Ignore all uploaded files in the invoices folder
+*
+
+# ...except for the gitignore file itself
+!.gitignore

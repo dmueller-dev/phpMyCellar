@@ -1,0 +1,8 @@
+# Ignore all files in this uploads folder...
+*
+
+# ...except for gitignore files themselves
+!.gitignore
+
+# ...and keep tracking the invoices subfolder
+!invoices/

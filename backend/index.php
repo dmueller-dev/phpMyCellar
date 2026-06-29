@@ -29,6 +29,8 @@
           <li><a href="browseBottles.php" title="Browse all bottles">Browse all bottles</a></li>
           <li><a href="addBottle.php" title="Add a new bottle of wine">Add new bottle of wine</a></li>
           <li><a href="editBottle.php" title="Edit bottles">Edit bottle</a></li>
+          <li><a href="addOrder.php" title="Create a new wine order">Create new order</a></li>
+          <li><a href="manageOrders.php" title="Manage open orders and accept delivery">Manage open orders</a></li>
         </ul>
         <hr>
         <h3>Wines</h3>

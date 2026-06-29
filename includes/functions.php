@@ -1806,4 +1806,181 @@ function sendNotificationEmail($to_email, $displayname, $item_name, $item_url, $
   @mail($to_email, $subject, $message, $headers);
 }
 
+// Function to insert new order
+function insertOrder($conn, $store_id, $order_date, $shipping_paid, $status = 'pending delivery') {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+  $sql = "INSERT INTO orders (store_id, order_date, shipping_paid, status) VALUES (?, ?, ?, ?)";
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
+  $stmt->bind_param("isds", $store_id, $order_date, $shipping_paid, $status);
+  if ($stmt->execute()) {
+    $order_id = $conn->insert_id;
+    $stmt->close();
+    return $order_id;
+  }
+  $stmt->close();
+  return false;
+}
+
+// Function to insert order line item
+function insertOrderItem($conn, $order_id, $wine_id, $format, $quantity, $total_price) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+  $sql = "INSERT INTO order_items (order_id, wine_id, format, quantity, total_price) VALUES (?, ?, ?, ?, ?)";
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
+  $stmt->bind_param("iisid", $order_id, $wine_id, $format, $quantity, $total_price);
+  $res = $stmt->execute();
+  $stmt->close();
+  return $res;
+}
+
+// Function to insert order document record
+function insertOrderDocument($conn, $order_id, $file_path, $file_name) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+  $sql = "INSERT INTO order_documents (order_id, file_path, file_name) VALUES (?, ?, ?)";
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
+  $stmt->bind_param("iss", $order_id, $file_path, $file_name);
+  $res = $stmt->execute();
+  $stmt->close();
+  return $res;
+}
+
+// Function to get orders
+function getOrders($conn, $status = null) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+  $sql = "SELECT orders.order_id, orders.store_id, orders.order_date, orders.shipping_paid, orders.status, orders.created_at, stores.store_name, stores.country 
+          FROM orders 
+          LEFT JOIN stores ON orders.store_id = stores.store_id";
+  if ($status !== null) {
+    $sql .= " WHERE orders.status = ?";
+  }
+  $sql .= " ORDER BY orders.order_date DESC, orders.order_id DESC";
+  
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return array();
+  }
+  if ($status !== null) {
+    $stmt->bind_param("s", $status);
+  }
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $rows = array();
+  while ($row = $result->fetch_assoc()) {
+    $rows[] = $row;
+  }
+  $stmt->close();
+  return $rows;
+}
+
+// Function to get order items
+function getOrderItems($conn, $order_id) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+  $sql = "SELECT order_items.item_id, order_items.wine_id, order_items.format, order_items.quantity, order_items.total_price,
+                 wines.vintage, wines_master.name, wines_master.nameconvention, producers.producer, regions.country, regions.region, vineyards.vineyard
+          FROM order_items
+          LEFT JOIN wines ON order_items.wine_id = wines.wine_id
+          LEFT JOIN wines_master ON wines.master_id = wines_master.master_id
+          LEFT JOIN producers ON wines_master.producer_id = producers.producer_id
+          LEFT JOIN regions ON wines_master.region_id = regions.region_id
+          LEFT JOIN vineyards ON wines_master.vineyard_id = vineyards.vineyard_id
+          WHERE order_items.order_id = ?
+          ORDER BY regions.country ASC, regions.region ASC, producers.producer ASC, wines.vintage DESC";
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return array();
+  }
+  $stmt->bind_param("i", $order_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $rows = array();
+  while ($row = $result->fetch_assoc()) {
+    $rows[] = $row;
+  }
+  $stmt->close();
+  return $rows;
+}
+
+// Function to get order documents
+function getOrderDocuments($conn, $order_id) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+  $sql = "SELECT document_id, file_path, file_name, uploaded_at FROM order_documents WHERE order_id = ? ORDER BY uploaded_at ASC";
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return array();
+  }
+  $stmt->bind_param("i", $order_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $rows = array();
+  while ($row = $result->fetch_assoc()) {
+    $rows[] = $row;
+  }
+  $stmt->close();
+  return $rows;
+}
+
+// Function to get pending bottles of an order
+function getPendingOrderBottles($conn, $order_id) {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+  $sql = "SELECT bottles.bottle_id, bottles.wine_id, bottles.format, bottles.purchase_price, 
+                 wines.vintage, wines_master.name, wines_master.nameconvention, producers.producer, regions.country, regions.region, vineyards.vineyard
+          FROM bottles
+          LEFT JOIN wines ON bottles.wine_id = wines.wine_id
+          LEFT JOIN wines_master ON wines.master_id = wines_master.master_id
+          LEFT JOIN producers ON wines_master.producer_id = producers.producer_id
+          LEFT JOIN regions ON wines_master.region_id = regions.region_id
+          LEFT JOIN vineyards ON wines_master.vineyard_id = vineyards.vineyard_id
+          WHERE bottles.order_id = ? AND bottles.status = 'pending delivery'
+          ORDER BY bottles.wine_id ASC, bottles.bottle_id ASC";
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return array();
+  }
+  $stmt->bind_param("i", $order_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $rows = array();
+  while ($row = $result->fetch_assoc()) {
+    $rows[] = $row;
+  }
+  $stmt->close();
+  return $rows;
+}
+
+// Function to insert newly generated order bottles (for_sale defaults to 'no')
+function insertOrderBottle($conn, $wine_id, $format, $store_id, $purchase_date, $purchase_price, $status, $order_id) {
+  $sql = "INSERT INTO bottles (wine_id, format, storage_location, purchased_from, purchase_date, purchase_price, arrival_date, status, drink_from, drink_through, consumption_date, consumption_note, for_sale, note_id, order_id) 
+          VALUES (?, ?, NULL, ?, ?, ?, NULL, ?, NULL, NULL, NULL, NULL, 'no', NULL, ?)";
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
+  $stmt->bind_param("isisdsi", $wine_id, $format, $store_id, $purchase_date, $purchase_price, $status, $order_id);
+  $res = $stmt->execute();
+  $stmt->close();
+  return $res;
+}
+
 ?>
