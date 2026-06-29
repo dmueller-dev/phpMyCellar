@@ -163,6 +163,7 @@
           $dest_path = __DIR__ . "/../uploads/invoices/" . $safe_name;
 
           if (move_uploaded_file($up_file['tmp_name'], $dest_path)) {
+            chmod($dest_path, 0644);
             $doc_success = insertOrderDocument($conn, $order_id, "/uploads/invoices/" . $safe_name, $up_file['original_name']);
             if (!$doc_success) {
               throw new Exception("Failed to link document '" . $up_file['original_name'] . "' with the order.");
