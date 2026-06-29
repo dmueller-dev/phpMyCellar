@@ -102,7 +102,7 @@
 
   // Generate CSRF token
   $csrf_token = generateCSRFToken();
-<?php
+
   $page_title = 'Add blind tasting note';
 
   $extra_head = <<<HTML
@@ -236,7 +236,7 @@
           <form method="POST" accept-charset="UTF-8">
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
             <input type="hidden" name="bottle_id" value="<?php echo isset($_POST['bottle_id']) ? htmlspecialchars($_POST['bottle_id'], ENT_QUOTES, 'UTF-8') : $selected_bottle['bottle_id']; ?>">
-	    <input type="hidden" name="wine_id" value="<?php echo isset($_POST['wine_id']) ? htmlspecialchars($POST['wine_id'], ENT_QUOTES, 'UTF-8') : $selected_bottle['wine_id']; ?>">
+            <input type="hidden" name="wine_id" value="<?php echo isset($_POST['wine_id']) ? htmlspecialchars($_POST['wine_id'], ENT_QUOTES, 'UTF-8') : $selected_bottle['wine_id']; ?>">
             
             <?php $wine_name=htmlspecialchars(getWineName($selected_bottle["nameconvention"],$selected_bottle["vintage"],$selected_bottle["name"],$selected_bottle["producer"],$selected_bottle["grape"],$selected_bottle["vineyard"]), ENT_QUOTES, 'UTF-8'); ?>
             <hr><details><summary>Reveal the wine?</summary><small><?php echo $wine_name; ?></small></details><hr style="margin-top:10px;"><br>
@@ -245,11 +245,11 @@
             <br><input type="date" id="tasting_date" name="tasting_date" value="<?php echo isset($_POST['tasting_date']) ? htmlspecialchars(sanitizeInput($_POST['tasting_date']), ENT_QUOTES, 'UTF-8') : ''; ?>" required>
 
             <br><br>
-	    <label for="tasting_note">Tasting note:</label>
+            <label for="tasting_note">Tasting note:</label>
             <br><textarea name="tasting_note" rows="20" cols="40" placeholder="<p>...</p>" required><?php echo isset($_POST['tasting_note']) ? htmlspecialchars(sanitizeInput($_POST['tasting_note']), ENT_QUOTES, 'UTF-8') : ''; ?></textarea>
 
             <br><br>
-	    <label for="flawed">Flawed?</label><br>
+            <label for="flawed">Flawed?</label><br>
             <select name="flawed" id="flawed" required>
               <option value="no" <?php echo (isset($_POST['flawed']) && $_POST['flawed'] == 'no') ? 'selected' : 'selected'; ?>>no</option>
               <option value="yes" <?php echo (isset($_POST['flawed']) && $_POST['flawed'] == 'yes') ? 'selected' : ''; ?>>yes</option>
@@ -258,28 +258,28 @@
             <h3>Ratings</h3>
 
             WSET<br>
-	    <label for="wset_balance">Balance:</label>
+            <label for="wset_balance">Balance:</label>
             <select name="wset_balance" id="wset_balance">
               <option value="0" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
               <option value="0.5" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
               <option value="1" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '1') ? 'selected' : ''; ?>>1.0</option>
             </select>
             <br>
-	    <label for="wset_length">Length:</label>
+            <label for="wset_length">Length:</label>
             <select name="wset_length" id="wset_length">
               <option value="0" <?php echo (isset($_POST['wset_length']) && $_POST['wset_length'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
               <option value="0.5" <?php echo (isset($_POST['wset_length']) && $_POST['wset_length'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
               <option value="1" <?php echo (isset($_POST['wset_length']) && $_POST['wset_length'] == '1') ? 'selected' : ''; ?>>1.0</option>
             </select>
             <br>
-	    <label for="wset_intensity">Intensity:</label>
+            <label for="wset_intensity">Intensity:</label>
             <select name="wset_intensity" id="wset_intensity">
               <option value="0" <?php echo (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
               <option value="0.5" <?php echo (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
               <option value="1" <?php echo (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] == '1') ? 'selected' : ''; ?>>1.0</option>
             </select>
             <br>
-	    <label for="wset_intensity">Complexity:</label>
+            <label for="wset_complexity">Complexity:</label>
             <select name="wset_complexity" id="wset_complexity">
               <option value="0" <?php echo (isset($_POST['wset_complexity']) && $_POST['wset_complexity'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
               <option value="0.5" <?php echo (isset($_POST['wset_complexity']) && $_POST['wset_complexity'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
@@ -299,7 +299,7 @@
               <option value="4" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '4') ? 'selected' : ''; ?>>4.0</option>
             </select>
 
-	    <br><br>
+            <br><br>
             <label for="dmpts"><?php echo htmlspecialchars(!empty($_SESSION['initials']) ? $_SESSION['initials'] : 'DM', ENT_QUOTES, 'UTF-8'); ?> points:</label>
             <select name="dmpts" id="dmpts">
               <option value="0" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '0') ? 'selected' : 'selected'; ?>>0</option>
