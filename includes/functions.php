@@ -1807,16 +1807,16 @@ function sendNotificationEmail($to_email, $displayname, $item_name, $item_url, $
 }
 
 // Function to insert new order
-function insertOrder($conn, $store_id, $order_date, $shipping_paid, $status = 'pending delivery') {
+function insertOrder($conn, $store_id, $order_date, $shipping_paid, $discount = 0.00, $status = 'pending delivery') {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
   }
-  $sql = "INSERT INTO orders (store_id, order_date, shipping_paid, status) VALUES (?, ?, ?, ?)";
+  $sql = "INSERT INTO orders (store_id, order_date, shipping_paid, discount, status) VALUES (?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
   if (!$stmt) {
     return false;
   }
-  $stmt->bind_param("isds", $store_id, $order_date, $shipping_paid, $status);
+  $stmt->bind_param("isdds", $store_id, $order_date, $shipping_paid, $discount, $status);
   if ($stmt->execute()) {
     $order_id = $conn->insert_id;
     $stmt->close();
@@ -1863,7 +1863,7 @@ function getOrders($conn, $status = null) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
   }
-  $sql = "SELECT orders.order_id, orders.store_id, orders.order_date, orders.shipping_paid, orders.status, orders.created_at, stores.store_name, stores.country 
+  $sql = "SELECT orders.order_id, orders.store_id, orders.order_date, orders.shipping_paid, orders.discount, orders.status, orders.created_at, stores.store_name, stores.country 
           FROM orders 
           LEFT JOIN stores ON orders.store_id = stores.store_id";
   if ($status !== null) {

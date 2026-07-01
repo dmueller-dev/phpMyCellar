@@ -12,6 +12,48 @@
   $errors = [];
   $success_message = '';
 
+  // Check if we are in Edit Mode
+  $edit_order_id = filter_input(INPUT_GET, 'edit', FILTER_VALIDATE_INT);
+  $is_edit = false;
+  $prepopulated_items = [];
+
+  if ($edit_order_id) {
+    // Verify order exists and has status 'pending delivery'
+    $order_sql = "SELECT store_id, order_date, shipping_paid, discount, status FROM orders WHERE order_id = ?";
+    $stmt = $conn->prepare($order_sql);
+    $stmt->bind_param("i", $edit_order_id);
+    $stmt->execute();
+    $stmt->bind_result($db_store_id, $db_order_date, $db_shipping_paid, $db_discount, $db_status);
+    if ($stmt->fetch()) {
+      if ($db_status !== 'pending delivery') {
+        $errors[] = "Only open orders (pending delivery) can be edited.";
+        $edit_order_id = null;
+      } else {
+        $is_edit = true;
+        $store_id = $db_store_id;
+        $order_date = $db_order_date;
+        $shipping_paid = number_format($db_shipping_paid, 2, '.', '');
+        $discount = number_format($db_discount, 2, '.', '');
+      }
+    } else {
+      $errors[] = "Order not found.";
+      $edit_order_id = null;
+    }
+    $stmt->close();
+
+    if ($is_edit) {
+      $prepopulated_items = getOrderItems($conn, $edit_order_id);
+    }
+  }
+
+  // Set default values if not editing and not submitting
+  if ($_SERVER["REQUEST_METHOD"] != "POST" && !$is_edit) {
+    $store_id = '';
+    $order_date = date('Y-m-d');
+    $shipping_paid = '0.00';
+    $discount = '0.00';
+  }
+
   // Handle form submission
   if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Validate CSRF token
@@ -21,9 +63,15 @@
 
     $store_id = filter_input(INPUT_POST, 'store_id', FILTER_VALIDATE_INT);
     $order_date = sanitizeInput($_POST['order_date'] ?? '');
+    
     $shipping_paid = filter_input(INPUT_POST, 'shipping_paid', FILTER_VALIDATE_FLOAT);
     if ($shipping_paid === false || $shipping_paid < 0) {
       $shipping_paid = 0.00;
+    }
+
+    $discount = filter_input(INPUT_POST, 'discount', FILTER_VALIDATE_FLOAT);
+    if ($discount === false || $discount < 0) {
+      $discount = 0.00;
     }
 
     // Retrieve arrays of wine line items
@@ -125,17 +173,61 @@
       }
     }
 
+    // If there are validation errors, re-populate form inputs for user convenience
+    if (!empty($errors)) {
+      $prepopulated_items = [];
+      for ($i = 0; $i < count($wine_ids); $i++) {
+        if (!empty($wine_ids[$i])) {
+          $prepopulated_items[] = [
+            'wine_id' => $wine_ids[$i],
+            'format' => $formats[$i] ?? '',
+            'quantity' => $quantities[$i] ?? 1,
+            'total_price' => $total_prices[$i] ?? '0.00'
+          ];
+        }
+      }
+    }
+
     // Proceed if there are no validation errors
     if (empty($errors)) {
       $conn->begin_transaction();
       try {
-        // 1. Insert Order
-        $order_id = insertOrder($conn, $store_id, $order_date, $shipping_paid, 'pending delivery');
-        if (!$order_id) {
-          throw new Exception("Failed to insert the order into the database.");
+        if ($is_edit) {
+          // 1. Update existing Order details
+          $sql_up = "UPDATE orders SET store_id = ?, order_date = ?, shipping_paid = ?, discount = ? WHERE order_id = ? AND status = 'pending delivery'";
+          $stmt_up = $conn->prepare($sql_up);
+          if (!$stmt_up) {
+            throw new Exception("Failed to prepare order update statement.");
+          }
+          $stmt_up->bind_param("isddi", $store_id, $order_date, $shipping_paid, $discount, $edit_order_id);
+          if (!$stmt_up->execute()) {
+            throw new Exception("Failed to update order details.");
+          }
+          $stmt_up->close();
+          $order_id = $edit_order_id;
+
+          // 2. Delete previously linked items
+          $sql_del_items = "DELETE FROM order_items WHERE order_id = ?";
+          $stmt_del = $conn->prepare($sql_del_items);
+          $stmt_del->bind_param("i", $order_id);
+          $stmt_del->execute();
+          $stmt_del->close();
+
+          // 3. Delete previously generated pending bottles
+          $sql_del_bottles = "DELETE FROM bottles WHERE order_id = ? AND status = 'pending delivery'";
+          $stmt_del_btl = $conn->prepare($sql_del_bottles);
+          $stmt_del_btl->bind_param("i", $order_id);
+          $stmt_del_btl->execute();
+          $stmt_del_btl->close();
+        } else {
+          // 1. Insert new Order
+          $order_id = insertOrder($conn, $store_id, $order_date, $shipping_paid, $discount, 'pending delivery');
+          if (!$order_id) {
+            throw new Exception("Failed to insert the order into the database.");
+          }
         }
 
-        // 2. Insert Order Items and Create Bottles
+        // 4. Insert Order Items and Create Bottles
         foreach ($valid_items as $item) {
           $item_success = insertOrderItem($conn, $order_id, $item['wine_id'], $item['format'], $item['quantity'], $item['total_price']);
           if (!$item_success) {
@@ -143,10 +235,11 @@
           }
 
           // Calculate Proportional Price/Bottle:
-          // price_per_bottle = (item_total_price / quantity) + (shipping_paid / total_order_qty)
+          // price_per_bottle = (item_total_price / quantity) + (shipping_paid / total_order_qty) - (discount / total_order_qty)
           $shipping_share = ($total_order_qty > 0) ? ($shipping_paid / $total_order_qty) : 0.00;
-          $unit_price = ($item['total_price'] / $item['quantity']) + $shipping_share;
-          $unit_price = round($unit_price, 2);
+          $discount_share = ($total_order_qty > 0) ? ($discount / $total_order_qty) : 0.00;
+          $unit_price = ($item['total_price'] / $item['quantity']) + $shipping_share - $discount_share;
+          $unit_price = max(0.00, round($unit_price, 2));
 
           // Create individual bottle records in 'pending delivery' status
           for ($b = 0; $b < $item['quantity']; $b++) {
@@ -157,7 +250,7 @@
           }
         }
 
-        // 3. Move and Record Uploaded Documents
+        // 5. Move and Record Uploaded Documents
         foreach ($upload_queue as $up_file) {
           $safe_name = "order_" . $order_id . "_" . time() . "_" . bin2hex(random_bytes(4)) . "." . $up_file['extension'];
           $dest_path = __DIR__ . "/../uploads/invoices/" . $safe_name;
@@ -174,18 +267,27 @@
         }
 
         $conn->commit();
-        $success_message = "Order successfully created! " . $total_order_qty . " bottles have been marked as 'pending delivery'.<br>" .
-                           "• <a href='manageOrders.php'>Manage open orders & accept delivery</a><br>" .
-                           "• <a href='addOrder.php'>Create another order</a>";
-        
-        // Clear variables for form resetting
-        $store_id = '';
-        $order_date = date('Y-m-d');
-        $shipping_paid = '0.00';
-        $wine_ids = [];
-        $formats = [];
-        $quantities = [];
-        $total_prices = [];
+
+        if ($is_edit) {
+          $_SESSION['success_message'] = "Order #{$order_id} successfully updated! {$total_order_qty} bottle records have been regenerated.";
+          header("Location: manageOrders.php");
+          exit();
+        } else {
+          $success_message = "Order successfully created! " . $total_order_qty . " bottles have been marked as 'pending delivery'.<br>" .
+                             "• <a href='manageOrders.php'>Manage open orders & accept delivery</a><br>" .
+                             "• <a href='addOrder.php'>Create another order</a>";
+          
+          // Clear variables for form resetting
+          $store_id = '';
+          $order_date = date('Y-m-d');
+          $shipping_paid = '0.00';
+          $discount = '0.00';
+          $wine_ids = [];
+          $formats = [];
+          $quantities = [];
+          $total_prices = [];
+          $prepopulated_items = [];
+        }
       } catch (Exception $e) {
         $conn->rollback();
         $errors[] = "Transaction failed: " . $e->getMessage();
@@ -201,7 +303,7 @@
   // Generate CSRF token
   $csrf_token = generateCSRFToken();
 
-  $page_title = 'Create Wine Order';
+  $page_title = $is_edit ? "Edit Wine Order #{$edit_order_id}" : "Create Wine Order";
 
   // Head Javascript for dynamic forms
   $extra_head = <<<HTML
@@ -268,13 +370,26 @@
           }
         }
         
-        // Add initial row if none exists
-        if (document.querySelectorAll('.order-item-row').length === 0) {
-          addWineRow();
-        }
+        // Load pre-populated rows or add an initial blank row
+HTML;
+
+  if (!empty($prepopulated_items)) {
+    foreach ($prepopulated_items as $item) {
+      $w_id = (int)$item['wine_id'];
+      $fmt = json_encode($item['format']);
+      $qty = (int)$item['quantity'];
+      $tot_pr = json_encode(number_format($item['total_price'], 2, '.', ''));
+      $extra_head .= "\n        addWineRow({$w_id}, {$fmt}, {$qty}, {$tot_pr});";
+    }
+  } else {
+    $extra_head .= "\n        if (document.querySelectorAll('.order-item-row').length === 0) { addWineRow(); }";
+  }
+
+  $extra_head .= <<<HTML
+
       });
 
-      function addWineRow() {
+      function addWineRow(wineId = '', format = '', quantity = 1, totalPrice = '') {
         const tableBody = document.getElementById('order_items_body');
         const rowIndex = tableBody.children.length;
         
@@ -284,13 +399,25 @@
 
         let optionsHTML = '<option value="">-- Select Wine --</option>';
         allWines.forEach(w => {
-          optionsHTML += `<option value="\${w.value}">\${w.text}</option>`;
+          const selected = (w.value == wineId) ? 'selected' : '';
+          optionsHTML += `<option value="\${w.value}" \${selected}>\${w.text}</option>`;
         });
 
         let formatsHTML = '';
         const formatsSelect = document.getElementById('format_master_source');
         if (formatsSelect) {
-          formatsHTML = formatsSelect.innerHTML;
+          const tempSelect = document.createElement('select');
+          tempSelect.innerHTML = formatsSelect.innerHTML;
+          if (format) {
+            for (let i = 0; i < tempSelect.options.length; i++) {
+              if (tempSelect.options[i].value === format) {
+                tempSelect.options[i].selected = true;
+              } else {
+                tempSelect.options[i].selected = false;
+              }
+            }
+          }
+          formatsHTML = tempSelect.innerHTML;
         }
 
         row.innerHTML = `
@@ -308,10 +435,10 @@
             </select>
           </td>
           <td>
-            <input type="number" name="quantity[]" min="1" value="1" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:70px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="number" name="quantity[]" min="1" value="\${quantity}" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:70px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
           </td>
           <td>
-            <input type="number" name="total_price[]" step="0.01" min="0" placeholder="0.00" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:100px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="number" name="total_price[]" step="0.01" min="0" value="\${totalPrice}" placeholder="0.00" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:100px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
           </td>
           <td style="text-align: center;">
             <button type="button" class="btn-remove" onclick="removeWineRow(\${rowIndex})">Remove</button>
@@ -365,8 +492,12 @@
         
         const qtyInputs = document.getElementsByName('quantity[]');
         const priceInputs = document.getElementsByName('total_price[]');
+        
         const shippingInput = document.getElementById('shipping_paid');
         const shippingPaid = parseFloat(shippingInput.value) || 0;
+
+        const discountInput = document.getElementById('discount');
+        const discount = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
 
         for (let i = 0; i < qtyInputs.length; i++) {
           const qty = parseInt(qtyInputs[i].value) || 0;
@@ -378,20 +509,20 @@
         document.getElementById('calc_total_qty').textContent = totalQty;
         document.getElementById('calc_items_total').textContent = totalItemsPrice.toFixed(2);
         
-        const totalOverall = totalItemsPrice + shippingPaid;
+        const totalOverall = totalItemsPrice + shippingPaid - discount;
         document.getElementById('calc_overall_total').textContent = totalOverall.toFixed(2);
         
         // Show proportional calculation in rows
         for (let i = 0; i < qtyInputs.length; i++) {
           const qty = parseInt(qtyInputs[i].value) || 0;
           const price = parseFloat(priceInputs[i].value) || 0.00;
-          const rowId = qtyInputs[i].closest('tr').id;
           
           if (qty > 0) {
             const shippingShare = (totalQty > 0) ? (shippingPaid / totalQty) : 0;
-            const bottleCost = (price / qty) + shippingShare;
+            const discountShare = (totalQty > 0) ? (discount / totalQty) : 0;
+            const bottleCost = (price / qty) + shippingShare - discountShare;
+            const safeCost = Math.max(0.00, bottleCost);
             
-            // Check if calculation display exists, if not create it
             let calcDisplay = qtyInputs[i].parentNode.querySelector('.bottle-calc-info');
             if (!calcDisplay) {
               calcDisplay = document.createElement('div');
@@ -401,7 +532,7 @@
               calcDisplay.style.marginTop = '3px';
               qtyInputs[i].parentNode.appendChild(calcDisplay);
             }
-            calcDisplay.innerHTML = `est: <strong>\${bottleCost.toFixed(2)}</strong> / btl`;
+            calcDisplay.innerHTML = `est: <strong>\${safeCost.toFixed(2)}</strong> / btl`;
           }
         }
       }
@@ -463,7 +594,7 @@
     <div class="card">
       <section>
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 15px;">
-          <h2 style="margin: 0; font-family: Georgia, serif;">Create New Wine Order</h2>
+          <h2 style="margin: 0; font-family: Georgia, serif;"><?php echo $is_edit ? "Edit Wine Purchase Order #{$edit_order_id}" : "Create New Wine Order"; ?></h2>
           <a href="manageOrders.php" class="btn-action" style="font-size: small; background-color: #6c757d;">📂 Manage Open Orders</a>
         </div>
 
@@ -484,7 +615,7 @@
         <form method="POST" enctype="multipart/form-data" accept-charset="UTF-8" style="font-family: Georgia, serif;">
           <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
           
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
             <div>
               <label for="store_id" style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Purchased From (Store):</label>
               <select name="store_id" id="store_id" required style="width:100%; padding: 8px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
@@ -506,10 +637,15 @@
               <label for="shipping_paid" style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Shipping Paid:</label>
               <input type="number" name="shipping_paid" id="shipping_paid" step="0.01" min="0" value="<?php echo isset($shipping_paid) ? htmlspecialchars($shipping_paid, ENT_QUOTES, 'UTF-8') : '0.00'; ?>" onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:100%; padding: 8px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
             </div>
+
+            <div>
+              <label for="discount" style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Discount:</label>
+              <input type="number" name="discount" id="discount" step="0.01" min="0" value="<?php echo isset($discount) ? htmlspecialchars($discount, ENT_QUOTES, 'UTF-8') : '0.00'; ?>" onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:100%; padding: 8px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            </div>
           </div>
 
           <h3 style="border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px; margin-bottom: 10px; font-family: Georgia, serif;">Order Items</h3>
-          <p style="font-size: 11px; color: #666; margin-top: 0;">Add one or more wines to this purchase. Individual bottle records will be created automatically in your inventory with 'pending delivery' status.</p>
+          <p style="font-size: 11px; color: #666; margin-top: 0;"><?php echo $is_edit ? "Edit the items in this order. Associated pending delivery bottle records will be updated automatically upon saving." : "Add one or more wines to this purchase. Individual bottle records will be created automatically in your inventory with 'pending delivery' status."; ?></p>
 
           <table class="order-table">
             <thead>
@@ -554,8 +690,8 @@
           <hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0 20px 0;">
 
           <div style="display: flex; justify-content: center; gap: 15px;">
-            <button type="submit" name="submit" class="btn-action" style="font-size: 14px; padding: 10px 25px; font-weight: bold; background-color: firebrick;">💾 Save Purchase Order</button>
-            <a href="index.php" class="btn-action btn-secondary" style="font-size: 14px; padding: 10px 25px;">Cancel</a>
+            <button type="submit" name="submit" class="btn-action" style="font-size: 14px; padding: 10px 25px; font-weight: bold; background-color: firebrick;">💾 <?php echo $is_edit ? "Update Purchase Order" : "Save Purchase Order"; ?></button>
+            <a href="manageOrders.php" class="btn-action btn-secondary" style="font-size: 14px; padding: 10px 25px;">Cancel</a>
           </div>
         </form>
       </section>

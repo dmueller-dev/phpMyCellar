@@ -12,6 +12,12 @@
   $errors = [];
   $success_message = '';
 
+  // Retrieve flash messages from session if any
+  if (isset($_SESSION['success_message'])) {
+    $success_message = $_SESSION['success_message'];
+    unset($_SESSION['success_message']);
+  }
+
   // Handle accepting delivery of an order
   if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] === 'accept_delivery') {
     // Validate CSRF token
@@ -94,9 +100,62 @@
     }
   }
 
-  // Fetch open and closed orders
+  // Handle cancelling an order
+  if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] === 'cancel_order') {
+    // Validate CSRF token
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+      die("CSRF token validation failed");
+    }
+
+    $order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
+
+    if (!$order_id) {
+      $errors[] = "Invalid order selected.";
+    }
+
+    if (empty($errors)) {
+      $conn->begin_transaction();
+      try {
+        // Double check status
+        $check_sql = "SELECT status FROM orders WHERE order_id = ? FOR UPDATE";
+        $stmt_check = $conn->prepare($check_sql);
+        $stmt_check->bind_param("i", $order_id);
+        $stmt_check->execute();
+        $stmt_check->bind_result($order_status);
+        $stmt_check->fetch();
+        $stmt_check->close();
+
+        if ($order_status !== 'pending delivery') {
+          throw new Exception("Only open orders (pending delivery) can be cancelled.");
+        }
+
+        // 1. Delete associated pending bottles from bottles table
+        $del_btl_sql = "DELETE FROM bottles WHERE order_id = ? AND status = 'pending delivery'";
+        $stmt_del_btl = $conn->prepare($del_btl_sql);
+        $stmt_del_btl->bind_param("i", $order_id);
+        $stmt_del_btl->execute();
+        $stmt_del_btl->close();
+
+        // 2. Set the order status to 'cancelled'
+        $up_order_sql = "UPDATE orders SET status = 'cancelled' WHERE order_id = ?";
+        $stmt_order = $conn->prepare($up_order_sql);
+        $stmt_order->bind_param("i", $order_id);
+        $stmt_order->execute();
+        $stmt_order->close();
+
+        $conn->commit();
+        $success_message = "Order #{$order_id} has been cancelled successfully. Associated pending bottle records have been removed.";
+      } catch (Exception $e) {
+        $conn->rollback();
+        $errors[] = "Failed to cancel order: " . $e->getMessage();
+      }
+    }
+  }
+
+  // Fetch open, closed, and cancelled orders
   $open_orders = getOrders($conn, 'pending delivery');
   $closed_orders = getOrders($conn, 'delivered');
+  $cancelled_orders = getOrders($conn, 'cancelled');
 
   // Fetch storage bins list
   $storage_locations = getStorageLocations($conn);
@@ -114,6 +173,7 @@
         margin-bottom: 20px;
         border-bottom: 1px solid #ccc;
         padding-bottom: 8px;
+        flex-wrap: wrap;
       }
       .tab-btn {
         background: #eaeaea;
@@ -250,6 +310,36 @@
           select.value = selectedVal;
         });
       }
+
+      function confirmCancelOrder(orderId) {
+        if (confirm("Are you sure you want to cancel Order #" + orderId + "? This will permanently delete all pending delivery bottle records associated with this order.")) {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = 'manageOrders.php';
+          
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'csrf_token';
+          csrfInput.value = '{$csrf_token}';
+          
+          const actionInput = document.createElement('input');
+          actionInput.type = 'hidden';
+          actionInput.name = 'action';
+          actionInput.value = 'cancel_order';
+          
+          const orderInput = document.createElement('input');
+          orderInput.type = 'hidden';
+          orderInput.name = 'order_id';
+          orderInput.value = orderId;
+          
+          form.appendChild(csrfInput);
+          form.appendChild(actionInput);
+          form.appendChild(orderInput);
+          
+          document.body.appendChild(form);
+          form.submit();
+        }
+      }
     </script>
   HTML;
 
@@ -283,6 +373,7 @@
         <div class="tab-nav">
           <button id="open_btn" class="tab-btn active" onclick="switchTab('open')">Pending Deliveries (<?php echo count($open_orders); ?>)</button>
           <button id="closed_btn" class="tab-btn" onclick="switchTab('closed')">Order History (<?php echo count($closed_orders); ?>)</button>
+          <button id="cancelled_btn" class="tab-btn" onclick="switchTab('cancelled')">Cancelled Orders (<?php echo count($cancelled_orders); ?>)</button>
         </div>
 
         <!-- 1. OPEN ORDERS TAB -->
@@ -300,6 +391,7 @@
               $pending_bottles = getPendingOrderBottles($conn, $order_id);
               $total_qty = array_sum(array_column($items, 'quantity'));
               $total_value = array_sum(array_column($items, 'total_price'));
+              $overall_total = $total_value + $order['shipping_paid'] - ($order['discount'] ?? 0.00);
             ?>
               <div class="order-card">
                 <div class="order-card-header">
@@ -309,7 +401,7 @@
                     <span style="color: #666; font-size: 13px; margin-left: 10px;">from <strong><?php echo htmlspecialchars($order['store_name'], ENT_QUOTES, 'UTF-8'); ?></strong> on <?php echo date('M d, Y', strtotime($order['order_date'])); ?></span>
                   </div>
                   <div>
-                    <strong style="color: firebrick; font-size: 15px;">€<?php echo number_format($total_value + $order['shipping_paid'], 2); ?></strong>
+                    <strong style="color: firebrick; font-size: 15px;">€<?php echo number_format($overall_total, 2); ?></strong>
                   </div>
                 </div>
 
@@ -340,7 +432,9 @@
                     <tbody>
                       <?php foreach ($items as $item): 
                         $shipping_share = ($total_qty > 0) ? ($order['shipping_paid'] / $total_qty) : 0.00;
-                        $calc_btl_price = ($item['total_price'] / $item['quantity']) + $shipping_share;
+                        $discount_share = ($total_qty > 0) ? (($order['discount'] ?? 0.00) / $total_qty) : 0.00;
+                        $calc_btl_price = ($item['total_price'] / $item['quantity']) + $shipping_share - $discount_share;
+                        $calc_btl_price = max(0.00, $calc_btl_price);
                       ?>
                         <tr>
                           <td>
@@ -366,11 +460,22 @@
                           <td></td>
                         </tr>
                       <?php endif; ?>
+                      <?php if (($order['discount'] ?? 0.00) > 0.00): ?>
+                        <tr style="color: green; font-size: xs-small; font-weight: bold;">
+                          <td colspan="3">Applied Discount:</td>
+                          <td style="text-align: right;">-€<?php echo number_format($order['discount'], 2); ?></td>
+                          <td></td>
+                        </tr>
+                      <?php endif; ?>
                     </tbody>
                   </table>
 
-                  <!-- Acceptance button action -->
-                  <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                  <!-- Interactive Actions Row -->
+                  <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 1px solid #eee; padding-top: 15px;">
+                    <div style="display: flex; gap: 8px;">
+                      <a href="addOrder.php?edit=<?php echo $order_id; ?>" class="btn-action" style="background-color: #0d6efd; font-size: small; padding: 8px 15px;">✏️ Edit Order</a>
+                      <button type="button" class="btn-action" onclick="confirmCancelOrder(<?php echo $order_id; ?>)" style="background-color: #dc3545; font-size: small; padding: 8px 15px;">❌ Cancel Order</button>
+                    </div>
                     <button type="button" class="btn-action" onclick="toggleDeliveryForm(<?php echo $order_id; ?>)" style="background-color: darkgreen; font-weight: bold; padding: 8px 15px;">🚚 Accept Delivery & File Bottles</button>
                   </div>
 
@@ -452,6 +557,7 @@
               $docs = getOrderDocuments($conn, $order_id);
               $total_qty = array_sum(array_column($items, 'quantity'));
               $total_value = array_sum(array_column($items, 'total_price'));
+              $overall_total = $total_value + $order['shipping_paid'] - ($order['discount'] ?? 0.00);
             ?>
               <div class="order-card" style="border-color: #cbd5e1; opacity: 0.85;">
                 <div class="order-card-header" style="background-color: #f8fafc;">
@@ -461,7 +567,7 @@
                     <span style="color: #666; font-size: 12px; margin-left: 10px;">from <strong><?php echo htmlspecialchars($order['store_name'], ENT_QUOTES, 'UTF-8'); ?></strong> on <?php echo date('M d, Y', strtotime($order['order_date'])); ?></span>
                   </div>
                   <div>
-                    <strong style="color: #475569; font-size: 14px;">€<?php echo number_format($total_value + $order['shipping_paid'], 2); ?></strong>
+                    <strong style="color: #475569; font-size: 14px;">€<?php echo number_format($overall_total, 2); ?></strong>
                   </div>
                 </div>
 
@@ -480,6 +586,51 @@
                   <!-- Simple item counts -->
                   <div style="font-size: small; color: #555;">
                     Contains <strong><?php echo $total_qty; ?></strong> bottles of 
+                    <?php 
+                      $wine_names_list = array_map(function($itm) {
+                        return $itm['quantity'] . 'x ' . ($itm['vintage'] ?: 'N/V') . ' ' . $itm['name'];
+                      }, $items);
+                      echo htmlspecialchars(implode(', ', $wine_names_list), ENT_QUOTES, 'UTF-8');
+                    ?>.
+                    <?php if (($order['discount'] ?? 0.00) > 0.00): ?>
+                      <span style="color: green; font-weight: bold; margin-left: 5px;">(Saved €<?php echo number_format($order['discount'], 2); ?> discount)</span>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </div>
+
+        <!-- 3. CANCELLED ORDERS TAB -->
+        <div id="cancelled_content" class="tab-content" style="display: none;">
+          <?php if (empty($cancelled_orders)): ?>
+            <p style="text-align: center; color: #777; padding: 30px;">No cancelled orders found.</p>
+          <?php else: ?>
+            <?php foreach ($cancelled_orders as $order): 
+              $order_id = $order['order_id'];
+              $items = getOrderItems($conn, $order_id);
+              $docs = getOrderDocuments($conn, $order_id);
+              $total_qty = array_sum(array_column($items, 'quantity'));
+              $total_value = array_sum(array_column($items, 'total_price'));
+              $overall_total = $total_value + $order['shipping_paid'] - ($order['discount'] ?? 0.00);
+            ?>
+              <div class="order-card" style="border-color: #f1f5f9; opacity: 0.7;">
+                <div class="order-card-header" style="background-color: #f8fafc;">
+                  <div>
+                    <span style="background-color: #94a3b8; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-right: 10px; vertical-align: middle;">CANCELLED</span>
+                    <strong style="font-size: 14px; text-decoration: line-through;">Order #<?php echo $order_id; ?></strong>
+                    <span style="color: #666; font-size: 12px; margin-left: 10px;">from <strong><?php echo htmlspecialchars($order['store_name'], ENT_QUOTES, 'UTF-8'); ?></strong> on <?php echo date('M d, Y', strtotime($order['order_date'])); ?></span>
+                  </div>
+                  <div>
+                    <strong style="color: #64748b; font-size: 14px; text-decoration: line-through;">€<?php echo number_format($overall_total, 2); ?></strong>
+                  </div>
+                </div>
+
+                <div class="order-card-body" style="padding: 10px 15px;">
+                  <!-- Simple item counts -->
+                  <div style="font-size: small; color: #777;">
+                    Was for <strong><?php echo $total_qty; ?></strong> bottles of 
                     <?php 
                       $wine_names_list = array_map(function($itm) {
                         return $itm['quantity'] . 'x ' . ($itm['vintage'] ?: 'N/V') . ' ' . $itm['name'];
