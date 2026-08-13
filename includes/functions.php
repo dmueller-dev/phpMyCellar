@@ -1212,14 +1212,16 @@ function validateMasterInput($conn, $master_id, $producer_id, $region_id, $subre
   }
 
   $selected_region_name = '';
+  $selected_country_name = '';
   if (is_numeric($region_id) && $region_id != "") {
-    $sql = "select region from regions where region_id = ?";
+    $sql = "select region, country from regions where region_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $region_id);
     $stmt->execute();
     $res = $stmt->get_result();
     if ($r = $res->fetch_assoc()) {
       $selected_region_name = strtolower(trim($r['region'] ?? ''));
+      $selected_country_name = strtolower(trim($r['country'] ?? ''));
     }
     $stmt->close();
   }
@@ -1251,17 +1253,25 @@ function validateMasterInput($conn, $master_id, $producer_id, $region_id, $subre
     if (!is_numeric($appellation_id)) {
       $errors[] = "Invalid appellation ID.";
     } else {
-      $sql = "select appellations.region_id, regions.region from appellations left join regions on appellations.region_id = regions.region_id where appellation_id = ?";
+      $sql = "select appellations.region_id, appellations.appellation, regions.region, regions.country from appellations left join regions on appellations.region_id = regions.region_id where appellation_id = ?";
       $stmt = $conn->prepare($sql);
       $stmt->bind_param("i", $appellation_id);
       $stmt->execute();
       $result = $stmt->get_result();
       $check = $result->fetch_assoc();
       if ($check) {
+        $appellation_name = strtolower(trim($check['appellation'] ?? ''));
         $appellation_region_name = strtolower(trim($check['region'] ?? ''));
-        $is_generic = in_array($selected_region_name, $generic_names) || in_array($appellation_region_name, $generic_names);
-        if ($check['region_id'] != $region_id && !$is_generic) {
-          $errors[] = "Appellation not in selected region. Check IDs.";
+        $appellation_country_name = strtolower(trim($check['country'] ?? ''));
+        $is_generic = in_array($selected_region_name, $generic_names) || in_array($appellation_region_name, $generic_names) || in_array($appellation_name, $generic_names);
+        if ($check['region_id'] != $region_id) {
+          if ($is_generic) {
+            if ($appellation_country_name != '' && $selected_country_name != '' && $appellation_country_name != $selected_country_name) {
+              $errors[] = "Appellation not in selected country. Check IDs.";
+            }
+          } else {
+            $errors[] = "Appellation not in selected region. Check IDs.";
+          }
         }
       }
       $stmt->close();
