@@ -1211,18 +1211,37 @@ function validateMasterInput($conn, $master_id, $producer_id, $region_id, $subre
     $errors[] = "Invalid region ID.";
   }
 
+  $selected_region_name = '';
+  if (is_numeric($region_id) && $region_id != "") {
+    $sql = "select region from regions where region_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $region_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($r = $res->fetch_assoc()) {
+      $selected_region_name = strtolower(trim($r['region'] ?? ''));
+    }
+    $stmt->close();
+  }
+
+  $generic_names = ['n/a', 'n.a.', 'none', 'generic'];
+
   if ($subregion_id != null && $subregion_id != "") {
     if (!is_numeric($subregion_id)) {
       $errors[] = "Invalid subregion ID.";
     } else {
-      $sql = "select region_id from subregions where subregion_id = ?";
+      $sql = "select subregions.region_id, regions.region from subregions left join regions on subregions.region_id = regions.region_id where subregion_id = ?";
       $stmt = $conn->prepare($sql);
       $stmt->bind_param("i", $subregion_id);
       $stmt->execute();
       $result = $stmt->get_result();
       $check = $result->fetch_assoc();
-      if ($check && $check['region_id'] != $region_id) {
-        $errors[] = "Subregion not in selected region. Check IDs.";
+      if ($check) {
+        $subregion_region_name = strtolower(trim($check['region'] ?? ''));
+        $is_generic = in_array($selected_region_name, $generic_names) || in_array($subregion_region_name, $generic_names);
+        if ($check['region_id'] != $region_id && !$is_generic) {
+          $errors[] = "Subregion not in selected region. Check IDs.";
+        }
       }
       $stmt->close();
     }
@@ -1232,14 +1251,18 @@ function validateMasterInput($conn, $master_id, $producer_id, $region_id, $subre
     if (!is_numeric($appellation_id)) {
       $errors[] = "Invalid appellation ID.";
     } else {
-      $sql = "select region_id from appellations where appellation_id = ?";
+      $sql = "select appellations.region_id, regions.region from appellations left join regions on appellations.region_id = regions.region_id where appellation_id = ?";
       $stmt = $conn->prepare($sql);
       $stmt->bind_param("i", $appellation_id);
       $stmt->execute();
       $result = $stmt->get_result();
       $check = $result->fetch_assoc();
-      if ($check && $check['region_id'] != $region_id) {
-        $errors[] = "Appellation not in selected region. Check IDs.";
+      if ($check) {
+        $appellation_region_name = strtolower(trim($check['region'] ?? ''));
+        $is_generic = in_array($selected_region_name, $generic_names) || in_array($appellation_region_name, $generic_names);
+        if ($check['region_id'] != $region_id && !$is_generic) {
+          $errors[] = "Appellation not in selected region. Check IDs.";
+        }
       }
       $stmt->close();
     }
@@ -1249,14 +1272,21 @@ function validateMasterInput($conn, $master_id, $producer_id, $region_id, $subre
     if (!is_numeric($vineyard_id)) {
       $errors[] = "Invalid vineyard ID.";
     } else {
-      $sql = "select region_id, appellation_id from vineyards where vineyard_id = ?";
+      $sql = "select vineyards.region_id, vineyards.appellation_id, regions.region from vineyards left join regions on vineyards.region_id = regions.region_id where vineyard_id = ?";
       $stmt = $conn->prepare($sql);
       $stmt->bind_param("i", $vineyard_id);
       $stmt->execute();
       $result = $stmt->get_result();
       $check = $result->fetch_assoc();
-      if (($check && $check['region_id'] != $region_id) || ($appellation_id != null && $appellation_id != "" && $check['appellation_id'] != $appellation_id)) {
-        $errors[] = "Vineyard not in selected region or appellation. Check IDs.";
+      if ($check) {
+        $vineyard_region_name = strtolower(trim($check['region'] ?? ''));
+        $is_region_generic = in_array($selected_region_name, $generic_names) || in_array($vineyard_region_name, $generic_names);
+        $region_mismatch = ($check['region_id'] != $region_id && !$is_region_generic);
+        $appellation_mismatch = ($appellation_id != null && $appellation_id != "" && $check['appellation_id'] != $appellation_id);
+
+        if ($region_mismatch || $appellation_mismatch) {
+          $errors[] = "Vineyard not in selected region or appellation. Check IDs.";
+        }
       }
       $stmt->close();
     }
