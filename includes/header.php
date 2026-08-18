@@ -53,7 +53,14 @@
       ?>
       <li><a class="<?php echo ($currentPath == '/index.php' || $currentPath == '/') ? 'active' : ''; ?>" href="/index.php" title="Back to homepage">Home</a></li>
       <li><a class="<?php echo ($currentPage == 'wines.php' || $currentPage == 'wine.php') ? 'active' : ''; ?>" href="/wines.php" title="Wine database">Wine database</a></li>
-      <li><a class="<?php echo ($currentPage == 'tnotes.php' || $currentPage == 'tnote.php') ? 'active' : ''; ?>" href="/tnotes.php" title="Fine wine tasting notes">Tasting notes</a></li>
+      <li class="dropdown">
+        <label for="drop-tnotes" class="menu-label <?php echo ($currentPage == 'tnotes.php' || $currentPage == 'tnote.php') ? 'active' : ''; ?>">Tasting notes</label>
+        <input type="checkbox" id="drop-tnotes" class="drop-check">
+        <label for="drop-tnotes" class="drop-icon">&#9660;</label>
+        <ul class="submenu">
+          <li><a class="<?php echo ($currentPage == 'tnotes.php' || $currentPage == 'tnote.php') ? 'active' : ''; ?>" href="/tnotes.php" title="Browse all tasting notes">Browse tasting notes</a></li>
+        </ul>
+      </li>
       <li><a class="<?php echo ($currentPage == 'blog.php' || $currentPage == 'blogpost.php') ? 'active' : ''; ?>" href="/blog.php" title="My wine blog">Stories</a></li>
       <?php
         if (!isset($_SESSION['user_id'])) {
@@ -64,7 +71,7 @@
           echo "<li class='right'><a class='".(($currentPage == 'login.php') ? 'active ' : '')."' href='/login.php" . $redirect_param . "' title='Login'>Login</a></li>";
         } elseif (isset($_SESSION['user_id'])) {
           echo "<li class='dropdown right'>" .
-            "<label for='drop-account' class='menu-label'>My account</label>" .
+            "<label for='drop-account' class='menu-label" . (($currentPage == 'accountSettings.php') ? ' active' : '') . "'>My account</label>" .
             "<input type='checkbox' id='drop-account' class='drop-check'>" .
             "<label for='drop-account' class='drop-icon'>&#9660;</label>" .
             "<ul class='submenu'>" .
@@ -81,9 +88,18 @@
 
           $role = $_SESSION['role'] ?? 'read';
 
+          $isContributeActive = in_array($currentPage, [
+            'addTastingNote.php',
+            'blindTasting.php',
+            'editTastingNote.php',
+            'addBlogpost.php',
+            'editBlogpost.php'
+          ]);
+          $isAdminActive = (strpos($currentPath, '/backend/') !== false && !$isContributeActive);
+
           if ($role === 'admin') {
             echo "<li class='dropdown right'>" .
-              "<label for='drop-admin' class='menu-label'>Admin</label>" .
+              "<label for='drop-admin' class='menu-label" . ($isAdminActive ? ' active' : '') . "'>Admin</label>" .
               "<input type='checkbox' id='drop-admin' class='drop-check'>" .
               "<label for='drop-admin' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
@@ -98,7 +114,7 @@
 
           if ($role === 'write' || $role === 'admin') {
             echo "<li class='dropdown right'>" .
-              "<label for='drop-contribute' class='menu-label'>Contribute</label>" .
+              "<label for='drop-contribute' class='menu-label" . ($isContributeActive ? ' active' : '') . "'>Contribute</label>" .
               "<input type='checkbox' id='drop-contribute' class='drop-check'>" .
               "<label for='drop-contribute' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
@@ -111,7 +127,7 @@
           }
 
           echo "<li class='dropdown right'>" .
-            "<label for='drop-friends' class='menu-label'>For friends</label>" .
+            "<label for='drop-friends' class='menu-label" . (($currentPage == 'winemenu.php') ? ' active' : '') . "'>For friends</label>" .
             "<input type='checkbox' id='drop-friends' class='drop-check'>" .
             "<label for='drop-friends' class='drop-icon'>&#9660;</label>" .
             "<ul class='submenu'>" .

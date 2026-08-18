@@ -179,7 +179,7 @@ ul.top-menu li label.menu-label {
 }
 
 ul.top-menu li a:hover:not(.active),
-ul.top-menu li label.menu-label:hover {
+ul.top-menu li label.menu-label:hover:not(.active) {
   background-color: darkred;
   padding-left: 12px;
   border-left-style: solid;
@@ -187,7 +187,8 @@ ul.top-menu li label.menu-label:hover {
   border-left-color: mistyrose;
 }
 
-ul.top-menu li a.active {
+ul.top-menu li a.active,
+ul.top-menu li label.menu-label.active {
   background-color: darkred;
   padding-left: 12px;
   border-left-style: solid;
