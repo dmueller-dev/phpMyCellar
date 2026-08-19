@@ -3,6 +3,8 @@
   if (!defined('INCLUDED_VIA_APP')) {
     die('Direct access not permitted');
   }
+
+  global $conn, $mysqli;
 ?>
 
 <!DOCTYPE html>
@@ -54,11 +56,12 @@
       <li><a class="<?php echo ($currentPath == '/index.php' || $currentPath == '/') ? 'active' : ''; ?>" href="/index.php" title="Back to homepage">Home</a></li>
       <li><a class="<?php echo ($currentPage == 'wines.php' || $currentPage == 'wine.php') ? 'active' : ''; ?>" href="/wines.php" title="Wine database">Wine database</a></li>
       <li class="dropdown">
-        <label for="drop-tnotes" class="menu-label <?php echo ($currentPage == 'tnotes.php' || $currentPage == 'tnote.php') ? 'active' : ''; ?>">Tasting notes</label>
+        <label for="drop-tnotes" class="menu-label <?php echo ($currentPage == 'tnotes.php' || $currentPage == 'tnote.php' || $currentPage == 'vintages.php') ? 'active' : ''; ?>">Tasting notes</label>
         <input type="checkbox" id="drop-tnotes" class="drop-check">
         <label for="drop-tnotes" class="drop-icon">&#9660;</label>
         <ul class="submenu">
           <li><a class="<?php echo ($currentPage == 'tnotes.php' || $currentPage == 'tnote.php') ? 'active' : ''; ?>" href="/tnotes.php" title="Browse all tasting notes">Browse tasting notes</a></li>
+          <li><a class="<?php echo ($currentPage == 'vintages.php') ? 'active' : ''; ?>" href="/vintages.php" title="Vintage reports">Vintage reports</a></li>
         </ul>
       </li>
       <li><a class="<?php echo ($currentPage == 'blog.php' || $currentPage == 'blogpost.php') ? 'active' : ''; ?>" href="/blog.php" title="My wine blog">Stories</a></li>

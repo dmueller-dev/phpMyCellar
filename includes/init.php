@@ -29,7 +29,8 @@
   $conn = $mysqli;
 
   // Enforce Role-Based Access Control (RBAC) for the backend
-  if (strpos($_SERVER['SCRIPT_FILENAME'], '/backend/') !== false) {
+  $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+  if (strpos($scriptName, '/backend/') !== false) {
     if (!isset($_SESSION['user_id'])) {
       // Not logged in, redirect to login
       header("Location: /login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
@@ -47,7 +48,7 @@
     if ($role === 'write') {
       // Write users only have access to specific scripts
       $allowedScripts = ['addTastingNote.php', 'editTastingNote.php', 'blindTasting.php', 'addBlogpost.php', 'editBlogpost.php'];
-      $currentScript = basename($_SERVER['SCRIPT_FILENAME']);
+      $currentScript = basename($scriptName);
       if (!in_array($currentScript, $allowedScripts)) {
         header("Location: /index.php");
         exit();

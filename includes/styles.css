@@ -585,3 +585,204 @@ ul.submenu li a:hover {
   font-weight: bold;
 }
 
+/* --- VINTAGE CHARTS & REPORTS STYLES --- */
+.vintage-nav-center {
+  text-align: center;
+  margin: 15px 0;
+}
+
+.vintage-grid-decade {
+  margin-bottom: 25px;
+}
+
+.vintage-decade-heading {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eee;
+}
+
+.vintage-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.vintage-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
+  background-color: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  text-decoration: none !important;
+  color: #333 !important;
+  transition: all 0.2s ease;
+}
+
+.vintage-tile:hover {
+  background-color: #fef2f2;
+  border-color: indianred;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.vintage-tile .vintage-year {
+  font-size: 18px;
+  font-weight: bold;
+  color: firebrick;
+  margin-bottom: 4px;
+}
+
+.vintage-tile .vintage-meta {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.vintage-tile .vintage-score-pill {
+  background-color: indianred;
+  color: white;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+/* Vintage Report: Country Percentage Bars */
+.vintage-country-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.vintage-country-table td {
+  padding: 6px 4px;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+.vintage-bar-wrapper {
+  background-color: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 12px;
+  width: 100%;
+}
+
+.vintage-bar-fill {
+  background-color: indianred;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Vintage Report: Expandable Region Accordion */
+.vintage-region-item {
+  margin-bottom: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: #fafafa;
+  overflow: hidden;
+}
+
+.vintage-region-detail summary {
+  padding: 9px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  font-size: 14px;
+  background-color: #f8fafc;
+  transition: background-color 0.2s;
+}
+
+.vintage-region-detail summary:hover {
+  background-color: #f1f5f9;
+}
+
+.vintage-region-detail[open] summary {
+  background-color: #fef2f2;
+  border-bottom: 1px solid #fed7aa;
+}
+
+.vintage-region-plain {
+  padding: 9px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  background-color: #f8fafc;
+}
+
+.vintage-desc-box {
+  padding: 12px 14px;
+  background-color: #fff;
+  border-left: 3px solid indianred;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.vintage-desc-box p {
+  margin: 0;
+}
+
+/* Vintage Top Wines List */
+.vintage-top-wine-card {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.vintage-top-wine-card:last-child {
+  border-bottom: none;
+}
+
+.vintage-score-badge {
+  font-weight: bold;
+  color: darkred;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.vintage-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.vintage-stat-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 8px 5px;
+}
+
+.vintage-stat-box .stat-val {
+  font-size: 18px;
+  font-weight: bold;
+  color: firebrick;
+}
+
+.vintage-stat-box .stat-lbl {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+
