@@ -732,7 +732,11 @@ ul.submenu li a:hover {
 }
 
 .vintage-desc-box p {
-  margin: 0;
+  margin: 0 0 8px 0;
+}
+
+.vintage-desc-box p:last-child {
+  margin-bottom: 0;
 }
 
 /* Vintage Top Wines List */

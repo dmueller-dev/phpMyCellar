@@ -116,7 +116,7 @@
                     <div class="vintage-score-badge"><?php echo $avg; ?> / 20</div>
                   </summary>
                   <div class="vintage-desc-box">
-                    <p><?php echo nl2br(htmlspecialchars($r['vintage_desc'], ENT_QUOTES, 'UTF-8')); ?></p>
+                    <?php echo $r['vintage_desc']; ?>
                   </div>
                 </details>
               <?php else: ?>
