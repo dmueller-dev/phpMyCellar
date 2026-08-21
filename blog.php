@@ -43,13 +43,14 @@
   global $mysqli, $conn;
     $prevYear="";
   // Perform query
-  $result = $mysqli -> query("select * from blogposts where status='published' order by pub_date desc, blog_id desc limit 0,".$num);
+  $result = $mysqli -> query("select blogposts.*, coalesce(c.comment_count, 0) as comment_count from blogposts left join (select blog_id as c_blog_id, count(comment_id) as comment_count from x_comments_blogposts group by blog_id) c on blogposts.blog_id=c.c_blog_id where status='published' order by pub_date desc, blog_id desc limit 0,".$num);
   // Output
   while ($blogs = $result->fetch_assoc()) {
+    $comment_badge = getCommentBadgeHtml($blogs["comment_count"] ?? 0, "/blogpost.php?id=" . $blogs["blog_id"] . "#comments");
     if (date_format(date_create($blogs["pub_date"]),"Y")!=$prevYear) {
       echo "<br><li><b>".date_format(date_create($blogs["pub_date"]),"Y")."</b></li>";
     }
-    echo "<li>".date_format(date_create($blogs["pub_date"]),"d M Y").": <a href='/blogpost.php?id=".$blogs['blog_id']."'>".$blogs["title"]."</a></li>";
+    echo "<li>".date_format(date_create($blogs["pub_date"]),"d M Y").": <a href='/blogpost.php?id=".$blogs['blog_id']."'>".$blogs["title"]."</a>" . $comment_badge . "</li>";
     $prevYear=date_format(date_create($blogs["pub_date"]),"Y");
   }
   $result -> free_result();

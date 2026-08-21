@@ -175,7 +175,8 @@
                                 regions.country,
                                 subregions.subregion,
                                 appellations.appellation,
-                                v.grape_desc
+                                v.grape_desc,
+                                coalesce(c.comment_count, 0) as comment_count
                               from wines
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join producers on wines_master.producer_id=producers.producer_id
@@ -184,6 +185,7 @@
                                 left join subregions on wines_master.subregion_id=subregions.subregion_id
                                 left join appellations on wines_master.appellation_id=appellations.appellation_id
                                 left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
+                                left join (select wine_id as c_wine_id, count(comment_id) as comment_count from x_comments_wines group by wine_id) c on wines.wine_id=c.c_wine_id
                                 " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
 
   // Display message if no results found
@@ -233,6 +235,9 @@
       $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
     }
 
+    // Comment badge
+    $comment_badge = getCommentBadgeHtml($wine["comment_count"] ?? 0, "/wine.php?id=" . $wine["wine_id"] . "#comments");
+
     // Generate shortcut link if user is authorized to contribute
     $add_note_link = "";
     if ($has_contribution_rights) {
@@ -250,7 +255,7 @@
         echo ($prevRegion!="") ? "</ul></details></li>" : "";
         echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["region"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $comment_badge . $add_note_link . "</li>";
     } elseif($sort=="producer") {
       if ($wine["producer"]!=$prevProducer) {
         echo ($prevProducer!="") ? "</ul></details><br>" : "";
@@ -260,7 +265,7 @@
           echo "<details><summary><b>".$wine["producer"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         }
       }
-      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
+      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $comment_badge . $add_note_link . "</li>";
     } elseif($sort=="vintage") {
       if($wine["vintage"]!=$prevVintage) {
         echo ($prevVintage!="") ? "</ul></details></li></ul></details><br>" : "";
@@ -271,7 +276,7 @@
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
         echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $comment_badge . $add_note_link . "</li>";
     } elseif($sort=="variety") {
       if($wine["grape"]!=$prevVariety) {
         echo ($prevVariety!="") ? "</ul></details></li></ul></details><br>" : "";
@@ -286,7 +291,7 @@
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
         echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $comment_badge . $add_note_link . "</li>";
     }
     // Set previous values
     $prevCountry=$wine["country"];

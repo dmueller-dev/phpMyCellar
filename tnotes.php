@@ -257,6 +257,7 @@
                                 left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
                                 left join (select pts as dpts, dmpts_desc from dmpts) d on tnotes.dmpts=d.dpts
                                 left join (select pts as spts, starpts_desc from starpts) s on tnotes.starpts=s.spts
+                                left join (select note_id as c_note_id, count(comment_id) as comment_count from x_comments_tnotes group by note_id) c on tnotes.note_id=c.c_note_id
                                 " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
 
   // Display message if no results found
@@ -379,6 +380,7 @@
     } elseif($sort=="tenyears") {
       if($tasting_note["vintage"]!=$prevVintage) {echo "<br><li><b>".$tasting_note["vintage"]."-".date_format(date_create($tasting_note["tasting_date"]),"y")."</b></li>";}
     }
+    $comment_badge = getCommentBadgeHtml($tasting_note["comment_count"] ?? 0, "/tnote.php?id=" . $tasting_note["note_id"] . "#comments");
     echo "<li>";
     if ($sort=="date" or $sort=="rating" or $sort=="tenyears" or $sort=="twentyplus") {
       echo date_format(date_create($tasting_note["tasting_date"]),"d M Y").": ";
@@ -386,7 +388,7 @@
     if (isset($tasting_note["favourite"]) && $tasting_note["favourite"] == 'yes') {
       echo "<span style='color:#e25555; margin-right:4px; font-size:0.9em;'>❤️</span>";
     }
-    echo "<a href='/tnote.php?id=".$tasting_note['note_id']."'>".$wine_name."</a> (".$dmpts.")</li>";
+    echo "<a href='/tnote.php?id=".$tasting_note['note_id']."'>".$wine_name."</a> (".$dmpts.")" . $comment_badge . "</li>";
     // Set previous values
     $prevYear=date_format(date_create($tasting_note["tasting_date"]),"Y");
     $prevRating=$dmpts;

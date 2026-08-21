@@ -1479,6 +1479,29 @@ function renderComments($conn, $id, $type) {
   }
 }
 
+/**
+ * Render a small comment icon and count badge
+ *
+ * @param int $count Number of comments
+ * @param string $url Target URL to link to (optional)
+ * @return string HTML string for the badge, or empty string if count <= 0
+ */
+function getCommentBadgeHtml($count, $url = '') {
+  $count = (int)$count;
+  if ($count <= 0) {
+    return '';
+  }
+
+  $title = $count === 1 ? '1 comment' : $count . ' comments';
+  $iconSvg = '<svg class="comment-icon" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+
+  if (!empty($url)) {
+    return ' <a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" class="comment-badge" title="' . $title . '" aria-label="' . $title . '">' . $iconSvg . '<span class="comment-count">' . $count . '</span></a>';
+  } else {
+    return ' <span class="comment-badge" title="' . $title . '" aria-label="' . $title . '">' . $iconSvg . '<span class="comment-count">' . $count . '</span></span>';
+  }
+}
+
 // Function to render blog references for an entity (tnote, wine)
 function renderBlogReferences($conn, $id, $type, $title) {
   if (!($conn instanceof mysqli)) {

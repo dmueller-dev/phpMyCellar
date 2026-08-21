@@ -247,7 +247,7 @@
       if (isset($_SESSION['user_id'])) {
         // Fetch subscription state and display toggle button
         $is_subbed = isSubscribed($conn, $_SESSION['user_id'], $wineID, 'wine');
-        echo "<div class='card' style='display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;'>";
+        echo "<div class='card' id='comments' style='display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;'>";
         echo "<div><h3 style='margin:0;'>Discussion</h3></div>";
         echo "<div class='subscription-container' style='margin:0;'>";
         if ($is_subbed) {

@@ -274,7 +274,7 @@
       <?php
         $is_subbed = isSubscribed($conn, $_SESSION['user_id'], $noteID, 'tnote');
       ?>
-      <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div class="card" id="comments" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div><h3 style="margin:0;">Discussion</h3></div>
         <div class="subscription-container" style="margin:0;">
           <?php if ($is_subbed): ?>
