@@ -862,8 +862,8 @@ details summary + ul {
   margin-top: 10px !important;
 }
 
-details + details,
-li + li:has(details) {
+details:not(.vintage-menu-detail) + details:not(.vintage-menu-detail),
+li + li:has(> details:not(.vintage-menu-detail)) {
   margin-top: 14px;
 }
 
@@ -875,7 +875,8 @@ li + li:has(details) {
   font-weight: 600;
   color: #1e293b;
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
+  line-height: 1.35;
   text-indent: 0;
 }
 
@@ -893,9 +894,9 @@ li + li:has(details) {
 .vintage-chip-group {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
-  margin-top: 3px;
+  margin-top: 0;
   margin-bottom: 4px;
   text-indent: 0;
 }
@@ -1013,10 +1014,140 @@ li + li:has(details) {
   color: firebrick !important;
 }
 
+/* --- WINE MENU VINTAGE ACCORDION CHIPS & STORAGE DRAWER --- */
+.vintage-menu-detail {
+  display: inline-block;
+  margin: 0 !important;
+  vertical-align: top;
+}
+
+.vintage-menu-detail + .vintage-menu-detail {
+  margin-top: 0 !important;
+}
+
+.vintage-menu-detail summary.vintage-chip {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  vertical-align: top;
+  transition: all 0.15s ease;
+}
+
+.vintage-menu-detail summary.vintage-chip::-webkit-details-marker,
+.vintage-menu-detail summary.vintage-chip::marker {
+  display: none;
+}
+
+.vintage-menu-detail summary.vintage-chip:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: darkred;
+}
+
+.vintage-menu-detail[open] summary.vintage-chip {
+  background-color: #fee2e2;
+  border-color: #f87171;
+  color: #991b1b;
+}
+
+.vintage-menu-detail[open] {
+  width: 100%;
+}
+
+.vintage-menu-popover {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid indianred;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-size: 0.88em;
+  text-indent: 0;
+  max-width: 520px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vintage-menu-desc {
+  color: #475569;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+  line-height: 1.4;
+}
+
+.vintage-menu-desc p {
+  margin: 0 0 4px 0;
+}
+
+.vintage-menu-desc p:last-child {
+  margin-bottom: 0;
+}
+
+.vintage-menu-bins {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vintage-menu-bins li {
+  display: table-row;
+  color: #334155;
+  text-indent: 0;
+}
+
+.vintage-menu-bins li > span {
+  display: table-cell;
+  padding: 3px 6px;
+  vertical-align: middle;
+  line-height: 1.35;
+}
+
+.vintage-menu-bins .bin-format {
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  width: 1%;
+  padding-left: 0;
+}
+
+.vintage-menu-bins .bin-sep {
+  color: #94a3b8;
+  font-size: 0.9em;
+  width: 1%;
+  text-align: center;
+  padding: 3px 4px;
+}
+
+.vintage-menu-bins .bin-loc {
+  color: #475569;
+  padding-left: 4px;
+  width: auto;
+}
+
+.vintage-menu-bins .bin-qty {
+  color: #64748b;
+  font-size: 0.95em;
+  white-space: nowrap;
+  text-align: right;
+  width: 1%;
+  padding-right: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 @media screen and (max-width: 720px) {
   .vintage-chip-group {
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 0;
     margin-bottom: 6px;
   }
   .vintage-chip {
@@ -1033,5 +1164,12 @@ li + li:has(details) {
   .vintage-chip .chip-action {
     padding: 6px 10px;
     font-size: 15px;
+  }
+  .vintage-menu-detail summary.vintage-chip {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  .vintage-menu-popover {
+    max-width: 100%;
   }
 }
