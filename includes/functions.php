@@ -557,6 +557,24 @@ function getWineName($nameconvention,$vintage,$name,$producer,$grape,$vineyard) 
   return $wine_name;
 }
 
+// Function for master wine names without vintage prefix
+function getMasterWineName($nameconvention, $name, $producer, $grape, $vineyard) {
+  if ($nameconvention == "vintage_name") {
+    $wine_name = $name;
+  } elseif ($nameconvention == "vintage_producer") {
+    $wine_name = $producer;
+  } elseif ($nameconvention == "vintage_producer_grape_name") {
+    $wine_name = $producer . " " . $grape . " " . $name;
+  } elseif ($nameconvention == "vintage_producer_vineyard_grape_name") {
+    $wine_name = $producer . " " . $vineyard . " " . $grape . " " . $name;
+  } elseif ($nameconvention == "vintage_producer_vineyard_name") {
+    $wine_name = $producer . " " . $vineyard . " " . $name;
+  } else {
+    $wine_name = $producer . " " . $name;
+  }
+  return trim($wine_name);
+}
+
 // Function to generate Wine-Searcher search URL from a full wine name
 function getWineSearcherUrl($wine_name) {
   return "https://www.wine-searcher.com/find/" . urlencode($wine_name);

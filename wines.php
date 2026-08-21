@@ -15,11 +15,11 @@
   if ($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus") {
     $sqlOrderBy="order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
   } elseif ($sort=="producer") {
-    $sqlOrderBy="order by producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
+    $sqlOrderBy="order by producer asc,region asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
   } elseif ($sort=="vintage") {
-    $sqlOrderBy="order by vintage desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc";
+    $sqlOrderBy="order by vintage desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
   } elseif ($sort=="variety") {
-    $sqlOrderBy="order by grape asc,country asc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
+    $sqlOrderBy="order by grape asc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
   }
 ?>
 
@@ -110,10 +110,6 @@
 <?php function renderWines($num,$sort,$sqlOrderBy)
 {
   global $mysqli, $conn;
-  $prevCountry="";
-  $prevRegion="";
-  $prevProducer="";
-  $prevVintage="";
   $has_contribution_rights = isset($_SESSION['user_id']) && (($_SESSION['role'] ?? 'read') === 'write' || ($_SESSION['role'] ?? 'read') === 'admin');
 
   // Base WHERE condition
@@ -157,6 +153,7 @@
   $result = $mysqli -> query("select
                                 wines.wine_id,
                                 wines.vintage,
+                                wines.wine_desc,
                                 wines_master.master_id,
                                 wines_master.name,
                                 wines_master.nameconvention,
@@ -189,7 +186,7 @@
                                 " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
 
   // Display message if no results found
-  if ($result->num_rows == 0) {
+  if (!$result || $result->num_rows == 0) {
     // Determine what to display based on whether they searched or just filtered
     $feedbackMsg = !empty($_GET['q']) 
         ? "your search for '<strong>" . htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8') . "</strong>'"
@@ -206,104 +203,174 @@
   if ($sort=="region") {
     echo "<p><small><i>Wines sorted by country and region. Then by producer, wine and vintage.</i></small></p>";
   } elseif ($sort=="producer") {
-    echo "<p><small><i>Wines sorted by producer, then vintage and wine.</i></small></p>";
+    echo "<p><small><i>Wines sorted by producer, then wine and vintage.</i></small></p>";
   } elseif ($sort=="vintage") {
     echo "<p><small><i>Wines sorted by vintage, then country, producer and wine.</i></small></p>";
   } elseif ($sort=="variety") {
-    echo "<p><small><i>Wines sorted by grape variety, then country, producer and wine.</i></small></p>";
+    echo "<p><small><i>Wines sorted by grape variety, then country, producer, wine and vintage.</i></small></p>";
   } elseif ($sort=="tenyearsold") {
     echo "<p><small><i>Ten-year-old wines sorted by country and region. Then by producer and wine.</i></small></p>";
   } elseif ($sort=="twentyplus") {
     echo "<p><small><i>Mature wines (20+ years) organised by country and region. Then by producer and wine.</i></small></p>";
   }
-  while ($wine = $result->fetch_assoc()) {
-    // Vintage NV?
-    if ($wine["vintage"]==null) { $wine["vintage"]="NV"; }
-    // Get wine name
-    if ($wine["nameconvention"]=="vintage_name") {
-      $wine_name=$wine["vintage"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_grape_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["grape"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_grape_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["grape"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["name"];
-    // ...else vintage_producer_name as default:
-    } else {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
-    }
 
-    // Comment badge
-    $comment_badge = getCommentBadgeHtml($wine["comment_count"] ?? 0, "/wine.php?id=" . $wine["wine_id"] . "#comments");
-
-    // Generate shortcut link if user is authorized to contribute
-    $add_note_link = "";
-    if ($has_contribution_rights) {
-      $add_note_link = " <a href='/backend/addTastingNote.php?wine_id=" . $wine["wine_id"] . "' title='Add a tasting note for this wine' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
+  // Fetch all rows and normalize non-vintage values
+  $rows = [];
+  while ($row = $result->fetch_assoc()) {
+    if ($row["vintage"] === null) {
+      $row["vintage"] = "NV";
     }
-
-    // Output
-    if($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus") {
-      if($wine["country"]!=$prevCountry) {
-        echo ($prevCountry!="") ? "</ul></details></li></ul></details><br>" : "";
-        echo "<details><summary><b>".$wine["country"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
-        $prevRegion="";
-      }
-      if($wine["region"]!=$prevRegion) {
-        echo ($prevRegion!="") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["region"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
-      }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $comment_badge . $add_note_link . "</li>";
-    } elseif($sort=="producer") {
-      if ($wine["producer"]!=$prevProducer) {
-        echo ($prevProducer!="") ? "</ul></details><br>" : "";
-        if ($wine["producer_desc"]!=null) {
-          echo "<details><summary><b>".$wine["producer"]."</b></summary><hr><small>".$wine["producer_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
-        } else {
-          echo "<details><summary><b>".$wine["producer"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
-        }
-      }
-      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $comment_badge . $add_note_link . "</li>";
-    } elseif($sort=="vintage") {
-      if($wine["vintage"]!=$prevVintage) {
-        echo ($prevVintage!="") ? "</ul></details></li></ul></details><br>" : "";
-        echo "<details><summary><b>".$wine["vintage"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
-        $prevCountry="";
-      }
-      if($wine["country"]!=$prevCountry) {
-        echo ($prevCountry!="") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
-      }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $comment_badge . $add_note_link . "</li>";
-    } elseif($sort=="variety") {
-      if($wine["grape"]!=$prevVariety) {
-        echo ($prevVariety!="") ? "</ul></details></li></ul></details><br>" : "";
-        if($wine["grape_desc"]!=null) {
-          echo "<details><summary><b>".$wine["grape"]."</b></summary><hr><small>".$wine["grape_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
-        } else {
-          echo "<details><summary><b>".$wine["grape"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
-        }
-        $prevCountry="";
-      }
-      if($wine["country"]!=$prevCountry) {
-        echo ($prevCountry!="") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
-      }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/wine.php?id=".$wine["wine_id"]."'>".$wine_name."</a>" . $comment_badge . $add_note_link . "</li>";
-    }
-    // Set previous values
-    $prevCountry=$wine["country"];
-    $prevRegion=$wine["region"];
-    $prevProducer=$wine["producer"];
-    $prevVintage=$wine["vintage"];
-    $prevVariety=$wine["grape"];
+    $rows[] = $row;
   }
-  if($sort=="region" || $sort=="tenyearsold" || $sort=="twentyplus" || $sort=="vintage" || $sort=="variety") {
+  $result->free_result();
+
+  // Group consecutive rows with the same master_id within the active hierarchy section
+  $grouped_wines = [];
+  $current_group = null;
+  $current_section_key = null;
+
+  foreach ($rows as $row) {
+    if ($sort == "region" || $sort == "tenyearsold" || $sort == "twentyplus") {
+      $section_key = ($row['country'] ?? '') . '|||' . ($row['region'] ?? '');
+    } elseif ($sort == "producer") {
+      $section_key = $row['producer'] ?? '';
+    } elseif ($sort == "vintage") {
+      $section_key = ($row['vintage'] ?? '') . '|||' . ($row['country'] ?? '');
+    } elseif ($sort == "variety") {
+      $section_key = ($row['grape'] ?? '') . '|||' . ($row['country'] ?? '');
+    } else {
+      $section_key = '';
+    }
+
+    $master_id = $row['master_id'] ?? $row['wine_id'];
+
+    if (
+      $current_group !== null &&
+      $current_section_key === $section_key &&
+      $current_group['master_id'] === $master_id
+    ) {
+      $current_group['vintages'][] = $row;
+    } else {
+      if ($current_group !== null) {
+        $grouped_wines[] = $current_group;
+      }
+      $current_section_key = $section_key;
+      $current_group = [
+        'section_key' => $section_key,
+        'master_id' => $master_id,
+        'row' => $row,
+        'vintages' => [$row]
+      ];
+    }
+  }
+  if ($current_group !== null) {
+    $grouped_wines[] = $current_group;
+  }
+
+  $prevCountry = "";
+  $prevRegion = "";
+  $prevProducer = "";
+  $prevVintage = "";
+  $prevVariety = "";
+
+  foreach ($grouped_wines as $group) {
+    $wine = $group['row'];
+
+    // Hierarchy headers
+    if ($sort == "region" || $sort == "tenyearsold" || $sort == "twentyplus") {
+      if ($wine["country"] != $prevCountry) {
+        echo ($prevCountry != "") ? "</ul></details></li></ul></details><br>" : "";
+        echo "<details><summary><b>" . htmlspecialchars($wine["country"], ENT_QUOTES, 'UTF-8') . "</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        $prevRegion = "";
+      }
+      if ($wine["region"] != $prevRegion) {
+        echo ($prevRegion != "") ? "</ul></details></li>" : "";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>" . htmlspecialchars($wine["region"], ENT_QUOTES, 'UTF-8') . "</i></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+      }
+    } elseif ($sort == "producer") {
+      if ($wine["producer"] != $prevProducer) {
+        echo ($prevProducer != "") ? "</ul></details><br>" : "";
+        if (!empty($wine["producer_desc"])) {
+          echo "<details><summary><b>" . htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>" . $wine["producer_desc"] . "</small><ul style='list-style-type:none;padding:0;margin:0;'>";
+        } else {
+          echo "<details><summary><b>" . htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8') . "</b></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+        }
+      }
+    } elseif ($sort == "vintage") {
+      if ($wine["vintage"] != $prevVintage) {
+        echo ($prevVintage != "") ? "</ul></details></li></ul></details><br>" : "";
+        echo "<details><summary><b>" . htmlspecialchars($wine["vintage"], ENT_QUOTES, 'UTF-8') . "</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        $prevCountry = "";
+      }
+      if ($wine["country"] != $prevCountry) {
+        echo ($prevCountry != "") ? "</ul></details></li>" : "";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>" . htmlspecialchars($wine["country"], ENT_QUOTES, 'UTF-8') . "</i></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+      }
+    } elseif ($sort == "variety") {
+      if ($wine["grape"] != $prevVariety) {
+        echo ($prevVariety != "") ? "</ul></details></li></ul></details><br>" : "";
+        if (!empty($wine["grape_desc"])) {
+          echo "<details><summary><b>" . htmlspecialchars($wine["grape"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>" . $wine["grape_desc"] . "</small><ul style='list-style-type:none;padding:0;margin:0;'>";
+        } else {
+          echo "<details><summary><b>" . htmlspecialchars($wine["grape"], ENT_QUOTES, 'UTF-8') . "</b></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+        }
+        $prevCountry = "";
+      }
+      if ($wine["country"] != $prevCountry) {
+        echo ($prevCountry != "") ? "</ul></details></li>" : "";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>" . htmlspecialchars($wine["country"], ENT_QUOTES, 'UTF-8') . "</i></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+      }
+    }
+
+    $item_padding = ($sort == "producer") ? "padding-left:35px;text-indent:-18px;" : "padding-left:43px;text-indent:-18px;";
+
+    $first_v = $group['vintages'][0];
+    $base_name = getMasterWineName($first_v["nameconvention"], $first_v["name"], $first_v["producer"], $first_v["grape"], $first_v["vineyard"]);
+
+    echo "<li class='wine-item' style='{$item_padding}margin-bottom:8px;'>";
+    echo "<span class='wine-title'>" . htmlspecialchars($base_name, ENT_QUOTES, 'UTF-8') . "</span>";
+    echo "<div class='vintage-chip-group'>";
+
+    foreach ($group['vintages'] as $v) {
+      $desc_title = !empty($v['wine_desc']) ? strip_tags($v['wine_desc']) : '';
+      $comment_count = (int)($v['comment_count'] ?? 0);
+      $v_display = htmlspecialchars($v['vintage'], ENT_QUOTES, 'UTF-8');
+
+      echo "<div class='vintage-chip'>";
+      echo "<a class='chip-link' href='/wine.php?id=" . $v["wine_id"] . "'" . (!empty($desc_title) ? " title='" . htmlspecialchars($desc_title, ENT_QUOTES, 'UTF-8') . "'" : "") . ">";
+      echo "<span class='chip-year'>" . $v_display . "</span>";
+      echo "</a>";
+
+      if ($comment_count > 0) {
+        $c_title = $comment_count === 1 ? '1 comment' : $comment_count . ' comments';
+        echo "<a class='chip-badge' href='/wine.php?id=" . $v["wine_id"] . "#comments' title='" . $c_title . "' aria-label='" . $c_title . "'>";
+        echo '<svg class="comment-icon" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+        echo "<span class='comment-count'>" . $comment_count . "</span>";
+        echo "</a>";
+      }
+
+      if ($has_contribution_rights) {
+        echo "<a class='chip-action' href='/backend/addTastingNote.php?wine_id=" . $v["wine_id"] . "' title='Add tasting note for " . $v_display . "'>+</a>";
+      }
+
+      echo "</div>";
+    }
+
+    echo "</div>";
+    echo "</li>";
+
+    // Set previous values
+    $prevCountry = $wine["country"];
+    $prevRegion = $wine["region"];
+    $prevProducer = $wine["producer"];
+    $prevVintage = $wine["vintage"];
+    $prevVariety = $wine["grape"];
+  }
+
+  if ($sort == "region" || $sort == "tenyearsold" || $sort == "twentyplus" || $sort == "vintage" || $sort == "variety") {
     echo "</ul></details></li></ul></details>";
-  } elseif($sort=="producer") {
+  } elseif ($sort == "producer") {
     echo "</ul></details>";
   }
-  $result -> free_result();
-  } ?>
+} ?>
+

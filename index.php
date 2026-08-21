@@ -24,7 +24,7 @@
     <div class="card">
       <section>
         <h3>Welcome</h3>
-        <img class="inline left" src="/img/me2022.jpg" alt="Dominik Mueller">
+        <img class="inline left" src="/img/me2026.jpg" alt="Dominik Mueller">
         <p>
           Welcome to my personal wine notebook! Here, I share wines I have tasted and tell you about my wine and food experiences. I am
           not a professional. Wine is my hobby. The French would call me an <em>amateur des vins</em>. With this website, I hope to connect

@@ -829,5 +829,148 @@ a.comment-badge:hover .comment-icon {
   stroke: firebrick;
 }
 
+/* --- WINE LIST VINTAGE CHIPS --- */
+details summary + ul {
+  margin-top: 8px !important;
+}
 
+.wine-item {
+  margin-bottom: 8px;
+}
 
+.wine-item .wine-title {
+  font-weight: 600;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 3px;
+  text-indent: 0;
+}
+
+.wine-item-action {
+  font-size: 0.85em;
+  color: indianred !important;
+  text-decoration: none !important;
+  margin-left: 6px;
+}
+
+.wine-item-action:hover {
+  text-decoration: underline !important;
+}
+
+.vintage-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  margin-bottom: 4px;
+  text-indent: 0;
+}
+
+.vintage-chip {
+  display: inline-flex;
+  align-items: stretch;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  overflow: hidden;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  line-height: 1.2;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+
+.vintage-chip:hover {
+  border-color: indianred;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.vintage-chip .chip-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  color: firebrick !important;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.vintage-chip .chip-link:hover {
+  background-color: #fee2e2;
+  color: darkred !important;
+}
+
+.vintage-chip .chip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  background-color: #f1f5f9;
+  border-left: 1px solid #e2e8f0;
+  color: #64748b !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.vintage-chip .chip-badge .comment-icon {
+  width: 11px;
+  height: 11px;
+  stroke: #64748b;
+  flex-shrink: 0;
+}
+
+.vintage-chip .chip-badge:hover {
+  background-color: #fee2e2;
+  color: firebrick !important;
+}
+
+.vintage-chip .chip-badge:hover .comment-icon {
+  stroke: firebrick;
+}
+
+.vintage-chip .chip-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 7px;
+  border-left: 1px solid #e2e8f0;
+  color: #64748b !important;
+  text-decoration: none !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.vintage-chip .chip-action:hover {
+  background-color: #fee2e2;
+  color: firebrick !important;
+}
+
+@media screen and (max-width: 720px) {
+  .vintage-chip-group {
+    gap: 8px;
+    margin-top: 4px;
+    margin-bottom: 6px;
+  }
+  .vintage-chip {
+    font-size: 14px;
+  }
+  .vintage-chip .chip-link {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  .vintage-chip .chip-badge {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .vintage-chip .chip-action {
+    padding: 6px 10px;
+    font-size: 15px;
+  }
+}
