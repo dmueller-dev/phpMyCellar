@@ -285,7 +285,7 @@
       }
       if ($wine["region"] != $prevRegion) {
         echo ($prevRegion != "") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>" . htmlspecialchars($wine["region"], ENT_QUOTES, 'UTF-8') . "</i></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+        echo "<li style='text-indent:10px;margin-top:6px;'><details><summary><i>" . htmlspecialchars($wine["region"], ENT_QUOTES, 'UTF-8') . "</i></summary><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
       }
     } elseif ($sort == "producer") {
       if ($wine["producer"] != $prevProducer) {
@@ -293,7 +293,7 @@
         if (!empty($wine["producer_desc"])) {
           echo "<details><summary><b>" . htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>" . $wine["producer_desc"] . "</small><ul style='list-style-type:none;padding:0;margin:0;'>";
         } else {
-          echo "<details><summary><b>" . htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8') . "</b></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+          echo "<details><summary><b>" . htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8') . "</b></summary><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
         }
       }
     } elseif ($sort == "vintage") {
@@ -304,7 +304,7 @@
       }
       if ($wine["country"] != $prevCountry) {
         echo ($prevCountry != "") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>" . htmlspecialchars($wine["country"], ENT_QUOTES, 'UTF-8') . "</i></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+        echo "<li style='text-indent:10px;margin-top:6px;'><details><summary><i>" . htmlspecialchars($wine["country"], ENT_QUOTES, 'UTF-8') . "</i></summary><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
       }
     } elseif ($sort == "variety") {
       if ($wine["grape"] != $prevVariety) {
@@ -312,13 +312,13 @@
         if (!empty($wine["grape_desc"])) {
           echo "<details><summary><b>" . htmlspecialchars($wine["grape"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>" . $wine["grape_desc"] . "</small><ul style='list-style-type:none;padding:0;margin:0;'>";
         } else {
-          echo "<details><summary><b>" . htmlspecialchars($wine["grape"], ENT_QUOTES, 'UTF-8') . "</b></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+          echo "<details><summary><b>" . htmlspecialchars($wine["grape"], ENT_QUOTES, 'UTF-8') . "</b></summary><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
         }
         $prevCountry = "";
       }
       if ($wine["country"] != $prevCountry) {
         echo ($prevCountry != "") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>" . htmlspecialchars($wine["country"], ENT_QUOTES, 'UTF-8') . "</i></summary><ul style='list-style-type:none;padding:0;margin:8px 0 0 0;'>";
+        echo "<li style='text-indent:10px;margin-top:6px;'><details><summary><i>" . htmlspecialchars($wine["country"], ENT_QUOTES, 'UTF-8') . "</i></summary><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
       }
     }
 
