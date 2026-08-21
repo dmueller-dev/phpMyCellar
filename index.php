@@ -58,6 +58,17 @@
     </div>
 
     <div class="card">
+      <h3>Recent comments</h3>
+      <?php if (isset($_SESSION['user_id'])): ?>
+        <ul style="list-style-type:none;padding:0;margin:0;">
+          <?php latestComments(5); ?>
+        </ul>
+      <?php else: ?>
+        <p>You must be <a href="/login.php">logged in</a> to view and post comments.</p>
+      <?php endif; ?>
+    </div>
+
+    <div class="card">
       <h3>Get in touch</h3>
       <p>
         I control access to some parts of this website. My tasting notes and blog posts are reserved for members only - as is

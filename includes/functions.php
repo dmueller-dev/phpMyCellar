@@ -1502,6 +1502,122 @@ function getCommentBadgeHtml($count, $url = '') {
   }
 }
 
+/**
+ * Render the latest comments across wines, tasting notes, and blog posts
+ *
+ * @param int $num Number of recent comments to display (default: 5)
+ */
+function latestComments($num = 5) {
+  global $conn, $mysqli;
+  $db = ($conn instanceof mysqli) ? $conn : $mysqli;
+  if (!($db instanceof mysqli)) {
+    return;
+  }
+
+  $num = (int)$num;
+  if ($num <= 0) {
+    $num = 5;
+  }
+
+  $sql = "SELECT 
+            c.comment_id,
+            c.user_id,
+            c.content,
+            c.pub_time,
+            u.displayname,
+            u.username,
+            xw.wine_id,
+            w_w.vintage AS wine_vintage,
+            w_wm.name AS wine_name,
+            w_wm.nameconvention AS wine_nameconvention,
+            w_p.producer AS wine_producer,
+            w_v.grape AS wine_grape,
+            w_vy.vineyard AS wine_vineyard,
+            xt.note_id,
+            t_w.vintage AS note_vintage,
+            t_wm.name AS note_name,
+            t_wm.nameconvention AS note_nameconvention,
+            t_p.producer AS note_producer,
+            t_v.grape AS note_grape,
+            t_vy.vineyard AS note_vineyard,
+            xb.blog_id,
+            b.title AS blog_title
+          FROM comments c
+          INNER JOIN users u ON c.user_id = u.user_id
+          LEFT JOIN x_comments_wines xw ON c.comment_id = xw.comment_id
+          LEFT JOIN wines w_w ON xw.wine_id = w_w.wine_id
+          LEFT JOIN wines_master w_wm ON w_w.master_id = w_wm.master_id
+          LEFT JOIN producers w_p ON w_wm.producer_id = w_p.producer_id
+          LEFT JOIN vineyards w_vy ON w_wm.vineyard_id = w_vy.vineyard_id
+          LEFT JOIN variety w_v ON w_wm.grape = w_v.grape
+          LEFT JOIN x_comments_tnotes xt ON c.comment_id = xt.comment_id
+          LEFT JOIN tnotes t_t ON xt.note_id = t_t.note_id
+          LEFT JOIN wines t_w ON t_t.wine_id = t_w.wine_id
+          LEFT JOIN wines_master t_wm ON t_w.master_id = t_wm.master_id
+          LEFT JOIN producers t_p ON t_wm.producer_id = t_p.producer_id
+          LEFT JOIN vineyards t_vy ON t_wm.vineyard_id = t_vy.vineyard_id
+          LEFT JOIN variety t_v ON t_wm.grape = t_v.grape
+          LEFT JOIN x_comments_blogposts xb ON c.comment_id = xb.comment_id
+          LEFT JOIN blogposts b ON xb.blog_id = b.blog_id
+          ORDER BY c.pub_time DESC, c.comment_id DESC
+          LIMIT ?";
+
+  $stmt = $db->prepare($sql);
+  if (!$stmt) {
+    return;
+  }
+  $stmt->bind_param("i", $num);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
+  if ($result && $result->num_rows > 0) {
+    while ($comment = $result->fetch_assoc()) {
+      $item_title = "";
+      $item_url = "";
+
+      if (!empty($comment['wine_id'])) {
+        $wine_name = getWineName(
+          $comment['wine_nameconvention'] ?? '',
+          $comment['wine_vintage'] ?? '',
+          $comment['wine_name'] ?? '',
+          $comment['wine_producer'] ?? '',
+          $comment['wine_grape'] ?? '',
+          $comment['wine_vineyard'] ?? ''
+        );
+        $item_title = $wine_name;
+        $item_url = "/wine.php?id=" . (int)$comment['wine_id'] . "#comment-" . (int)$comment['comment_id'];
+      } elseif (!empty($comment['note_id'])) {
+        $note_wine_name = getWineName(
+          $comment['note_nameconvention'] ?? '',
+          $comment['note_vintage'] ?? '',
+          $comment['note_name'] ?? '',
+          $comment['note_producer'] ?? '',
+          $comment['note_grape'] ?? '',
+          $comment['note_vineyard'] ?? ''
+        );
+        $item_title = $note_wine_name . " (tasting note)";
+        $item_url = "/tnote.php?id=" . (int)$comment['note_id'] . "#comment-" . (int)$comment['comment_id'];
+      } elseif (!empty($comment['blog_id'])) {
+        $item_title = !empty($comment['blog_title']) ? $comment['blog_title'] : ("Story #" . $comment['blog_id']);
+        $item_url = "/blogpost.php?id=" . (int)$comment['blog_id'] . "#comment-" . (int)$comment['comment_id'];
+      } else {
+        continue;
+      }
+
+      $author = !empty($comment['displayname']) ? $comment['displayname'] : ($comment['username'] ?? 'Anonymous');
+      $date = date_format(date_create($comment['pub_time']), "d M y");
+
+      echo "<li>" . $date . ": " . htmlspecialchars($author, ENT_QUOTES, 'UTF-8') . " on <a href='" . htmlspecialchars($item_url, ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($item_title, ENT_QUOTES, 'UTF-8') . "</a></li>";
+    }
+  } else {
+    echo "<li><i>No comments yet.</i></li>";
+  }
+  $stmt->close();
+  if ($result) {
+    $result->free_result();
+  }
+}
+
 // Function to render blog references for an entity (tnote, wine)
 function renderBlogReferences($conn, $id, $type, $title) {
   if (!($conn instanceof mysqli)) {
