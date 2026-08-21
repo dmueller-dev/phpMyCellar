@@ -201,17 +201,17 @@
   }
 
   if ($sort=="region") {
-    echo "<p><small><i>Wines sorted by country and region. Then by producer, wine and vintage.</i></small></p>";
+    echo "<p><small><i>Wines arranged by country and region, then by producer, cuvée, and vintage.</i></small></p>";
   } elseif ($sort=="producer") {
-    echo "<p><small><i>Wines sorted by producer, then wine and vintage.</i></small></p>";
+    echo "<p><small><i>Wines organised by producer, then by cuvée and vintage.</i></small></p>";
   } elseif ($sort=="vintage") {
-    echo "<p><small><i>Wines sorted by vintage, then country, producer and wine.</i></small></p>";
+    echo "<p><small><i>Wines arranged by vintage, then by country, producer, and cuvée.</i></small></p>";
   } elseif ($sort=="variety") {
-    echo "<p><small><i>Wines sorted by grape variety, then country, producer, wine and vintage.</i></small></p>";
+    echo "<p><small><i>Wines grouped by grape variety, then by country, producer, cuvée, and vintage. For <em>assemblages</em>, only the primary grape variety is shown.</i></small></p>";
   } elseif ($sort=="tenyearsold") {
-    echo "<p><small><i>Ten-year-old wines sorted by country and region. Then by producer and wine.</i></small></p>";
+    echo "<p><small><i>A selection of ten-year-old wines, arranged by country and region, then by producer and cuvée.</i></small></p>";
   } elseif ($sort=="twentyplus") {
-    echo "<p><small><i>Mature wines (20+ years) organised by country and region. Then by producer and wine.</i></small></p>";
+    echo "<p><small><i>A selection of mature wines (20+ years), arranged by country and region, then by producer, cuvée, and vintage.</i></small></p>";
   }
 
   // Fetch all rows and normalize non-vintage values

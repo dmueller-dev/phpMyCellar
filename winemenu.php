@@ -357,23 +357,23 @@
   // Dynamic sort message
   $selectionText = ($cellarMsg == "all cellars") ? "across all cellars" : "within $cellarMsg";
   if ($sort == "region") {
-      echo "<p><small><i>Wines $selectionText, arranged by country and region, then by producer and vintage.</i></small></p>";
+      echo "<p><small><i>Wines $selectionText, arranged by country and region, then by producer, cuvée, and vintage.</i></small></p>";
   } elseif ($sort == "producer") {
-      echo "<p><small><i>Wines $selectionText, organised by producer, followed by cuvée and vintage.</i></small></p>";
+      echo "<p><small><i>Wines $selectionText, organised by producer, then by cuvée and vintage.</i></small></p>";
   } elseif ($sort == "vintage") {
-      echo "<p><small><i>Wines $selectionText, presented by vintage, then by country and producer.</i></small></p>";
+      echo "<p><small><i>Wines $selectionText, arranged by vintage, then by country, producer, and cuvée.</i></small></p>";
   } elseif ($sort == "variety") {
-      echo "<p><small><i>Wines $selectionText, grouped by grape variety, then by country and producer.</i></small></p>";
+      echo "<p><small><i>Wines $selectionText, grouped by grape variety, then by country, producer, cuvée, and vintage. For <em>assemblages</em>, only the primary grape variety is shown.</i></small></p>";
   } elseif ($sort == "tenyearsold") {
-      echo "<p><small><i>A selection of ten-year-old wines $selectionText, arranged by region and producer.</i></small></p>";
+      echo "<p><small><i>A selection of ten-year-old wines $selectionText, arranged by country and region, then by producer, cuvée, and vintage.</i></small></p>";
   } elseif ($sort == "twentyplus") {
-      echo "<p><small><i>A selection of mature wines (20+ years) $selectionText, organised by region and vintage.</i></small></p>";
+      echo "<p><small><i>A selection of mature wines (20+ years) $selectionText, arranged by country and region, then by producer, cuvée, and vintage.</i></small></p>";
   } elseif ($sort == "location") {
-      echo "<p><small><i>Current inventory $selectionText, sorted by specific bin location.</i></small></p>";
+      echo "<p><small><i>Current inventory $selectionText, arranged by cellar and bin location, then by producer and cuvée.</i></small></p>";
   } elseif ($sort == "style") {
-      echo "<p><small><i>Wines $selectionText, categorised by style, then by country and region.</i></small></p>";
+      echo "<p><small><i>Wines $selectionText, categorised by style, then by country, producer, and cuvée.</i></small></p>";
   } elseif ($sort == "rand") {
-      echo "<p><small><i>A featured recommendation $selectionText. Please refresh for another suggestion.</i></small></p>";
+      echo "<p><small><i>A featured recommendation $selectionText. Please refresh to receive another suggestion.</i></small></p>";
   }
 
   // Fetch all rows and group consecutive rows for the same master wine

@@ -275,23 +275,23 @@
   }
 
   if ($sort=="date") {
-    echo "<p><small><i>Tasting notes sorted chronologically by tasting date.</i></small></p>";
+    echo "<p><small><i>Tasting notes arranged chronologically by tasting date, grouped by year.</i></small></p>";
   } elseif ($sort=="rating") {
-    echo "<p><small><i>Tasting notes sorted by DM points (20-point absolute scale).</i></small></p>";
+    echo "<p><small><i>Tasting notes arranged by DM score (20-point scale), then by producer and vintage.</i></small></p>";
   } elseif ($sort=="stars") {
-    echo "<p><small><i>Tasting notes sorted by stars (5-star relative scale), then DM points and producer.</i></small></p>";
+    echo "<p><small><i>Tasting notes arranged by star rating (5-star scale), then by score and producer.</i></small></p>";
   } elseif ($sort=="region") {
-    echo "<p><small><i>Tasting notes sorted by country and region. Then by DM points, producer and wine.</i></small></p>";
+    echo "<p><small><i>Tasting notes arranged by country and region, then by producer, cuvée, and vintage.</i></small></p>";
   } elseif ($sort=="producer") {
-    echo "<p><small><i>Tasting notes sorted by producer, then vintage and wine.</i></small></p>";
+    echo "<p><small><i>Tasting notes organised by producer, then by cuvée and vintage.</i></small></p>";
   } elseif ($sort=="vintage") {
-    echo "<p><small><i>Tasting notes sorted by vintage, then DM points and tasting date.</i></small></p>";
+    echo "<p><small><i>Tasting notes arranged by vintage, then by country, producer, and cuvée.</i></small></p>";
   } elseif ($sort=="variety") {
-    echo "<p><small><i>Tasting notes sorted by grape variety, then DM points, producer and tasting date. For <em>assemblages</em>, only the main grape variety is shown.</i></small></p>";
+    echo "<p><small><i>Tasting notes grouped by grape variety, then by country, producer, and cuvée. For <em>assemblages</em>, only the primary grape variety is shown.</i></small></p>";
   } elseif ($sort=="tenyears") {
-    echo "<p><small><i>&quot;Ten years on&quot; tasting notes sorted chronologically by tasting date.</i></small></p>";
+    echo "<p><small><i>&quot;Ten years on&quot; tasting notes, arranged chronologically by tasting date.</i></small></p>";
   } elseif ($sort=="twentyplus") {
-    echo "<p><small><i>Tasting notes for mature wines (20+ years) sorted chronologically by tasting date.</i></small></p>";
+    echo "<p><small><i>Tasting notes for mature wines (20+ years), arranged chronologically by tasting date.</i></small></p>";
   }
   $rows = [];
   while ($r = $result->fetch_assoc()) {
