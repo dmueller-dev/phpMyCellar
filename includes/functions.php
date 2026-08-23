@@ -2201,7 +2201,7 @@ function getVintageRegionStats($conn, $vintage) {
         wines_master.colour,
         CONCAT(regions.country, ': ', regions.region, ' (', wines_master.colour, ')') AS country_region_colour,
         COUNT(tnotes.note_id) AS note_count,
-        ROUND(AVG(tnotes.dmpts), 1) AS avg_dmpts,
+        ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN tnotes.dmpts END), 1) AS avg_dmpts,
         xvr.vintage_desc
     FROM tnotes
     JOIN wines ON tnotes.wine_id = wines.wine_id
@@ -2209,8 +2209,6 @@ function getVintageRegionStats($conn, $vintage) {
     JOIN regions ON wines_master.region_id = regions.region_id
     LEFT JOIN x_vintage_region xvr ON wines.vintage = xvr.vintage AND wines_master.region_id = xvr.region_id
     WHERE tnotes.status = 'published' 
-      AND tnotes.flawed_yn = 'no' 
-      AND tnotes.dmpts IS NOT NULL 
       AND wines.vintage = ?
     GROUP BY 
         regions.country,
@@ -2370,9 +2368,14 @@ function getVintageSummary($conn, $vintage) {
 
   $sql = "SELECT 
             COUNT(tnotes.note_id) AS total_notes,
-            ROUND(AVG(tnotes.dmpts), 1) AS avg_dmpts,
-            MAX(tnotes.dmpts) AS max_dmpts,
-            MIN(tnotes.dmpts) AS min_dmpts,
+            COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN 1 END) AS rated_notes_count,
+            CASE 
+              WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN 1 END) >= 5 
+              THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN tnotes.dmpts END), 1) 
+              ELSE NULL 
+            END AS avg_dmpts,
+            MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.dmpts END) AS max_dmpts,
+            MIN(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.dmpts END) AS min_dmpts,
             COUNT(DISTINCT regions.country) AS country_count,
             COUNT(DISTINCT regions.region_id) AS region_count,
             COUNT(DISTINCT producers.producer_id) AS producer_count
@@ -2403,8 +2406,13 @@ function getAllVintagesSummary($conn) {
   $sql = "SELECT 
             wines.vintage,
             COUNT(tnotes.note_id) AS note_count,
-            ROUND(AVG(tnotes.dmpts), 1) AS avg_dmpts,
-            MAX(tnotes.dmpts) AS max_dmpts
+            COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN 1 END) AS rated_count,
+            CASE 
+              WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN 1 END) >= 5 
+              THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN tnotes.dmpts END), 1) 
+              ELSE NULL 
+            END AS avg_dmpts,
+            MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.dmpts END) AS max_dmpts
           FROM tnotes
           JOIN wines ON tnotes.wine_id = wines.wine_id
           WHERE tnotes.status = 'published' AND wines.vintage IS NOT NULL

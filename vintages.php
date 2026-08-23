@@ -54,7 +54,7 @@
     ?>
 
     <!-- Top Centre Back Button -->
-    <div class="vintage-nav-center" style="width: 100%;">
+    <div class="vintage-nav-center">
       <a href="/vintages.php" class="btn-action" style="padding: 8px 18px; font-size: 14px; display: inline-block;">← Back to all vintages</a>
     </div>
 
@@ -67,11 +67,11 @@
 
         <div class="vintage-stats-grid">
           <div class="vintage-stat-box">
-            <div class="stat-val"><?php echo (int)$vintage_summary['total_notes']; ?></div>
+            <div class="stat-val"><?php echo '<span title="Total number of tasting notes (including flawed wines and notes without a rating">'.(int)$vintage_summary['total_notes'].'</span>'; ?></div>
             <div class="stat-lbl">Tasting Notes</div>
           </div>
           <div class="vintage-stat-box">
-            <div class="stat-val"><?php echo ($vintage_summary['avg_dmpts'] !== null) ? $vintage_summary['avg_dmpts'] : 'n/a'; ?></div>
+            <div class="stat-val"><?php echo ($vintage_summary['avg_dmpts'] !== null) ? $vintage_summary['avg_dmpts'] : '<span title="Not enough tasting notes to calculate an average">n/a</span>'; ?></div>
             <div class="stat-lbl">Avg DM Rating</div>
           </div>
           <div class="vintage-stat-box">
@@ -87,6 +87,12 @@
             <div class="stat-lbl">Regions</div>
           </div>
         </div>
+
+        <?php if ($vintage_summary['avg_dmpts'] === null): ?>
+          <p style="margin-top: 15px; margin-bottom: 0; color: #64748b; font-size: 13px;">
+            <em>Not enough tasting notes to calculate an average rating (at least 5 <b>rated</b> tasting notes required<?php echo ((int)$vintage_summary['rated_notes_count'] > 0) ? ', currently ' . (int)$vintage_summary['rated_notes_count'] : ''; ?>).</em>
+          </p>
+        <?php endif; ?>
       </div>
 
       <!-- Regional Averages & Expandable Descriptions -->
@@ -248,7 +254,7 @@
             <option value="">-- Select a vintage --</option>
             <?php foreach ($all_vintages_list as $v_item): ?>
               <option value="<?php echo (int)$v_item['vintage']; ?>" <?php echo ((int)$v_item['vintage'] === $selected_vintage) ? 'selected' : ''; ?>>
-                <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> notes, avg <?php echo $v_item['avg_dmpts'] ?? 'n/a'; ?>)
+                <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> note<?php echo (int)$v_item['note_count'] === 1 ? '' : 's'; ?><?php echo ($v_item['avg_dmpts'] !== null) ? ', avg ' . $v_item['avg_dmpts'] : ', avg n/a'; ?>)
               </option>
             <?php endforeach; ?>
           </select>
@@ -273,7 +279,7 @@
     </div>
 
     <!-- Bottom Centre Back Button -->
-    <div class="vintage-nav-center" style="width: 100%;">
+    <div class="vintage-nav-center bottom">
       <a href="/vintages.php" class="btn-action" style="padding: 8px 18px; font-size: 14px; display: inline-block;">← Back to all vintages</a>
     </div>
 
@@ -293,7 +299,7 @@
         </div>
       </div>
 
-      <div class="vintage-nav-center">
+      <div class="vintage-nav-center bottom">
         <a href="/vintages.php" class="btn-action" style="padding: 8px 18px; font-size: 14px; display: inline-block;">← Back to all vintages</a>
       </div>
     </div>
@@ -321,7 +327,7 @@
           $weighted_score_sum += ($avg_val * $n_count);
           $weighted_notes_count += $n_count;
 
-          if ($avg_val > $highest_vintage_score && $n_count >= 3) {
+          if ($avg_val > $highest_vintage_score && $n_count >= 5) {
             $highest_vintage_score = $avg_val;
             $highest_vintage = $v_num;
           }
@@ -368,12 +374,14 @@
                     $v_avg = ($v['avg_dmpts'] !== null) ? number_format((float)$v['avg_dmpts'], 1) : null;
                   ?>
                   <!-- Link to vintages.php?vintage=NNNN -->
-                  <a href="/vintages.php?vintage=<?php echo $v_year; ?>" class="vintage-tile" title="View <?php echo $v_year; ?> vintage report">
+                  <a href="/vintages.php?vintage=<?php echo $v_year; ?>" class="vintage-tile" title="<?php echo ($v_avg !== null) ? 'View ' . $v_year . ' vintage report (avg ' . $v_avg . ')' : 'View ' . $v_year . ' vintage report (not enough tasting notes to calculate an average)'; ?>">
                     <span class="vintage-year"><?php echo $v_year; ?></span>
                     <span class="vintage-meta">
                       <small><?php echo $v_count; ?> note<?php echo $v_count > 1 ? 's' : ''; ?></small>
                       <?php if ($v_avg !== null): ?>
                         <span class="vintage-score-pill"><?php echo $v_avg; ?></span>
+                      <?php else: ?>
+                        <span class="vintage-score-pill vintage-score-pill-na" title="Not enough tasting notes to calculate an average">n/a</span>
                       <?php endif; ?>
                     </span>
                   </a>
@@ -408,7 +416,7 @@
 
         <?php if ($highest_vintage): ?>
           <p style="font-size:small; margin-top:15px;">
-            Top performing vintage (min. 3 notes): <a href="/vintages.php?vintage=<?php echo $highest_vintage; ?>"><b><?php echo $highest_vintage; ?></b></a> (avg <?php echo number_format($highest_vintage_score, 1); ?> / 20).
+            Top performing vintage (min. 5 notes): <a href="/vintages.php?vintage=<?php echo $highest_vintage; ?>"><b><?php echo $highest_vintage; ?></b></a> (avg <?php echo number_format($highest_vintage_score, 1); ?> / 20).
           </p>
         <?php endif; ?>
       </div>
@@ -420,7 +428,7 @@
           <option value="">-- Choose a vintage --</option>
           <?php foreach ($all_vintages as $v_item): ?>
             <option value="<?php echo (int)$v_item['vintage']; ?>">
-              <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> notes, avg <?php echo $v_item['avg_dmpts'] ?? 'n/a'; ?>)
+              <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> note<?php echo (int)$v_item['note_count'] === 1 ? '' : 's'; ?><?php echo ($v_item['avg_dmpts'] !== null) ? ', avg ' . $v_item['avg_dmpts'] : ', avg n/a'; ?>)
             </option>
           <?php endforeach; ?>
         </select>

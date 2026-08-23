@@ -587,8 +587,15 @@ ul.submenu li a:hover {
 
 /* --- VINTAGE CHARTS & REPORTS STYLES --- */
 .vintage-nav-center {
+  clear: both;
+  width: 100%;
   text-align: center;
-  margin: 15px 0;
+  padding: 15px 0;
+}
+
+.vintage-nav-center.bottom {
+  padding-top: 25px;
+  padding-bottom: 15px;
 }
 
 .vintage-grid-decade {
@@ -653,6 +660,12 @@ ul.submenu li a:hover {
   border-radius: 10px;
   font-size: 11px;
   font-weight: bold;
+}
+
+.vintage-tile .vintage-score-pill.vintage-score-pill-na {
+  background-color: #cbd5e1;
+  color: #475569;
+  font-weight: normal;
 }
 
 /* Vintage Report: Country Percentage Bars */
