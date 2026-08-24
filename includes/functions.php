@@ -2091,6 +2091,8 @@ function getOrderItems($conn, $order_id) {
     throw new Exception("Invalid database connection");
   }
   $sql = "SELECT order_items.item_id, order_items.wine_id, order_items.format, order_items.quantity, order_items.total_price,
+                 (SELECT b.drink_from FROM bottles b WHERE b.order_id = order_items.order_id AND b.wine_id = order_items.wine_id AND b.format = order_items.format LIMIT 1) AS drink_from,
+                 (SELECT b.drink_through FROM bottles b WHERE b.order_id = order_items.order_id AND b.wine_id = order_items.wine_id AND b.format = order_items.format LIMIT 1) AS drink_through,
                  wines.vintage, wines_master.name, wines_master.nameconvention, producers.producer, regions.country, regions.region, vineyards.vineyard
           FROM order_items
           LEFT JOIN wines ON order_items.wine_id = wines.wine_id
@@ -2141,7 +2143,7 @@ function getPendingOrderBottles($conn, $order_id) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
   }
-  $sql = "SELECT bottles.bottle_id, bottles.wine_id, bottles.format, bottles.purchase_price, 
+  $sql = "SELECT bottles.bottle_id, bottles.wine_id, bottles.format, bottles.purchase_price, bottles.drink_from, bottles.drink_through,
                  wines.vintage, wines_master.name, wines_master.nameconvention, producers.producer, regions.country, regions.region, vineyards.vineyard
           FROM bottles
           LEFT JOIN wines ON bottles.wine_id = wines.wine_id
@@ -2167,14 +2169,17 @@ function getPendingOrderBottles($conn, $order_id) {
 }
 
 // Function to insert newly generated order bottles (for_sale defaults to 'no')
-function insertOrderBottle($conn, $wine_id, $format, $store_id, $purchase_date, $purchase_price, $status, $order_id) {
+function insertOrderBottle($conn, $wine_id, $format, $store_id, $purchase_date, $purchase_price, $status, $order_id, $drink_from = null, $drink_through = null) {
+  if (empty($drink_from) || $drink_from === "") { $drink_from = null; }
+  if (empty($drink_through) || $drink_through === "") { $drink_through = null; }
+
   $sql = "INSERT INTO bottles (wine_id, format, storage_location, purchased_from, purchase_date, purchase_price, arrival_date, status, drink_from, drink_through, consumption_date, consumption_note, for_sale, note_id, order_id) 
-          VALUES (?, ?, NULL, ?, ?, ?, NULL, ?, NULL, NULL, NULL, NULL, 'no', NULL, ?)";
+          VALUES (?, ?, NULL, ?, ?, ?, NULL, ?, ?, ?, NULL, NULL, 'no', NULL, ?)";
   $stmt = $conn->prepare($sql);
   if (!$stmt) {
     return false;
   }
-  $stmt->bind_param("isisdsi", $wine_id, $format, $store_id, $purchase_date, $purchase_price, $status, $order_id);
+  $stmt->bind_param("isisdsiii", $wine_id, $format, $store_id, $purchase_date, $purchase_price, $status, $drink_from, $drink_through, $order_id);
   $res = $stmt->execute();
   $stmt->close();
   return $res;

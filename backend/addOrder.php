@@ -77,6 +77,8 @@
     // Retrieve arrays of wine line items
     $wine_ids = $_POST['wine_id'] ?? [];
     $formats = $_POST['format'] ?? [];
+    $drink_froms = $_POST['drink_from'] ?? [];
+    $drink_throughs = $_POST['drink_through'] ?? [];
     $quantities = $_POST['quantity'] ?? [];
     $total_prices = $_POST['total_price'] ?? [];
 
@@ -100,6 +102,8 @@
       $fmt = sanitizeInput($formats[$i] ?? '');
       $qty = filter_var($quantities[$i], FILTER_VALIDATE_INT);
       $price = filter_var($total_prices[$i], FILTER_VALIDATE_FLOAT);
+      $df_raw = trim($drink_froms[$i] ?? '');
+      $dt_raw = trim($drink_throughs[$i] ?? '');
 
       if (!$w_id) {
         $errors[] = "Line " . ($i + 1) . ": Invalid wine selected.";
@@ -118,11 +122,35 @@
         continue;
       }
 
+      // Validate drinking window
+      $df = null;
+      $dt = null;
+      if ($df_raw !== '') {
+        if (!is_numeric($df_raw) || strlen($df_raw) != 4) {
+          $errors[] = "Line " . ($i + 1) . ": 'Drink from' must be a 4-digit year (e.g. 2025).";
+          continue;
+        }
+        $df = (int)$df_raw;
+      }
+      if ($dt_raw !== '') {
+        if (!is_numeric($dt_raw) || strlen($dt_raw) != 4) {
+          $errors[] = "Line " . ($i + 1) . ": 'Drink through' must be a 4-digit year (e.g. 2030).";
+          continue;
+        }
+        $dt = (int)$dt_raw;
+      }
+      if ($df !== null && $dt !== null && $df > $dt) {
+        $errors[] = "Line " . ($i + 1) . ": Start of drinking window ({$df}) must be before or equal to end of drinking window ({$dt}).";
+        continue;
+      }
+
       $valid_items[] = [
         'wine_id' => $w_id,
         'format' => $fmt,
         'quantity' => $qty,
-        'total_price' => $price
+        'total_price' => $price,
+        'drink_from' => $df,
+        'drink_through' => $dt
       ];
       $total_order_qty += $qty;
     }
@@ -182,7 +210,9 @@
             'wine_id' => $wine_ids[$i],
             'format' => $formats[$i] ?? '',
             'quantity' => $quantities[$i] ?? 1,
-            'total_price' => $total_prices[$i] ?? '0.00'
+            'total_price' => $total_prices[$i] ?? '0.00',
+            'drink_from' => $drink_froms[$i] ?? '',
+            'drink_through' => $drink_throughs[$i] ?? ''
           ];
         }
       }
@@ -243,7 +273,7 @@
 
           // Create individual bottle records in 'pending delivery' status
           for ($b = 0; $b < $item['quantity']; $b++) {
-            $bottle_success = insertOrderBottle($conn, $item['wine_id'], $item['format'], $store_id, $order_date, $unit_price, 'pending delivery', $order_id);
+            $bottle_success = insertOrderBottle($conn, $item['wine_id'], $item['format'], $store_id, $order_date, $unit_price, 'pending delivery', $order_id, $item['drink_from'], $item['drink_through']);
             if (!$bottle_success) {
               throw new Exception("Failed to automatically generate bottle records.");
             }
@@ -284,6 +314,8 @@
           $discount = '0.00';
           $wine_ids = [];
           $formats = [];
+          $drink_froms = [];
+          $drink_throughs = [];
           $quantities = [];
           $total_prices = [];
           $prepopulated_items = [];
@@ -378,8 +410,10 @@ HTML;
       $w_id = (int)$item['wine_id'];
       $fmt = json_encode($item['format']);
       $qty = (int)$item['quantity'];
-      $tot_pr = json_encode(number_format($item['total_price'], 2, '.', ''));
-      $extra_head .= "\n        addWineRow({$w_id}, {$fmt}, {$qty}, {$tot_pr});";
+      $tot_pr = json_encode(number_format((float)$item['total_price'], 2, '.', ''));
+      $d_from = json_encode($item['drink_from'] ?? '');
+      $d_through = json_encode($item['drink_through'] ?? '');
+      $extra_head .= "\n        addWineRow({$w_id}, {$fmt}, {$qty}, {$tot_pr}, {$d_from}, {$d_through});";
     }
   } else {
     $extra_head .= "\n        if (document.querySelectorAll('.order-item-row').length === 0) { addWineRow(); }";
@@ -389,7 +423,7 @@ HTML;
 
       });
 
-      function addWineRow(wineId = '', format = '', quantity = 1, totalPrice = '') {
+      function addWineRow(wineId = '', format = '', quantity = 1, totalPrice = '', drinkFrom = '', drinkThrough = '') {
         const tableBody = document.getElementById('order_items_body');
         const rowIndex = tableBody.children.length;
         
@@ -435,10 +469,17 @@ HTML;
             </select>
           </td>
           <td>
-            <input type="number" name="quantity[]" min="1" value="\${quantity}" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:70px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <input type="text" name="drink_from[]" maxlength="4" size="4" value="\${drinkFrom || ''}" placeholder="yyyy" title="Drink from (yyyy)" style="width:52px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px; text-align: center;">
+              <span style="color: #666; font-size: small;">–</span>
+              <input type="text" name="drink_through[]" maxlength="4" size="4" value="\${drinkThrough || ''}" placeholder="yyyy" title="Drink through (yyyy)" style="width:52px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px; text-align: center;">
+            </div>
           </td>
           <td>
-            <input type="number" name="total_price[]" step="0.01" min="0" value="\${totalPrice}" placeholder="0.00" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:100px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="number" name="quantity[]" min="1" value="\${quantity}" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:60px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
+          </td>
+          <td>
+            <input type="number" name="total_price[]" step="0.01" min="0" value="\${totalPrice}" placeholder="0.00" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:90px; padding: 5px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
           </td>
           <td style="text-align: center;">
             <button type="button" class="btn-remove" onclick="removeWineRow(\${rowIndex})">Remove</button>
@@ -650,11 +691,12 @@ HTML;
           <table class="order-table">
             <thead>
               <tr>
-                <th style="width: 45%;">Wine Select</th>
-                <th style="width: 18%;">Format</th>
-                <th style="width: 12%;">Qty</th>
-                <th style="width: 18%;">Total Price Paid</th>
-                <th style="width: 7%; text-align: center;">Action</th>
+                <th style="width: 38%;">Wine Select</th>
+                <th style="width: 16%;">Format</th>
+                <th style="width: 18%;">Drinking Window</th>
+                <th style="width: 10%;">Qty</th>
+                <th style="width: 12%;">Total Price Paid</th>
+                <th style="width: 6%; text-align: center;">Action</th>
               </tr>
             </thead>
             <tbody id="order_items_body">

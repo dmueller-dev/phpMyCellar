@@ -28,12 +28,29 @@
     $order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
     $arrival_date = sanitizeInput($_POST['arrival_date'] ?? '');
     $bin_ids = $_POST['bin_id'] ?? []; // Map of bottle_id => bin_id
+    $drink_froms = $_POST['drink_from'] ?? []; // Map of bottle_id => drink_from
+    $drink_throughs = $_POST['drink_through'] ?? []; // Map of bottle_id => drink_through
 
     if (!$order_id) {
       $errors[] = "Invalid order selected.";
     }
     if (empty($arrival_date)) {
       $errors[] = "Please select an arrival date.";
+    }
+
+    // Validate drinking windows for each bottle
+    foreach ($bin_ids as $btl_id => $bin_id) {
+      $df_raw = trim($drink_froms[$btl_id] ?? '');
+      $dt_raw = trim($drink_throughs[$btl_id] ?? '');
+      if ($df_raw !== '' && (!is_numeric($df_raw) || strlen($df_raw) != 4)) {
+        $errors[] = "Bottle #{$btl_id}: 'Drink from' must be a 4-digit year (e.g. 2025).";
+      }
+      if ($dt_raw !== '' && (!is_numeric($dt_raw) || strlen($dt_raw) != 4)) {
+        $errors[] = "Bottle #{$btl_id}: 'Drink through' must be a 4-digit year (e.g. 2030).";
+      }
+      if ($df_raw !== '' && $dt_raw !== '' && is_numeric($df_raw) && is_numeric($dt_raw) && (int)$df_raw > (int)$dt_raw) {
+        $errors[] = "Bottle #{$btl_id}: Start of drinking window ({$df_raw}) must be before or equal to end of drinking window ({$dt_raw}).";
+      }
     }
 
     if (empty($errors)) {
@@ -58,7 +75,7 @@
         $pending_bottle_ids = array_column($pending_bottles, 'bottle_id');
 
         // Prepare statements for bulk updating
-        $up_bottle_sql = "UPDATE bottles SET storage_location = ?, arrival_date = ?, status = 'in cellar' WHERE bottle_id = ? AND order_id = ?";
+        $up_bottle_sql = "UPDATE bottles SET storage_location = ?, arrival_date = ?, drink_from = ?, drink_through = ?, status = 'in cellar' WHERE bottle_id = ? AND order_id = ?";
         $stmt_up = $conn->prepare($up_bottle_sql);
         if (!$stmt_up) {
           throw new Exception("Failed to prepare bottle update statement.");
@@ -67,6 +84,8 @@
         foreach ($bin_ids as $btl_id => $bin_id) {
           $btl_id = (int)$btl_id;
           $bin_id = empty($bin_id) ? null : (int)$bin_id;
+          $df = (!empty($drink_froms[$btl_id]) && is_numeric($drink_froms[$btl_id])) ? (int)$drink_froms[$btl_id] : null;
+          $dt = (!empty($drink_throughs[$btl_id]) && is_numeric($drink_throughs[$btl_id])) ? (int)$drink_throughs[$btl_id] : null;
 
           // Check if bottle belongs to this order
           if (!in_array($btl_id, $pending_bottle_ids)) {
@@ -77,7 +96,7 @@
             throw new Exception("Please assign a storage location for all bottles before accepting delivery.");
           }
 
-          $stmt_up->bind_param("isii", $bin_id, $arrival_date, $btl_id, $order_id);
+          $stmt_up->bind_param("isiisi", $bin_id, $arrival_date, $df, $dt, $btl_id, $order_id);
           if (!$stmt_up->execute()) {
             throw new Exception("Error updating bottle #" . $btl_id);
           }
@@ -424,6 +443,7 @@
                       <tr>
                         <th>Wine Details</th>
                         <th>Format</th>
+                        <th style="text-align: center;">Drinking Window</th>
                         <th style="text-align: center;">Qty</th>
                         <th style="text-align: right;">Total Price</th>
                         <th style="text-align: right; color: #777;">Proportional Price/btl</th>
@@ -435,6 +455,9 @@
                         $discount_share = ($total_qty > 0) ? (($order['discount'] ?? 0.00) / $total_qty) : 0.00;
                         $calc_btl_price = ($item['total_price'] / $item['quantity']) + $shipping_share - $discount_share;
                         $calc_btl_price = max(0.00, $calc_btl_price);
+                        $window_display = (!empty($item['drink_from']) || !empty($item['drink_through'])) 
+                          ? htmlspecialchars(($item['drink_from'] ?: '...') . ' – ' . ($item['drink_through'] ?: '...'), ENT_QUOTES, 'UTF-8') 
+                          : '<span style="color: #bbb;">—</span>';
                       ?>
                         <tr>
                           <td>
@@ -442,27 +465,28 @@
                             <?php echo getWineName($item['nameconvention'], $item['vintage'], $item['name'], $item['producer'], $item['grape'], $item['vineyard']); ?>
                           </td>
                           <td><?php echo htmlspecialchars($item['format'], ENT_QUOTES, 'UTF-8'); ?></td>
+                          <td style="text-align: center; font-size: small;"><?php echo $window_display; ?></td>
                           <td style="text-align: center;"><?php echo $item['quantity']; ?></td>
                           <td style="text-align: right;">€<?php echo number_format($item['total_price'], 2); ?></td>
                           <td style="text-align: right; color: #555; font-style: italic;">€<?php echo number_format($calc_btl_price, 2); ?></td>
                         </tr>
                       <?php endforeach; ?>
                       <tr style="background-color: #fafbfc; font-weight: bold; border-top: 1px solid #ddd;">
-                        <td colspan="2">Order Subtotal:</td>
+                        <td colspan="3">Order Subtotal:</td>
                         <td style="text-align: center;"><?php echo $total_qty; ?></td>
                         <td style="text-align: right;">€<?php echo number_format($total_value, 2); ?></td>
                         <td></td>
                       </tr>
                       <?php if ($order['shipping_paid'] > 0): ?>
                         <tr style="color: #666; font-size: xs-small;">
-                          <td colspan="3">Shipping & handling:</td>
+                          <td colspan="4">Shipping & handling:</td>
                           <td style="text-align: right;">€<?php echo number_format($order['shipping_paid'], 2); ?></td>
                           <td></td>
                         </tr>
                       <?php endif; ?>
                       <?php if (($order['discount'] ?? 0.00) > 0.00): ?>
                         <tr style="color: green; font-size: xs-small; font-weight: bold;">
-                          <td colspan="3">Applied Discount:</td>
+                          <td colspan="4">Applied Discount:</td>
                           <td style="text-align: right;">-€<?php echo number_format($order['discount'], 2); ?></td>
                           <td></td>
                         </tr>
@@ -511,7 +535,7 @@
                         </div>
                       </div>
 
-                      <strong style="font-size: small; color: #444;">Bottle Storage Allocation Override:</strong>
+                      <strong style="font-size: small; color: #444;">Bottle Storage Allocation & Drinking Window Override:</strong>
                       <div class="pending-bottles-grid">
                         <?php foreach ($pending_bottles as $btl): ?>
                           <div class="bottle-row">
@@ -520,15 +544,23 @@
                               <strong><?php echo $btl['vintage'] ?: 'N/V'; ?></strong> <?php echo htmlspecialchars($btl['name'], ENT_QUOTES, 'UTF-8'); ?> 
                               <span style="font-size: 10px; color: #666;">(<?php echo htmlspecialchars($btl['format'], ENT_QUOTES, 'UTF-8'); ?>)</span>
                             </div>
-                            <div>
-                              <select name="bin_id[<?php echo $btl['bottle_id']; ?>]" required style="width: 100%; padding: 4px; font-size: xs-small; font-family: Georgia, serif; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">-- Select Storage Location --</option>
-                                <?php foreach ($storage_locations as $bin): ?>
-                                  <option value="<?php echo $bin['bin_id']; ?>">
-                                    <?php echo htmlspecialchars($bin['cellar_name'] . " / " . $bin['bin_name'], ENT_QUOTES, 'UTF-8'); ?>
-                                  </option>
-                                <?php endforeach; ?>
-                              </select>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                              <div style="flex: 1; min-width: 180px;">
+                                <select name="bin_id[<?php echo $btl['bottle_id']; ?>]" required style="width: 100%; padding: 4px; font-size: xs-small; font-family: Georgia, serif; border: 1px solid #ccc; border-radius: 4px;">
+                                  <option value="">-- Select Storage Location --</option>
+                                  <?php foreach ($storage_locations as $bin): ?>
+                                    <option value="<?php echo $bin['bin_id']; ?>">
+                                      <?php echo htmlspecialchars($bin['cellar_name'] . " / " . $bin['bin_name'], ENT_QUOTES, 'UTF-8'); ?>
+                                    </option>
+                                  <?php endforeach; ?>
+                                </select>
+                              </div>
+                              <div style="display: flex; align-items: center; gap: 4px; font-size: 11px;">
+                                <label style="color: #666;">Window:</label>
+                                <input type="text" name="drink_from[<?php echo $btl['bottle_id']; ?>]" maxlength="4" size="4" value="<?php echo htmlspecialchars($btl['drink_from'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="yyyy" title="Drink from" style="width: 48px; padding: 3px; font-size: 11px; font-family: Georgia, serif; border: 1px solid #ccc; border-radius: 3px; text-align: center;">
+                                <span>–</span>
+                                <input type="text" name="drink_through[<?php echo $btl['bottle_id']; ?>]" maxlength="4" size="4" value="<?php echo htmlspecialchars($btl['drink_through'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="yyyy" title="Drink through" style="width: 48px; padding: 3px; font-size: 11px; font-family: Georgia, serif; border: 1px solid #ccc; border-radius: 3px; text-align: center;">
+                              </div>
                             </div>
                           </div>
                         <?php endforeach; ?>
