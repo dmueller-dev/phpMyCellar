@@ -175,7 +175,7 @@
               ?>
               <li class="vintage-top-wine-card">
                 <div>
-                  <a href="/tnote.php?id=<?php echo (int)$wine['note_id']; ?>" style="font-weight: bold;">
+                  <a href="/tnotes.php?id=<?php echo (int)$wine['note_id']; ?>" style="font-weight: bold;">
                     <?php echo htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8'); ?>
                   </a>
                   <?php echo $fav_icon; ?>
@@ -274,7 +274,7 @@
           <li><b>12-13.5</b>: Good</li>
           <li><b>8-11.5</b>: Everyday / Acceptable</li>
         </ul>
-        <p style="margin-top:10px;"><small><a href="https://dmueller.com/blogpost.php?id=26">Learn more about how I rate wines &rarr;</a></small></p>
+        <p style="margin-top:10px;"><small><a href="https://dmueller.com/blog.php?id=26">Learn more about how I rate wines &rarr;</a></small></p>
       </div>
     </div>
 

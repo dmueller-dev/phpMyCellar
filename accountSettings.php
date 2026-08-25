@@ -333,17 +333,17 @@
                 $producer = $sub_row['w_producer'] ?? '';
                 $name = $sub_row['w_name'] ?? '';
                 $item_name = trim("$vintage $producer $name");
-                $item_url = "/wine.php?id=$item_id";
+                $item_url = "/wines.php?id=$item_id";
               } elseif ($item_type === 'tnote') {
                 $vintage = $sub_row['tn_vintage'] ?? 'NV';
                 $producer = $sub_row['tn_producer'] ?? '';
                 $name = $sub_row['tn_name'] ?? '';
                 $item_name = "Tasting note on " . trim("$vintage $producer $name");
-                $item_url = "/tnote.php?id=$item_id";
+                $item_url = "/tnotes.php?id=$item_id";
               } elseif ($item_type === 'blog') {
                 $title = $sub_row['bp_title'] ?? '';
                 $item_name = "Story: " . trim($title);
-                $item_url = "/blogpost.php?id=$item_id";
+                $item_url = "/blog.php?id=$item_id";
               }
 
               $display_type = "";

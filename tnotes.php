@@ -9,79 +9,417 @@
     header("Location: login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
     exit();
   }
-?>
 
-<?php
-  if (empty($_GET['sort'])) {
-    $sort="date";
-  } else {
-    $sort=$_GET['sort'];
-  }
+  $is_single = isset($_GET['id']) && trim($_GET['id']) !== '';
 
-  if ($sort=="date" || $sort=="tenyears" || $sort=="twentyplus") {
-    $sqlOrderBy="order by tnotes.tasting_date desc, wines.wine_id asc, tnotes.note_id desc";
-  } elseif ($sort=="rating") {
-    $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.dmpts desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
-  } elseif ($sort=="stars") {
-    $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.starpts desc, tnotes.dmpts desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
-  } elseif ($sort=="region") {
-    $sqlOrderBy="order by regions.country asc, regions.region asc, producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
-  } elseif ($sort=="producer") {
-    $sqlOrderBy="order by producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, regions.region asc, tnotes.tasting_date desc, tnotes.note_id desc";
-  } elseif ($sort=="vintage") {
-    $sqlOrderBy="order by wines.vintage desc, regions.country asc, producers.producer asc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
-  } elseif ($sort=="variety") {
-    $sqlOrderBy="order by wines_master.grape asc, regions.country asc, producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
-  }
-?>
+  if ($is_single) {
+    // Get tasting note ID
+    $noteID = $_GET['id'];
 
-<?php
-  $page_title = 'Dominik Mueller - Browse all wines';
-  $meta_desc = 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
+    // Include the database configuration file
+    global $mysqli, $conn;
 
-  $extra_head = <<<HTML
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        if (sessionStorage.getItem('returnFocusToSearch') === 'true') {
-          const searchBox = document.getElementById('searchBox');
-          if (searchBox) {
-            searchBox.focus();
-            const len = searchBox.value.length;
-            searchBox.setSelectionRange(len, len);
+    // Fetch the tasting note and ensure it exists before proceeding
+    getNote($noteID);
+    if (empty($tasting_note)) {
+      header("Location: /tnotes.php");
+      exit;
+    }
+
+    // Generate the token for the form
+    $csrf_token = generateCSRFToken();
+
+    // Fetch user details
+    $user_id = $_SESSION['user_id'];
+    $stmt = $mysqli->prepare("SELECT username, displayname FROM users WHERE user_id = ?");
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $stmt->bind_result($username, $displayname);
+    if (!$stmt->fetch()) {
+      $stmt->close();
+      die("<h2>User not found.</h2>");
+    }
+    $stmt->close();
+
+    // Initialize error and success messages
+    $error = "";
+    $success = "";
+
+    // Process form submission
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      // Validate the token before processing the comment
+      if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+        $error = "Security check failed. Please refresh the page and try again.";
+      } else {
+        $comment = $_POST['comment'] ?? '';
+        $mysqli->autocommit(FALSE);
+        $post = $mysqli->prepare("INSERT INTO comments (user_id, content) VALUES (?, ?)");
+        $post->bind_param('is', $user_id, $comment);
+        if ($post->execute()) {
+          $last_id = $mysqli->insert_id;
+          $post->close();
+          $post = $mysqli->prepare("INSERT INTO x_comments_tnotes (comment_id, note_id) VALUES (?, ?)");
+          $post->bind_param('ii', $last_id, $noteID);
+          if ($post->execute()) {
+            $success = "Thank you! Comment posted successfully.";
+            $mysqli->commit();
+            $mysqli->autocommit(TRUE);
+            
+            // Auto-subscribe the commenter and notify existing subscribers
+            autoSubscribe($mysqli, $user_id, $noteID, 'tnote');
+            createNotificationsForComment($mysqli, $user_id, $noteID, 'tnote', $last_id);
+          } else {
+            $error = "Failed to post comment. Please try again.";
+            $mysqli->rollback();
+            $mysqli->autocommit(TRUE);
           }
-          sessionStorage.removeItem('returnFocusToSearch');
-        }
-      });
-
-      let searchTimeout;
-      function updateFilters(triggeredBySearch = false) {
-        const searchValue = document.getElementById('searchBox').value;
-        const favouriteCheckbox = document.getElementById('favouriteToggle');
-        const url = new URL(window.location.href);
-        if (searchValue) {
-          url.searchParams.set('q', searchValue);
         } else {
-          url.searchParams.delete('q');
+          $error = "Failed to post comment. Please try again.";
+          $mysqli->rollback();
+          $mysqli->autocommit(TRUE);
         }
-        if (favouriteCheckbox && favouriteCheckbox.checked) {
-          url.searchParams.set('favourite', 'yes');
-        } else {
-          url.searchParams.delete('favourite');
-        }
-        if (triggeredBySearch) {
-          sessionStorage.setItem('returnFocusToSearch', 'true');
-        }
-        window.location.href = url.toString();
+        $post->close();
       }
+    }
 
-      function triggerSearch() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => updateFilters(true), 600);
+    // Vintage NV?
+    if ($tasting_note["vintage"]==null) { $tasting_note["vintage"]="NV"; }
+    // Get wine name
+    if ($tasting_note["nameconvention"]=="vintage_name") {
+      $wine_name=$tasting_note["vintage"]." ".$tasting_note["name"];
+    } elseif ($tasting_note["nameconvention"]=="vintage_producer") {
+      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"];
+    } elseif ($tasting_note["nameconvention"]=="vintage_producer_grape_name") {
+      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["grape"]." ".$tasting_note["name"];
+    } elseif ($tasting_note["nameconvention"]=="vintage_producer_vineyard_grape_name") {
+      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["vineyard"]." ".$tasting_note["grape"]." ".$tasting_note["name"];
+    } elseif ($tasting_note["nameconvention"]=="vintage_producer_vineyard_name") {
+      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["vineyard"]." ".$tasting_note["name"];
+    // ...else vintage_producer_name as default:
+    } else {
+      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["name"];
+    }
+
+    // Page title and header
+    $page_title = "Dominik Mueller - " . $wine_name . "";
+    require_once 'includes/header.php';
+?>
+
+<div class="row">
+  <div class="column main">
+    <div class="card">
+      <h3><?php echo $wine_name;?></h3>
+    </div>
+    <div class="card">
+      <section>
+	<h3>Tasting note</h3>
+        <?php
+          if($tasting_note["img"]!=null) {
+            echo "<img class='".$tasting_note["img_class"]."' src='/img/".$tasting_note["img"]."' alt='".$wine_name."'>";
+          }
+          echo $tasting_note["tasting_note"];
+          if($tasting_note["drinkwindow_min"]!=null && $tasting_note["drinkwindow_max"]!=null) {
+            echo " <p>Drink from " . $tasting_note["drinkwindow_min"] . " through " . $tasting_note["drinkwindow_max"] . ".</p>";
+          } elseif ($tasting_note["drinkwindow_max"]!=null) {
+            echo " <p>Drink through " . $tasting_note["drinkwindow_max"] . ".</p>";
+          }
+          echo "<p><i>Tasted by ".$tasting_note["displayname"]." on ".date_format(date_create($tasting_note["tasting_date"]),"l, j F Y").".</i></p>";
+        ?>
+      </section>
+    </div>
+    <?php renderBlogReferences($conn, $noteID, 'tnote', 'Referenced in these stories:'); ?>
+  </div>
+
+  <div class="column side">
+    <div class="card">
+      <h3>Ratings</h3>
+      <p>
+        <table>
+          <tr><td>Flawed?</td><td style="width:5px;"></td><td><?php echo $tasting_note["flawed_yn"];?></td></tr>
+          <tr>
+            <td><?php echo htmlspecialchars($tasting_note["initials"] ?? 'DM', ENT_QUOTES, 'UTF-8'); ?>:</td>
+            <td style="width:5px;"></td>
+            <td>
+              <?php
+                if($tasting_note["dmpts"]==null) {
+                  echo "not rated";
+                } else {
+                  echo "<div class='tooltip'>".$tasting_note["dmpts"]."<span class='tooltiptext'>".$tasting_note["dmpts_desc"]."</span></div> / 20 (&quot;".$tasting_note["dmpts_class"]."&quot;)";
+                }
+              ?>
+            </td>
+          </tr>
+          <tr>
+            <td>Stars:</td>
+            <td style="width:5px;"></td>
+            <td>
+              <?php
+                if($tasting_note["starpts"]==null) {
+                  echo "not rated";
+                } else {
+                  echo "<div class='tooltip'>".$tasting_note["starpts"]."<span class='tooltiptext'>".$tasting_note["starpts_desc"]."</span></div> / 5";
+                }
+              ?>
+            </td>
+          </tr>
+          <tr>
+            <td>Favourite:</td>
+            <td style="width:5px;"></td>
+            <td>
+              <?php
+                if(isset($tasting_note["favourite"]) && $tasting_note["favourite"] == 'yes') {
+                  echo "<span style='color:#e25555; font-size:0.9em;'>❤️ Yes</span>";
+                } else {
+                  echo "No";
+                }
+              ?>
+            </td>
+          </tr>
+        </table>
+      </p>
+      <?php if ($tasting_note["blind"]=="blind") { echo "<p><em>Tasted blind.</em></p>"; } ?>
+      <p><a href="/blog.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>
+    </div>
+    <div class="card">
+    <h3>Wine details</h3>
+    <p>
+      <table>
+        <tr>
+          <td>Vintage:</td>
+          <td>
+            <?php
+              if ($tasting_note["vintage_desc"]==null) {
+                echo $tasting_note["vintage"];
+              } else {
+                echo "<div class='tooltip'>".$tasting_note["vintage"]."<span class='tooltiptext'>".$tasting_note["vintage_desc"]."</span></div>";
+              }
+            ?>
+          </td>
+        </tr>
+        <tr style="height:10px;"><td></td></tr>
+        <tr><td>Colour:</td><td><?php echo $tasting_note["colour"];?></td></tr>
+        <tr><td>Style:</td><td><?php echo $tasting_note["style"];?></td></tr>
+        <tr style="height:10px;"><td></td></tr>
+        <tr><td>Assemblage:</td><td><?php echo $tasting_note["cuvee_yn"];?></td></tr>
+        <tr>
+          <td>Grape variety:</td>
+          <td>
+            <?php
+              if ($tasting_note["grape_desc"]==null) {
+                echo $tasting_note["grape"];
+              } else {
+                echo "<div class='tooltip'>".$tasting_note["grape"]."<span class='tooltiptext'>".$tasting_note["grape_desc"]."</span></div>";
+              }
+            ?>
+          </td>
+        </tr>
+        <tr><td colspan="2"><font style="font-size:12px;">For <i>assemblages</i>, the main grape variety is shown.</font></td></tr>
+        <tr style="height:10px;"><td></td></tr>
+        <tr><td>Producer:</td><td><?php echo "<a href='/producers.php?id=".$tasting_note["producer_id"]."'>".$tasting_note["producer"]."</a>";?></td></tr>
+        <tr><td>Country:</td><td><?php echo $tasting_note["country"];?></td></tr>
+        <tr>
+          <td>Region:</td>
+          <td>
+            <?php
+              if ($tasting_note["region_desc"]==null) {
+                echo $tasting_note["region"];
+              } else {
+                echo "<div class='tooltip'>".$tasting_note["region"]."<span class='tooltiptext'>".$tasting_note["region_desc"]."</span></div>";
+              }
+            ?>
+          </td>
+        </tr>
+        <tr><td>Subregion:</td><td><?php if ($tasting_note["subregion"]==null){echo "n/a";}else{echo $tasting_note["subregion"];}?></td></tr>
+        <tr>
+          <td>Appellation:</td>
+          <td>
+            <?php
+              if ($tasting_note["appellation"]==null) {
+                echo "n/a";
+              } elseif ($tasting_note["appellation_desc"]==null) {
+                echo $tasting_note["appellation"];
+              } else {
+                echo "<div class='tooltip'>".$tasting_note["appellation"]."<span class='tooltiptext'>".$tasting_note["appellation_desc"]."</span></div>";
+              }
+            ?>
+          </td>
+        </tr>
+        <tr>
+          <td>Vineyard:</td>
+          <td>
+            <?php
+              if ($tasting_note["vineyard"]==null) {
+                echo "n/a";
+              } elseif ($tasting_note["vineyard_desc"]==null) {
+                echo $tasting_note["vineyard"];
+              } else {
+                echo "<div class='tooltip'>".$tasting_note["vineyard"]."<span class='tooltiptext'>".$tasting_note["vineyard_desc"]."</span></div>";
+              }
+            ?>
+          </td>
+        </tr>
+        <tr style="height:10px;"><td></td></tr>
+        <tr><td colspan="2"><?php echo "<a href='/wines.php?id=".$tasting_note["wine_id"]."'>More details on this wine.</a>";?></td></tr>
+        <tr><td colspan="2"><?php echo ($tasting_note["ct_id"]!==null) ? "<a href='https://www.cellartracker.com/wine.asp?iWine=".$tasting_note["ct_id"]."' target='_blank' rel='noopener noreferrer'>View this wine on CellarTracker.</a>" : "";?></td></tr>
+        <tr><td colspan="2"><a href="<?php echo getWineSearcherUrl($wine_name); ?>" target="_blank" rel="noopener noreferrer">Find this wine on Wine-Searcher.</a></td></tr>
+      </table>
+    </p>
+    </div>
+    <?php moreNotes($noteID, $tasting_note["wine_id"], $wine_name); ?>
+    <?php if ($tasting_note["vintage"]!="NV") { otherVintages($tasting_note["wine_id"], $tasting_note["master_id"]); } ?>
+    <?php if (isset($_SESSION['user_id'])): ?>
+      <?php
+        $is_subbed = isSubscribed($conn, $_SESSION['user_id'], $noteID, 'tnote');
+      ?>
+      <div class="card" id="comments" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div><h3 style="margin:0;">Discussion</h3></div>
+        <div class="subscription-container" style="margin:0;">
+          <?php if ($is_subbed): ?>
+            <button id="btn-sub-toggle" class="btn-subscription subscribed" onclick="toggleSubscriptionAjax(<?= $noteID ?>, 'tnote')">🔕 Unsubscribe</button>
+          <?php else: ?>
+            <button id="btn-sub-toggle" class="btn-subscription" onclick="toggleSubscriptionAjax(<?= $noteID ?>, 'tnote')">🔔 Subscribe to discussion</button>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <div class="card">
+        <details><summary><h3 style="display:inline;margin:0;">Post a comment</h3></summary>
+        <?php
+          if ($error!="") {
+            echo "<div style='color:red;'>$error</div>";
+          } elseif ($success!="") {
+            echo "<div style='color:green;'>$success</div>";
+          }
+        ?>
+        <form method="post" autocomplete="off" accept-charset="UTF-8" style="margin-bottom:10px;">
+          <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+          <label for="username">Your name:</label>
+          <br><input type="text" id="username" value="<?= htmlspecialchars($displayname ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
+          <br><br>
+          <label for="comment">Your comment:</label>
+          <br><textarea name="comment" id="comment" rows="15" cols="35" maxlength="2000" placeholder="..."></textarea>
+          <br><br>
+          <button type="submit">Post comment</button>
+        </form></details>
+      </div>
+      <?php renderComments($conn, $noteID, 'tnote'); ?>
+
+      <script>
+      function toggleSubscriptionAjax(id, type) {
+        const btn = document.getElementById('btn-sub-toggle');
+        if (!btn) return;
+        
+        btn.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('type', type);
+        formData.append('csrf_token', '<?= $csrf_token ?>');
+        
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/toggle_subscription.php', true);
+        xhr.onload = function() {
+          btn.disabled = false;
+          if (xhr.status === 200) {
+            try {
+              const res = JSON.parse(xhr.responseText);
+              if (res.status === 'success') {
+                if (res.action === 'subscribed') {
+                  btn.textContent = '🔕 Unsubscribe';
+                  btn.className = 'btn-subscription subscribed';
+                } else {
+                  btn.textContent = '🔔 Subscribe to discussion';
+                  btn.className = 'btn-subscription';
+                }
+              } else {
+                alert(res.message);
+              }
+            } catch (e) {
+              alert('An error occurred. Please try again.');
+            }
+          } else {
+            alert('An error occurred. Please try again.');
+          }
+        };
+        xhr.send(formData);
       }
-    </script>
-  HTML;
+      </script>
+    <?php endif; ?>
+  </div>
+</div>
 
-  require_once 'includes/header.php';
+<?php require_once 'includes/footer.php'; ?>
+<?php
+  } else {
+    // Browse all tasting notes list view
+    if (empty($_GET['sort'])) {
+      $sort="date";
+    } else {
+      $sort=$_GET['sort'];
+    }
+
+    if ($sort=="date" || $sort=="tenyears" || $sort=="twentyplus") {
+      $sqlOrderBy="order by tnotes.tasting_date desc, wines.wine_id asc, tnotes.note_id desc";
+    } elseif ($sort=="rating") {
+      $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.dmpts desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
+    } elseif ($sort=="stars") {
+      $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.starpts desc, tnotes.dmpts desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
+    } elseif ($sort=="region") {
+      $sqlOrderBy="order by regions.country asc, regions.region asc, producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
+    } elseif ($sort=="producer") {
+      $sqlOrderBy="order by producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, regions.region asc, tnotes.tasting_date desc, tnotes.note_id desc";
+    } elseif ($sort=="vintage") {
+      $sqlOrderBy="order by wines.vintage desc, regions.country asc, producers.producer asc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
+    } elseif ($sort=="variety") {
+      $sqlOrderBy="order by wines_master.grape asc, regions.country asc, producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
+    }
+
+    $page_title = 'Dominik Mueller - Browse all tasting notes';
+    $meta_desc = 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
+
+    $extra_head = <<<HTML
+      <script>
+        document.addEventListener("DOMContentLoaded", function() {
+          if (sessionStorage.getItem('returnFocusToSearch') === 'true') {
+            const searchBox = document.getElementById('searchBox');
+            if (searchBox) {
+              searchBox.focus();
+              const len = searchBox.value.length;
+              searchBox.setSelectionRange(len, len);
+            }
+            sessionStorage.removeItem('returnFocusToSearch');
+          }
+        });
+
+        let searchTimeout;
+        function updateFilters(triggeredBySearch = false) {
+          const searchValue = document.getElementById('searchBox').value;
+          const favouriteCheckbox = document.getElementById('favouriteToggle');
+          const url = new URL(window.location.href);
+          if (searchValue) {
+            url.searchParams.set('q', searchValue);
+          } else {
+            url.searchParams.delete('q');
+          }
+          if (favouriteCheckbox && favouriteCheckbox.checked) {
+            url.searchParams.set('favourite', 'yes');
+          } else {
+            url.searchParams.delete('favourite');
+          }
+          if (triggeredBySearch) {
+            sessionStorage.setItem('returnFocusToSearch', 'true');
+          }
+          window.location.href = url.toString();
+        }
+
+        function triggerSearch() {
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(() => updateFilters(true), 600);
+        }
+      </script>
+    HTML;
+
+    require_once 'includes/header.php';
 ?>
 
 <div class="row">
@@ -188,13 +526,133 @@
           by Jasper Morris from Inside Burgundy to use his <strong>star scale</strong> on which a maximum of 5 stars can be achieved. With this
           scale I take into account the quality of a wine <em>relative to its peer group</em> in order to allow well-made wines to stand out.
         </p>
-        <p><a href="https://dmueller.com/blogpost.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>
+        <p><a href="/blog.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>
       </aside>
     </div>
   </div>
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
+<?php
+  }
+?>
+
+<?php function getNote($noteID)
+{
+  global $mysqli, $conn;
+
+  // Perform query
+  $stmt = $mysqli->prepare("select * from tnotes
+                                   left join users on tnotes.user_id=users.user_id
+                                   left join wines on tnotes.wine_id=wines.wine_id
+                                   left join wines_master on wines.master_id=wines_master.master_id
+                                   left join producers on wines_master.producer_id=producers.producer_id
+                                   left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
+                                   left join regions on wines_master.region_id=regions.region_id
+                                   left join countries on regions.country=countries.country
+                                   left join subregions on wines_master.subregion_id=subregions.subregion_id
+                                   left join appellations on wines_master.appellation_id=appellations.appellation_id
+                                   left join variety on wines_master.grape=variety.grape
+				   left join dmpts on tnotes.dmpts=dmpts.pts
+				   left join wsetpts on tnotes.wsetpts=wsetpts.pts
+				   left join starpts on tnotes.starpts=starpts.pts
+				   left join (select vintage as vint, region_id as rvid, vintage_desc from x_vintage_region) xvr on wines.vintage=xvr.vint and wines_master.region_id=xvr.rvid
+                                 where note_id=?");
+  $stmt->bind_param("i", $noteID);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
+  if ($result)
+  {
+    $GLOBALS['tasting_note'] = $result -> fetch_assoc();
+    // Free result set
+    $result -> free_result();
+  }
+  $stmt->close();
+} ?>
+
+<?php function moreNotes($id, $wine_id, $wine_name)
+{
+  global $mysqli, $conn;
+    // Perform query
+  $stmt = $mysqli->prepare("select tnotes.*, users.initials from tnotes
+                              left join users on tnotes.user_id=users.user_id
+                              where tnotes.status='published' and tnotes.note_id<>? and tnotes.wine_id=?
+                              order by tnotes.tasting_date desc");
+  $stmt->bind_param("ii", $id, $wine_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
+  if (mysqli_num_rows($result)!=0) {
+    echo "<div class='card'><h3>More tasting notes on this wine:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
+    while ($moreNotes = $result->fetch_assoc()) {
+      if ($moreNotes['flawed_yn']=="yes") {
+        $dmpts="flawed";
+      } elseif ($moreNotes['dmpts']!=null) {
+        $initials = !empty($moreNotes['initials']) ? $moreNotes['initials'] : 'DM';
+        $dmpts=$initials.$moreNotes["dmpts"];
+      } else {
+        $dmpts="NR";
+      }
+      echo "<li>".date_format(date_create($moreNotes["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$moreNotes["note_id"]."'>".$wine_name."</a> (".$dmpts.")</li>";
+    }
+    echo "</ul></p></div>";
+  }
+  $stmt->close();
+  $result -> free_result();
+} ?>
+
+<?php function otherVintages($wine_id, $master_id)
+{
+  global $mysqli, $conn;
+    // Perform query
+  $stmt = $mysqli->prepare("select wines.*, wines_master.*, tnotes.*, producers.*, vineyards.*, users.initials from wines
+                                left join wines_master on wines.master_id=wines_master.master_id
+                                left join tnotes on wines.wine_id=tnotes.wine_id
+                                left join users on tnotes.user_id=users.user_id
+                                left join producers on wines_master.producer_id=producers.producer_id
+                                left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
+                              where tnotes.status='published' and wines.wine_id<>? and wines.master_id=?
+                              order by tnotes.tasting_date desc");
+  $stmt->bind_param("ii", $wine_id, $master_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
+  if (mysqli_num_rows($result)!=0) {
+    echo "<div class='card'><h3>Tasting notes on other vintages of this wine:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
+    while ($otherVintages = $result->fetch_assoc()) {
+      // Get wine name
+      if ($otherVintages["nameconvention"]=="vintage_name") {
+        $otherWine=$otherVintages["vintage"]." ".$otherVintages["name"];
+      } elseif ($otherVintages["nameconvention"]=="vintage_producer") {
+        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"];
+      } elseif ($otherVintages["nameconvention"]=="vintage_producer_grape_name") {
+        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"]." ".$otherVintages["grape"]." ".$otherVintages["name"];
+      } elseif ($otherVintages["nameconvention"]=="vintage_producer_vineyard_grape_name") {
+        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"]." ".$otherVintages["vineyard"]." ".$otherVintages["grape"]." ".$otherVintages["name"];
+      } elseif ($otherVintages["nameconvention"]=="vintage_producer_vineyard_name") {
+        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"]." ".$otherVintages["vineyard"]." ".$otherVintages["name"];
+      // ...else vintage_producer_name as default:
+      } else {
+        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"]." ".$otherVintages["name"];
+      }
+      if ($otherVintages['flawed_yn']=="yes") {
+        $dmpts="flawed";
+      } elseif ($otherVintages['dmpts']!=null) {
+        $initials = !empty($otherVintages['initials']) ? $otherVintages['initials'] : 'DM';
+        $dmpts=$initials.$otherVintages["dmpts"];
+      } else {
+        $dmpts="NR";
+      }
+      if ($otherVintages["tasting_date"]!=null) {
+        echo "<li>".date_format(date_create($otherVintages["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$otherVintages["note_id"]."'>".$otherWine."</a> (".$dmpts.")</li>";
+      }
+    }
+    echo "</ul></p></div>";
+  }
+  $stmt->close();
+  $result -> free_result();
+} ?>
 
 <?php function getNotes($num,$sort,$sqlOrderBy)
 {
@@ -473,7 +931,7 @@
       $is_fav = (isset($n['favourite']) && $n['favourite'] == 'yes');
 
       echo "<div class='vintage-chip rating-chip'>";
-      echo "<a class='chip-link' href='/tnote.php?id=" . $n["note_id"] . "' title='Tasted on " . $t_date . "'>";
+      echo "<a class='chip-link' href='/tnotes.php?id=" . $n["note_id"] . "' title='Tasted on " . $t_date . "'>";
       if ($is_fav) {
         echo "<span class='chip-fav'>❤️</span>";
       }
@@ -484,7 +942,7 @@
 
       if ($comment_count > 0) {
         $c_title = $comment_count === 1 ? '1 comment' : $comment_count . ' comments';
-        echo "<a class='chip-badge' href='/tnote.php?id=" . $n["note_id"] . "#comments' title='" . $c_title . "' aria-label='" . $c_title . "'>";
+        echo "<a class='chip-badge' href='/tnotes.php?id=" . $n["note_id"] . "#comments' title='" . $c_title . "' aria-label='" . $c_title . "'>";
         echo '<svg class="comment-icon" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
         echo "<span class='comment-count'>" . $comment_count . "</span>";
         echo "</a>";

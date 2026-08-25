@@ -172,17 +172,17 @@ require_once 'includes/header.php';
             $producer = $row['w_producer'] ?? '';
             $name = $row['w_name'] ?? '';
             $item_name = trim("$vintage $producer $name");
-            $link_url = "/wine.php?id=$item_id#comment-$comment_id";
+            $link_url = "/wines.php?id=$item_id#comment-$comment_id";
           } elseif ($item_type === 'tnote') {
             $vintage = $row['tn_vintage'] ?? 'NV';
             $producer = $row['tn_producer'] ?? '';
             $name = $row['tn_name'] ?? '';
             $item_name = "Tasting note on " . trim("$vintage $producer $name");
-            $link_url = "/tnote.php?id=$item_id#comment-$comment_id";
+            $link_url = "/tnotes.php?id=$item_id#comment-$comment_id";
           } elseif ($item_type === 'blog') {
             $title = $row['bp_title'] ?? '';
             $item_name = "Story: " . trim($title);
-            $link_url = "/blogpost.php?id=$item_id#comment-$comment_id";
+            $link_url = "/blog.php?id=$item_id#comment-$comment_id";
           }
 
           $created_at_dt = !empty($row['created_at']) ? date_create($row['created_at']) : false;

@@ -1603,7 +1603,7 @@ function latestComments($num = 5) {
           $comment['wine_vineyard'] ?? ''
         );
         $item_title = $wine_name;
-        $item_url = "/wine.php?id=" . (int)$comment['wine_id'] . "#comment-" . (int)$comment['comment_id'];
+        $item_url = "/wines.php?id=" . (int)$comment['wine_id'] . "#comment-" . (int)$comment['comment_id'];
       } elseif (!empty($comment['note_id'])) {
         $note_wine_name = getWineName(
           $comment['note_nameconvention'] ?? '',
@@ -1614,10 +1614,10 @@ function latestComments($num = 5) {
           $comment['note_vineyard'] ?? ''
         );
         $item_title = $note_wine_name . " (tasting note)";
-        $item_url = "/tnote.php?id=" . (int)$comment['note_id'] . "#comment-" . (int)$comment['comment_id'];
+        $item_url = "/tnotes.php?id=" . (int)$comment['note_id'] . "#comment-" . (int)$comment['comment_id'];
       } elseif (!empty($comment['blog_id'])) {
         $item_title = !empty($comment['blog_title']) ? $comment['blog_title'] : ("Story #" . $comment['blog_id']);
-        $item_url = "/blogpost.php?id=" . (int)$comment['blog_id'] . "#comment-" . (int)$comment['comment_id'];
+        $item_url = "/blog.php?id=" . (int)$comment['blog_id'] . "#comment-" . (int)$comment['comment_id'];
       } else {
         continue;
       }
@@ -1667,7 +1667,7 @@ function renderBlogReferences($conn, $id, $type, $title) {
   if ($result && mysqli_num_rows($result) != 0) {
     echo "<div class='card'><h3>$title</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
     while ($blog = $result->fetch_assoc()) {
-      echo "<li>".date_format(date_create($blog["pub_date"]),"d M Y").": <a href='/blogpost.php?id=".$blog['blog_id']."'>".$blog["title"]."</a></li>";
+      echo "<li>".date_format(date_create($blog["pub_date"]),"d M Y").": <a href='/blog.php?id=".$blog['blog_id']."'>".$blog["title"]."</a></li>";
     }
     echo "</ul></p></div>";
   }
@@ -1899,7 +1899,7 @@ function createNotificationsForComment($conn, $sender_id, $item_id, $item_type, 
       } else {
         $item_name = "Wine #" . $item_id;
       }
-      $item_url = "https://dmueller.com/wine.php?id=" . $item_id . "#comment-" . $comment_id;
+      $item_url = "https://dmueller.com/wines.php?id=" . $item_id . "#comment-" . $comment_id;
     } elseif ($item_type === 'tnote') {
       $stmt = $conn->prepare("SELECT wines.vintage, wines_master.name, producers.producer 
                               FROM tnotes 
@@ -1921,7 +1921,7 @@ function createNotificationsForComment($conn, $sender_id, $item_id, $item_type, 
       } else {
         $item_name = "Tasting Note #" . $item_id;
       }
-      $item_url = "https://dmueller.com/tnote.php?id=" . $item_id . "#comment-" . $comment_id;
+      $item_url = "https://dmueller.com/tnotes.php?id=" . $item_id . "#comment-" . $comment_id;
     } elseif ($item_type === 'blog') {
       $stmt = $conn->prepare("SELECT title FROM blogposts WHERE blog_id = ?");
       if ($stmt) {
@@ -1937,7 +1937,7 @@ function createNotificationsForComment($conn, $sender_id, $item_id, $item_type, 
       } else {
         $item_name = "Story #" . $item_id;
       }
-      $item_url = "https://dmueller.com/blogpost.php?id=" . $item_id . "#comment-" . $comment_id;
+      $item_url = "https://dmueller.com/blog.php?id=" . $item_id . "#comment-" . $comment_id;
     }
 
     // 4. Fetch comment snippet

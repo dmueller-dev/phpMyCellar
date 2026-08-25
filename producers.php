@@ -146,7 +146,7 @@
       $dmpts="NR";
     }
     // Output
-    echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnote.php?id=".$tasting_note['note_id']."'>".$wine_name."</a> (".$dmpts.")</li>";
+    echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$tasting_note['note_id']."'>".$wine_name."</a> (".$dmpts.")</li>";
   }
   if (mysqli_num_rows($result)==0) { echo "<li>I haven't tasted any of this producer's wines, yet.</li>"; }
   $stmt->close();
