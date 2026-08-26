@@ -33,7 +33,6 @@
       $wset_intensity = number_format(filter_input(INPUT_POST, 'wset_intensity', FILTER_VALIDATE_FLOAT),1,'.','');
       $wset_complexity = number_format(filter_input(INPUT_POST, 'wset_complexity', FILTER_VALIDATE_FLOAT),1,'.','');
       $wsetpts=number_format($wset_balance+$wset_length+$wset_intensity+$wset_complexity, 1, '.', '');
-      $starpts = filter_input(INPUT_POST, 'starpts', FILTER_VALIDATE_INT);
       $favourite = sanitizeInput($_POST['favourite'] ?? 'no');
       $drink_from = filter_input(INPUT_POST, 'drink_from', FILTER_VALIDATE_INT);
       $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
@@ -44,7 +43,7 @@
       $img_class = sanitizeInput($_POST['img_class']);
       if ($img_class == "null") { $img_class = null; }
       $errorsImg = validateImageInput($img, $img_class);
-      $errors = validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $blind, $status, $img, $img_class, $favourite);
+      $errors = validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $blind, $status, $img, $img_class, $favourite);
       
       // Ownership and published check for 'write' users
       if ($role === 'write') {
@@ -60,7 +59,7 @@
         // Start transaction
         $conn->begin_transaction();
         try {
-          if (updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $blind, $status, $img, $img_class, $favourite)) {
+          if (updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $blind, $status, $img, $img_class, $favourite)) {
             $conn->commit();
             $success_message = "Tasting note updated successfully";
           } else {
@@ -320,18 +319,6 @@
             </select>
             <p id="suggestedDMpts" style="margin-top:5px;"></p>
 
-            <label for="starpts">Stars:</label>
-            <select name="starpts" id="starpts">
-              <option value="" <?php echo ($selected_note['starpts'] == null) ? 'selected' : 'selected'; ?>></option>
-              <option value="0" <?php echo ($selected_note['starpts'] == '0') ? 'selected' : ''; ?>>0</option>
-              <option value="1" <?php echo ($selected_note['starpts'] == '1') ? 'selected' : ''; ?>>1</option>
-              <option value="2" <?php echo ($selected_note['starpts'] == '2') ? 'selected' : ''; ?>>2</option>
-              <option value="3" <?php echo ($selected_note['starpts'] == '3') ? 'selected' : ''; ?>>3</option>
-              <option value="4" <?php echo ($selected_note['starpts'] == '4') ? 'selected' : ''; ?>>4</option>
-              <option value="5" <?php echo ($selected_note['starpts'] == '5') ? 'selected' : ''; ?>>5</option>
-            </select>
-
-            <br><br>
             <label for="favourite">Favourite?</label><br>
             <select name="favourite" id="favourite" required>
               <option value="no" <?php echo ($selected_note['favourite'] == 'no') ? 'selected' : 'selected'; ?>>no</option>

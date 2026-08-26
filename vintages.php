@@ -169,7 +169,6 @@
 
                 $initials = !empty($wine['initials']) ? $wine['initials'] : 'DM';
                 $score_text = $initials . $wine['dmpts'];
-                $stars_text = ($wine['starpts'] !== null) ? $wine['starpts'] . '★' : '';
                 $fav_icon = ($wine['favourite'] === 'yes') ? "<span style='color:#e25555; margin-left:4px;'>❤️</span>" : "";
                 $tasted_date = !empty($wine['tasting_date']) ? date_format(date_create($wine['tasting_date']), "d M Y") : '';
               ?>
@@ -187,9 +186,6 @@
                 </div>
                 <div style="text-align: right; min-width: 90px;">
                   <span class="vintage-score-badge"><?php echo $score_text; ?></span>
-                  <?php if (!empty($stars_text)): ?>
-                    <div style="font-size: 11px; color: #64748b;"><?php echo $stars_text; ?></div>
-                  <?php endif; ?>
                 </div>
               </li>
             <?php endforeach; ?>

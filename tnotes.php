@@ -150,19 +150,6 @@
             </td>
           </tr>
           <tr>
-            <td>Stars:</td>
-            <td style="width:5px;"></td>
-            <td>
-              <?php
-                if($tasting_note["starpts"]==null) {
-                  echo "not rated";
-                } else {
-                  echo "<div class='tooltip'>".$tasting_note["starpts"]."<span class='tooltiptext'>".$tasting_note["starpts_desc"]."</span></div> / 5";
-                }
-              ?>
-            </td>
-          </tr>
-          <tr>
             <td>Favourite:</td>
             <td style="width:5px;"></td>
             <td>
@@ -362,8 +349,6 @@
       $sqlOrderBy="order by tnotes.tasting_date desc, wines.wine_id asc, tnotes.note_id desc";
     } elseif ($sort=="rating") {
       $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.dmpts desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
-    } elseif ($sort=="stars") {
-      $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.starpts desc, tnotes.dmpts desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
     } elseif ($sort=="region") {
       $sqlOrderBy="order by regions.country asc, regions.region asc, producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
     } elseif ($sort=="producer") {
@@ -453,7 +438,6 @@
         ?>
         <a class="filter-nav" href="/tnotes.php?sort=date<?php echo $urlParams; ?>">Tasting date</a>
         <a class="filter-nav" href="/tnotes.php?sort=rating<?php echo $urlParams; ?>">DM points</a>
-        <a class="filter-nav" href="/tnotes.php?sort=stars<?php echo $urlParams; ?>">Stars</a>
         <a class="filter-nav" href="/tnotes.php?sort=region<?php echo $urlParams; ?>">Region</a>
         <a class="filter-nav" href="/tnotes.php?sort=producer<?php echo $urlParams; ?>">Producer</a>
         <a class="filter-nav" href="/tnotes.php?sort=vintage<?php echo $urlParams; ?>">Vintage</a>
@@ -478,9 +462,8 @@
       </p>
       <aside>
         <h4>How I rate wines</h4>
-        <p>I use two rating scales in my notes:</p>
         <p>
-          Firstly, there is my personal <strong>20-point DM scale</strong>. On this scale, I rate the <em>absolute</em> quality of wines.
+          I rate wines on my personal <strong>20-point DM scale</strong>. On this scale, I rate the <em>absolute</em> quality of wines.
           My ratings may appear low relative to those of most popular wine reviewers at first glance, but I make use of the entire range
           from 0 to 20 points:
         </p>
@@ -519,14 +502,7 @@
           </tr>
         </table>
         <p>As you can see, &quot;good&quot; wines start at 5 points already!</p>
-        <p>
-          Secondly, I also find <em>relative</em> ratings extremely valuable. For Burgundy, for example, it is logical that a <em>village</em>
-          wine should generally receive fewer points than a <em>grand cru</em> wine on both the 20-point and the 100-point scale, although
-          that particular village wine may still be an excellent wine within its category (type, character, and price segment). I was inspired
-          by Jasper Morris from Inside Burgundy to use his <strong>star scale</strong> on which a maximum of 5 stars can be achieved. With this
-          scale I take into account the quality of a wine <em>relative to its peer group</em> in order to allow well-made wines to stand out.
-        </p>
-        <p><a href="/blog.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>
+        <p><a href="/blogpost.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>
       </aside>
     </div>
   </div>
@@ -555,7 +531,6 @@
                                    left join variety on wines_master.grape=variety.grape
 				   left join dmpts on tnotes.dmpts=dmpts.pts
 				   left join wsetpts on tnotes.wsetpts=wsetpts.pts
-				   left join starpts on tnotes.starpts=starpts.pts
 				   left join (select vintage as vint, region_id as rvid, vintage_desc from x_vintage_region) xvr on wines.vintage=xvr.vint and wines_master.region_id=xvr.rvid
                                  where note_id=?");
   $stmt->bind_param("i", $noteID);
@@ -714,7 +689,6 @@
                                 left join appellations on wines_master.appellation_id=appellations.appellation_id
                                 left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
                                 left join (select pts as dpts, dmpts_desc from dmpts) d on tnotes.dmpts=d.dpts
-                                left join (select pts as spts, starpts_desc from starpts) s on tnotes.starpts=s.spts
                                 left join (select note_id as c_note_id, count(comment_id) as comment_count from x_comments_tnotes group by note_id) c on tnotes.note_id=c.c_note_id
                                 " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
 
@@ -736,8 +710,6 @@
     echo "<p><small><i>Tasting notes arranged chronologically by tasting date, grouped by year.</i></small></p>";
   } elseif ($sort=="rating") {
     echo "<p><small><i>Tasting notes arranged by DM score (20-point scale), then by producer and vintage.</i></small></p>";
-  } elseif ($sort=="stars") {
-    echo "<p><small><i>Tasting notes arranged by star rating (5-star scale), then by score and producer.</i></small></p>";
   } elseif ($sort=="region") {
     echo "<p><small><i>Tasting notes arranged by country and region, then by producer, cuvée, and vintage.</i></small></p>";
   } elseif ($sort=="producer") {
@@ -759,14 +731,11 @@
 
     if ($r['flawed_yn'] == "yes") {
       $r['dmpts_label'] = "flawed";
-      $r['stars_label'] = "flawed";
     } elseif ($r['dmpts'] !== null) {
       $initials = !empty($r["initials"]) ? $r["initials"] : 'DM';
       $r['dmpts_label'] = $initials . $r["dmpts"];
-      $r['stars_label'] = ($r["starpts"] != 1) ? $r["starpts"] . " stars" : $r["starpts"] . " star";
     } else {
       $r['dmpts_label'] = "NR";
-      $r['stars_label'] = "NR";
     }
 
     $rows[] = $r;
@@ -785,8 +754,6 @@
       $section_key = $row["vintage"] . "-" . date_format(date_create($row["tasting_date"]), "y");
     } elseif ($sort == "rating") {
       $section_key = $row["dmpts_label"];
-    } elseif ($sort == "stars") {
-      $section_key = $row["stars_label"];
     } elseif ($sort == "region") {
       $section_key = ($row['country'] ?? '') . '|||' . ($row['region'] ?? '');
     } elseif ($sort == "producer") {
@@ -827,7 +794,6 @@
   $prevYear = "";
   $prevTenYears = "";
   $prevRating = "";
-  $prevStars = "";
   $prevCountry = "";
   $prevRegion = "";
   $prevProducer = "";
@@ -859,17 +825,6 @@
           echo "<details open><summary><b>" . htmlspecialchars($wine["dmpts_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>Sometimes I don't give a rating to a wine. In that case you'll read &quot;not rated&quot; or the abbreviation &quot;NR&quot; in the tasting note. I might not give a rating if I tasted a wine only quickly without taking notes - at a winery, for example. Sometimes I might still want to note down an indication for a possible rating. In that case, I'll write a provisional score in the tasting note, but I'll always make that clear in the written note.</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
         } elseif ($wine["dmpts_label"] == "flawed") {
           echo "<details open><summary><b>" . htmlspecialchars($wine["dmpts_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>I mark bottles as flawed when there is a fault outside of the control of the winemaker. This might happen if a wine is corked or it is spoilt because of bad storage conditions. I don't rate these wines.</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
-        }
-      }
-    } elseif ($sort == "stars") {
-      if ($wine["stars_label"] != $prevStars) {
-        echo ($prevStars != "") ? "</ul></details><br>" : "";
-        if ($wine["stars_label"] != "flawed" && $wine["stars_label"] != "NR") {
-          echo "<details open><summary><b>" . htmlspecialchars($wine["stars_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>" . $wine["starpts_desc"] . "</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
-        } elseif ($wine["stars_label"] == "NR") {
-          echo "<details open><summary><b>" . htmlspecialchars($wine["stars_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>Sometimes I don't give a rating to a wine. In that case you'll read &quot;not rated&quot; or the abbreviation &quot;NR&quot; in the tasting note. I might not give a rating if I tasted a wine only quickly without taking notes - at a winery, for example. Sometimes I might still want to note down an indication for a possible rating. In that case, I'll write a provisional score in the tasting note, but I'll always make that clear in the written note.</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
-        } elseif ($wine["stars_label"] == "flawed") {
-          echo "<details open><summary><b>" . htmlspecialchars($wine["stars_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>I mark bottles as flawed when there is a fault outside of the control of the winemaker. This might happen if a wine is corked or it is spoilt because of bad storage conditions. I don't rate these wines.</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
         }
       }
     } elseif ($sort == "region") {
@@ -958,7 +913,6 @@
     $prevYear = date_format(date_create($wine["tasting_date"]), "Y");
     $prevTenYears = $wine["vintage"] . "-" . date_format(date_create($wine["tasting_date"]), "y");
     $prevRating = $wine["dmpts_label"];
-    $prevStars = $wine["stars_label"];
     $prevCountry = $wine["country"];
     $prevRegion = $wine["region"];
     $prevProducer = $wine["producer"];
@@ -968,7 +922,7 @@
 
   if ($sort == "region" || $sort == "vintage" || $sort == "variety") {
     echo "</ul></details></li></ul></details>";
-  } elseif ($sort == "date" || $sort == "twentyplus" || $sort == "tenyears" || $sort == "rating" || $sort == "stars" || $sort == "producer") {
+  } elseif ($sort == "date" || $sort == "twentyplus" || $sort == "tenyears" || $sort == "rating" || $sort == "producer") {
     echo "</ul></details>";
   }
 } ?>

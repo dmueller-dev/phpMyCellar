@@ -822,7 +822,7 @@ function markBottleAsConsumed($conn, $bottle_id, $consumption_date, $note_id = n
   return $stmt->execute();
 }
 
-function updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $starpts = null, $drink_from = null, $drink_through = null, $blind, $status, $img = null, $img_class = null, $favourite = 'no') {
+function updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $drink_from = null, $drink_through = null, $blind, $status, $img = null, $img_class = null, $favourite = 'no') {
 
   if (empty($dmpts) || $dmpts=="") { $dmpts=null; }
   if (empty($wset_balance) || $wset_balance=="") { $wset_balance=null; }
@@ -830,15 +830,14 @@ function updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $
   if (empty($wset_intensity) || $wset_intensity=="") { $wset_intensity=null; }
   if (empty($wset_complexity) || $wset_complexity=="") { $wset_complexity=null; }
   if (empty($wsetpts) || $wsetpts=="") { $wsetpts=null; }
-  if (empty($starpts) || $starpts=="") { $starpts=null; }
   if (empty($drink_from) || $drink_from=="") { $drink_from=null; }
   if (empty($drink_through) || $drink_through=="") { $drink_through=null; }
   if (empty($img) || $img=="") { $img=null; }
   if (empty($img_class) || $img_class=="") { $img_class=null; }
 
-  $sql = "update tnotes set wine_id = ?, tasting_date = ?, user_id = ?, tasting_note = ?, flawed_yn = ?, dmpts = ?, wset_balance = ?, wset_length = ?, wset_intensity = ?, wset_complexity = ?, wsetpts = ?, starpts = ?, drinkwindow_min = ?, drinkwindow_max = ?, status = ?, blind = ?, img = ?, img_class = ?, favourite = ? where note_id = ?";
+  $sql = "update tnotes set wine_id = ?, tasting_date = ?, user_id = ?, tasting_note = ?, flawed_yn = ?, dmpts = ?, wset_balance = ?, wset_length = ?, wset_intensity = ?, wset_complexity = ?, wsetpts = ?, drinkwindow_min = ?, drinkwindow_max = ?, status = ?, blind = ?, img = ?, img_class = ?, favourite = ? where note_id = ?";
   $stmt = $conn->prepare($sql);
-  $stmt->bind_param("isissidddddiiisssssi", $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite, $note_id);
+  $stmt->bind_param("isissidddddiisssssi", $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite, $note_id);
   return $stmt->execute();
 }
 
@@ -981,19 +980,19 @@ function insertBottle($conn, $wine_id, $format, $bin_id = null, $store_id, $purc
 }
 
 // Function to insert a new tasting note
-function insertTastingNote($conn, $bottle_id = null, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drinkwindow_min = null, $drinkwindow_max = null, $status, $blind, $img = null, $img_class = null, $favourite = 'no') {
+function insertTastingNote($conn, $bottle_id = null, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drinkwindow_min = null, $drinkwindow_max = null, $status, $blind, $img = null, $img_class = null, $favourite = 'no') {
   // Check optional inputs
   if ($drinkwindow_min=="") { $drinkwindow_min=null; }
   if ($drinkwindow_max=="") { $drinkwindow_max=null; }
   if ($img=="") { $img=null; $img_class=null; }
     
-  $sql = "INSERT INTO tnotes (wine_id, user_id, tasting_date, tasting_note, flawed_yn, dmpts, wset_balance, wset_length, wset_intensity, wset_complexity, wsetpts, starpts, drinkwindow_min, drinkwindow_max, status, blind, img, img_class, favourite) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  $sql = "INSERT INTO tnotes (wine_id, user_id, tasting_date, tasting_note, flawed_yn, dmpts, wset_balance, wset_length, wset_intensity, wset_complexity, wsetpts, drinkwindow_min, drinkwindow_max, status, blind, img, img_class, favourite) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
   $stmt = $conn->prepare($sql);
     
   // Create an array of parameters
-  $params = [$wine_id, $user_id, $tasting_date, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drinkwindow_min, $drinkwindow_max, $status, $blind, $img, $img_class, $favourite];
+  $params = [$wine_id, $user_id, $tasting_date, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drinkwindow_min, $drinkwindow_max, $status, $blind, $img, $img_class, $favourite];
     
   // Create a types string
   $types = '';
@@ -1410,7 +1409,7 @@ function validateDrinkDatesInput($drink_from, $drink_through) {
 }
 
 // Function to validate tasting note input
-function validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $starpts = null, $drink_from = null, $drink_through = null, $blind, $status, $img = null, $img_class = null, $favourite = 'no') {
+function validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $drink_from = null, $drink_through = null, $blind, $status, $img = null, $img_class = null, $favourite = 'no') {
   $errors = [];
 
   if ($dmpts=="") { $dmpts=null; }
@@ -1419,7 +1418,6 @@ function validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting
   if ($wset_intensity=="") { $wset_intensity=null; }
   if ($wset_complexity=="") { $wset_complexity=null; }
   if ($wsetpts=="") { $wsetpts=null; }
-  if ($starpts=="") { $starpts=null; }
   if ($drink_from=="") { $drink_from=null; }
   if ($drink_through=="") { $drink_through=null; }
   if ($img=="") { $img=null; }
@@ -2297,13 +2295,13 @@ function getVintageTopWines($conn, $vintage) {
     throw new Exception("Invalid database connection");
   }
 
-  $sql = "SELECT note_id, wine_id, user_id, tasting_date, dmpts, starpts, flawed_yn, favourite,
+  $sql = "SELECT note_id, wine_id, user_id, tasting_date, dmpts, flawed_yn, favourite,
                  status, initials, vintage, master_id, name, nameconvention, grape, colour, style,
                  producer_id, producer, vineyard_id, vineyard, region_id, region, country,
                  appellation_id, appellation
           FROM view_vintage_top_wines
           WHERE vintage = ?
-          ORDER BY dmpts DESC, starpts DESC, producer ASC, name ASC, tasting_date DESC";
+          ORDER BY dmpts DESC, producer ASC, name ASC, tasting_date DESC";
 
   $stmt = $conn->prepare($sql);
   if (!$stmt) {
@@ -2314,7 +2312,6 @@ function getVintageTopWines($conn, $vintage) {
         tnotes.user_id,
         tnotes.tasting_date,
         tnotes.dmpts,
-        tnotes.starpts,
         tnotes.flawed_yn,
         tnotes.favourite,
         tnotes.status,
@@ -2347,7 +2344,7 @@ function getVintageTopWines($conn, $vintage) {
       AND tnotes.flawed_yn = 'no'
       AND tnotes.dmpts >= 8
       AND wines.vintage = ?
-    ORDER BY tnotes.dmpts DESC, tnotes.starpts DESC, producers.producer ASC, wines_master.name ASC, tnotes.tasting_date DESC";
+    ORDER BY tnotes.dmpts DESC, producers.producer ASC, wines_master.name ASC, tnotes.tasting_date DESC";
     $stmt = $conn->prepare($sqlFallback);
     if (!$stmt) {
       return array();

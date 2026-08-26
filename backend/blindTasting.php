@@ -33,7 +33,6 @@
       $wset_intensity = number_format(filter_input(INPUT_POST, 'wset_intensity', FILTER_VALIDATE_FLOAT),1,'.','');
       $wset_complexity = number_format(filter_input(INPUT_POST, 'wset_complexity', FILTER_VALIDATE_FLOAT),1,'.','');
       $wsetpts=number_format($wset_balance+$wset_length+$wset_intensity+$wset_complexity, 1, '.', '');
-      $starpts = filter_input(INPUT_POST, 'starpts', FILTER_VALIDATE_INT);
       $favourite = sanitizeInput($_POST['favourite'] ?? 'no');
       $drink_from = filter_input(INPUT_POST, 'drink_from', FILTER_VALIDATE_INT);
       $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
@@ -48,7 +47,7 @@
         // Start transaction
         $conn->begin_transaction();
         try {
-          if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $starpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite)) {
+          if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite)) {
             $tasting_note_id = $conn->insert_id; // Retrieve note ID from database
             $conn->commit();
             $success_message = "Note added successfully.";
@@ -326,17 +325,6 @@
             </select>
             <p id="suggestedDMpts" style="margin-top:5px;"></p>
 
-            <label for="starpts">Stars:</label>
-            <select name="starpts" id="starpts">
-              <option value="0" <?php echo (isset($_POST['starpts']) && $_POST['starpts'] == '0') ? 'selected' : 'selected'; ?>>0</option>
-              <option value="1" <?php echo (isset($_POST['starpts']) && $_POST['starpts'] == '1') ? 'selected' : ''; ?>>1</option>
-              <option value="2" <?php echo (isset($_POST['starpts']) && $_POST['starpts'] == '2') ? 'selected' : ''; ?>>2</option>
-              <option value="3" <?php echo (isset($_POST['starpts']) && $_POST['starpts'] == '3') ? 'selected' : ''; ?>>3</option>
-              <option value="4" <?php echo (isset($_POST['starpts']) && $_POST['starpts'] == '4') ? 'selected' : ''; ?>>4</option>
-              <option value="5" <?php echo (isset($_POST['starpts']) && $_POST['starpts'] == '5') ? 'selected' : ''; ?>>5</option>
-            </select>
-
-            <br><br>
             <label for="favourite">Favourite?</label><br>
             <select name="favourite" id="favourite" required>
               <option value="no" <?php echo (isset($_POST['favourite']) && $_POST['favourite'] == 'no') ? 'selected' : 'selected'; ?>>no</option>
