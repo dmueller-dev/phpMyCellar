@@ -211,7 +211,10 @@
               <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                   <h4 style="margin: 0; font-size: 1.1em;"><?= htmlspecialchars($selectedUserData['displayname'], ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars($selectedUserData['username'], ENT_QUOTES, 'UTF-8') ?>)</h4>
-                  <div style="color: #666; font-size: 0.9em; margin-top: 4px;">User ID: #<?= (int)$selectedUserData['user_id'] ?> | Initials: <?= htmlspecialchars($selectedUserData['initials'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></div>
+                  <div style="color: #666; font-size: 0.9em; margin-top: 4px;">
+                    User ID: #<?= (int)$selectedUserData['user_id'] ?> | Initials: <?= htmlspecialchars($selectedUserData['initials'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?>
+                    | <a href="/backend/editUser.php?user_id=<?= $selectedUserId ?>" style="text-decoration: none; color: #0969da; font-weight: 500;">✏️ Edit Profile & Reset Password</a>
+                  </div>
                 </div>
                 <div>
                   <?php if ($selectedUserId === 1): ?>

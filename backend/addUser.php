@@ -89,12 +89,15 @@
 <div class="row">
   <div class="column main">
     <div class="card">
-      <h3>Add user</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <h3 style="margin: 0;">Add user</h3>
+        <a href="/backend/editUser.php" style="font-size: 0.9em; text-decoration: none; padding: 6px 12px; background: #555; color: white; border-radius: 4px;">✏️ Edit User & Reset Password</a>
+      </div>
       <?php
         if ($error!="") {
-          echo "<div style='color:red;'>$error</div>";
+          echo "<div style='margin-top: 15px; color:red;'>$error</div>";
         } elseif ($success!="") {
-          echo "<div style='color:green;'>$success</div>";
+          echo "<div style='margin-top: 15px; color:green;'>$success</div>";
         }
       ?>
     </div>

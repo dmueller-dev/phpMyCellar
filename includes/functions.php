@@ -2644,6 +2644,7 @@ function getPrivilegeScriptMap() {
     'addVineyard.php'      => 'manage_vineyards',
     'editVineyard.php'     => 'manage_vineyards',
     'addUser.php'          => 'manage_users',
+    'editUser.php'         => 'manage_users',
     'managePrivileges.php' => 'manage_privileges',
   ];
 }
@@ -3123,4 +3124,170 @@ function createCustomRole($conn, $role_name, $display_name, $description) {
   }
   return false;
 }
+
+/**
+ * Get user details by user ID
+ */
+function getUserDetails($conn, $user_id) {
+  if (!($conn instanceof mysqli)) {
+    return null;
+  }
+  $user_id = (int)$user_id;
+  $stmt = $conn->prepare("SELECT user_id, username, displayname, email, initials, role, email_notifications FROM users WHERE user_id = ?");
+  if ($stmt) {
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $user = $res ? $res->fetch_assoc() : null;
+    if ($res) {
+      $res->free_result();
+    }
+    $stmt->close();
+    return $user;
+  }
+  return null;
+}
+
+/**
+ * Get all users list for dropdowns
+ */
+function getAllUsersList($conn) {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+  $users = [];
+  $res = $conn->query("SELECT user_id, username, displayname, email, initials, role, email_notifications FROM users ORDER BY displayname ASC, username ASC");
+  if ($res) {
+    while ($row = $res->fetch_assoc()) {
+      $users[] = $row;
+    }
+    $res->free_result();
+  }
+  return $users;
+}
+
+/**
+ * Update user details and optionally reset password (enforces security backstops)
+ *
+ * @param mysqli $conn
+ * @param int $user_id
+ * @param string $username
+ * @param string $displayname
+ * @param string $email
+ * @param string $initials
+ * @param string $role
+ * @param int $email_notifications
+ * @param string|null $new_password
+ * @return array ['success' => bool, 'error' => string, 'password_reset' => bool]
+ */
+function updateUserDetails($conn, $user_id, $username, $displayname, $email, $initials, $role, $email_notifications, $new_password = null) {
+  if (!($conn instanceof mysqli)) {
+    return ['success' => false, 'error' => 'Database connection unavailable.', 'password_reset' => false];
+  }
+
+  $user_id = (int)$user_id;
+  $username = trim($username);
+  $displayname = trim($displayname);
+  $email = trim($email);
+  $initials = strtoupper(trim($initials));
+  $role = trim($role);
+  $email_notifications = (int)$email_notifications ? 1 : 0;
+  $new_password = trim((string)$new_password);
+
+  // Check if user exists
+  $existingUser = getUserDetails($conn, $user_id);
+  if (!$existingUser) {
+    return ['success' => false, 'error' => 'User not found.', 'password_reset' => false];
+  }
+
+  // Basic validations
+  if (empty($username) || empty($displayname) || empty($email) || empty($initials)) {
+    return ['success' => false, 'error' => 'Username, display name, email, and initials are required.', 'password_reset' => false];
+  }
+
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    return ['success' => false, 'error' => 'Invalid email address format.', 'password_reset' => false];
+  }
+
+  if (!preg_match('/^[A-Za-z0-9]{2,5}$/', $initials)) {
+    return ['success' => false, 'error' => 'Initials must be 2 to 5 alphanumeric characters.', 'password_reset' => false];
+  }
+
+  // Check username collision with other users
+  $stmt = $conn->prepare("SELECT user_id FROM users WHERE username = ? AND user_id != ?");
+  if ($stmt) {
+    $stmt->bind_param("si", $username, $user_id);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows > 0) {
+      $stmt->close();
+      return ['success' => false, 'error' => 'Username is already taken by another account.', 'password_reset' => false];
+    }
+    $stmt->close();
+  }
+
+  // Security Backstop:
+  // Root admin (user_id = 1) must remain 'admin'
+  if ($user_id === 1) {
+    $role = 'admin';
+  } else {
+    // Non-root users cannot be assigned 'admin' or 'public'
+    if ($role === 'admin' || $role === 'public') {
+      return ['success' => false, 'error' => 'Invalid role. Administrator permissions cannot be assigned via the interface.', 'password_reset' => false];
+    }
+    // Check if role exists in roles table
+    $stmtRole = $conn->prepare("SELECT role_name FROM roles WHERE role_name = ?");
+    if ($stmtRole) {
+      $stmtRole->bind_param("s", $role);
+      $stmtRole->execute();
+      $stmtRole->store_result();
+      if ($stmtRole->num_rows === 0) {
+        $stmtRole->close();
+        return ['success' => false, 'error' => 'Selected role does not exist.', 'password_reset' => false];
+      }
+      $stmtRole->close();
+    }
+  }
+
+  // Password reset check
+  $password_reset = false;
+  $password_hash = null;
+  if (!empty($new_password)) {
+    if (strlen($new_password) < 6) {
+      return ['success' => false, 'error' => 'New password must be at least 6 characters long.', 'password_reset' => false];
+    }
+    $password_hash = password_hash($new_password, PASSWORD_DEFAULT);
+    $password_reset = true;
+  }
+
+  // Update query
+  if ($password_reset) {
+    $stmt = $conn->prepare("UPDATE users SET username = ?, displayname = ?, email = ?, initials = ?, role = ?, email_notifications = ?, password = ? WHERE user_id = ?");
+    if ($stmt) {
+      $stmt->bind_param("sssssisi", $username, $displayname, $email, $initials, $role, $email_notifications, $password_hash, $user_id);
+      $exec = $stmt->execute();
+      $stmt->close();
+      if ($exec) {
+        return ['success' => true, 'error' => '', 'password_reset' => true];
+      } else {
+        return ['success' => false, 'error' => 'Database error updating user: ' . $conn->error, 'password_reset' => false];
+      }
+    }
+  } else {
+    $stmt = $conn->prepare("UPDATE users SET username = ?, displayname = ?, email = ?, initials = ?, role = ?, email_notifications = ? WHERE user_id = ?");
+    if ($stmt) {
+      $stmt->bind_param("sssssii", $username, $displayname, $email, $initials, $role, $email_notifications, $user_id);
+      $exec = $stmt->execute();
+      $stmt->close();
+      if ($exec) {
+        return ['success' => true, 'error' => '', 'password_reset' => false];
+      } else {
+        return ['success' => false, 'error' => 'Database error updating user: ' . $conn->error, 'password_reset' => false];
+      }
+    }
+  }
+
+  return ['success' => false, 'error' => 'Failed to prepare update query.', 'password_reset' => false];
+}
+
 

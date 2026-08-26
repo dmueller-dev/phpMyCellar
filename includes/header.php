@@ -130,7 +130,8 @@
               echo "<li><a class='" . (($currentPath == '/backend/managePrivileges.php') ? 'active' : '') . "' href='/backend/managePrivileges.php' title='User & role privileges'>User & role privileges</a></li>";
             }
             if ($canManageUsers) {
-              echo "<li><a class='" . (($currentPath == '/backend/addUser.php') ? 'active' : '') . "' href='/backend/addUser.php' title='User management'>Add user</a></li>";
+              echo "<li><a class='" . (($currentPath == '/backend/addUser.php') ? 'active' : '') . "' href='/backend/addUser.php' title='Add user'>Add user</a></li>";
+              echo "<li><a class='" . (($currentPath == '/backend/editUser.php') ? 'active' : '') . "' href='/backend/editUser.php' title='Edit user & reset password'>Edit user</a></li>";
             }
             echo "</ul></li>";
           }

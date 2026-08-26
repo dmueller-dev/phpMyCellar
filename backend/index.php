@@ -143,6 +143,7 @@
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_users')): ?>
               <li><a href="addUser.php" title="Add a new user">Add new user</a></li>
+              <li><a href="editUser.php" title="Edit a user and reset password">Edit user</a></li>
             <?php endif; ?>
           </ul>
         <?php endif; ?>
