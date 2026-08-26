@@ -3296,4 +3296,645 @@ function updateUserDetails($conn, $user_id, $username, $displayname, $email, $in
   return ['success' => false, 'error' => 'Failed to prepare update query.', 'password_reset' => false];
 }
 
+/**
+ * Check if the current page is a private or backend endpoint that should never be indexed.
+ */
+function isPrivatePage() {
+  $script = $_SERVER['SCRIPT_NAME'] ?? '';
+  $basename = basename($script);
+  
+  if (strpos($script, '/backend/') !== false) {
+    return true;
+  }
+  
+  $privateScripts = [
+    'login.php',
+    'logout.php',
+    'accountSettings.php',
+    'notifications.php',
+    'winemenu.php',
+    'toggle_subscription.php'
+  ];
+  
+  return in_array($basename, $privateScripts, true);
+}
+
+/**
+ * Format and sanitize text for meta descriptions.
+ * Strips tags, normalizes whitespace, decodes entities, and truncates at word boundaries.
+ */
+function sanitizeMetaDescription($text, $maxLength = 160) {
+  if (empty($text)) {
+    return '';
+  }
+  
+  // Strip HTML tags and newlines
+  $clean = strip_tags($text);
+  $clean = html_entity_decode($clean, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  // Normalize whitespace
+  $clean = preg_replace('/\s+/', ' ', $clean);
+  $clean = trim($clean);
+  
+  if (mb_strlen($clean, 'UTF-8') <= $maxLength) {
+    return $clean;
+  }
+  
+  // Truncate at word boundary
+  $sub = mb_substr($clean, 0, $maxLength - 3, 'UTF-8');
+  $lastSpace = mb_strrpos($sub, ' ', 0, 'UTF-8');
+  if ($lastSpace !== false && $lastSpace > ($maxLength / 2)) {
+    $sub = mb_substr($sub, 0, $lastSpace, 'UTF-8');
+  }
+  return rtrim($sub, ',.;:- ') . '...';
+}
+
+/**
+ * Helper to ensure a full absolute URL for canonical links, Open Graph, and JSON-LD.
+ */
+function getAbsoluteUrl($pathOrUrl) {
+  if (empty($pathOrUrl)) {
+    return 'https://dmueller.com/';
+  }
+  if (preg_match('#^https?://#i', $pathOrUrl)) {
+    return $pathOrUrl;
+  }
+  return 'https://dmueller.com' . (strpos($pathOrUrl, '/') === 0 ? $pathOrUrl : '/' . $pathOrUrl);
+}
+
+/**
+ * Helper to extract the first image src from an HTML string.
+ */
+function extractFirstImageUrl($htmlContent) {
+  if (empty($htmlContent)) {
+    return null;
+  }
+  if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $htmlContent, $matches)) {
+    return getAbsoluteUrl($matches[1]);
+  }
+  return null;
+}
+
+/**
+ * Clean and build a comma-separated list of keywords from a list of strings/terms.
+ * Filters out empty values, "n/a", "none", and removes case-insensitive duplicates while preserving case.
+ */
+function buildKeywordsList(array $terms) {
+  $seen = [];
+  $keywords = [];
+  
+  foreach ($terms as $term) {
+    if ($term === null) {
+      continue;
+    }
+    $trimmed = trim((string)$term);
+    if ($trimmed === '' || in_array(strtolower($trimmed), ['n/a', 'na', 'none', 'null', 'unknown', '-'], true)) {
+      continue;
+    }
+    
+    // Split if term already contains commas
+    $parts = explode(',', $trimmed);
+    foreach ($parts as $part) {
+      $p = trim($part);
+      if ($p === '' || in_array(strtolower($p), ['n/a', 'na', 'none', 'null', 'unknown', '-'], true)) {
+        continue;
+      }
+      $lower = mb_strtolower($p, 'UTF-8');
+      if (!isset($seen[$lower])) {
+        $seen[$lower] = true;
+        $keywords[] = $p;
+      }
+    }
+  }
+  
+  return implode(', ', $keywords);
+}
+
+/**
+ * Generate rich keywords for a wine item.
+ * Features: producer, wine name (if distinct), vintage, country, region, sub-region, appellation, vineyard, grape variety, colour, style.
+ */
+function generateWineKeywords($wine) {
+  if (empty($wine) || !is_array($wine)) {
+    return 'Dominik Mueller, fine wine, wine database, wine tasting';
+  }
+  
+  $producer = trim($wine['producer'] ?? '');
+  $name = trim($wine['name'] ?? '');
+  $vintage = trim($wine['vintage'] ?? '');
+  $country = trim($wine['country'] ?? '');
+  $region = trim($wine['region'] ?? '');
+  $subregion = trim($wine['subregion'] ?? '');
+  $appellation = trim($wine['appellation'] ?? '');
+  $vineyard = trim($wine['vineyard'] ?? '');
+  $grape = trim($wine['grape'] ?? '');
+  $colour = trim($wine['colour'] ?? '');
+  $style = trim($wine['style'] ?? '');
+  
+  $terms = [];
+  
+  if (!empty($producer)) {
+    $terms[] = $producer;
+  }
+  // Include wine name if not identical to producer
+  if (!empty($name) && strcasecmp($name, $producer) !== 0) {
+    $terms[] = $name;
+  }
+  if (!empty($vintage)) {
+    $terms[] = $vintage;
+  }
+  if (!empty($country)) {
+    $terms[] = $country;
+  }
+  if (!empty($region)) {
+    $terms[] = $region;
+  }
+  if (!empty($subregion)) {
+    $terms[] = $subregion;
+  }
+  if (!empty($appellation)) {
+    $terms[] = $appellation;
+  }
+  if (!empty($vineyard)) {
+    $terms[] = $vineyard;
+  }
+  if (!empty($grape)) {
+    $terms[] = $grape;
+  }
+  if (!empty($colour)) {
+    $terms[] = $colour . ' wine';
+  }
+  if (!empty($style) && strcasecmp($style, 'Still') !== 0) {
+    $terms[] = $style . ' wine';
+  }
+  
+  $terms[] = 'fine wine';
+  $terms[] = 'wine tasting';
+  $terms[] = 'Dominik Mueller';
+  
+  return buildKeywordsList($terms);
+}
+
+/**
+ * Generate a meta description for a single wine page.
+ */
+function generateWineDescription($wine, $wine_name) {
+  if (empty($wine) || !is_array($wine)) {
+    return 'Explore Dominik Mueller\'s wine database with tasting notes, producer details, and vintage reports.';
+  }
+  
+  $geo = array_filter([$wine['appellation'] ?? '', $wine['subregion'] ?? '', $wine['region'] ?? '', $wine['country'] ?? ''], function($v) {
+    return !empty($v) && strtolower($v) !== 'n/a';
+  });
+  $geoStr = implode(', ', array_unique($geo));
+  
+  $descPrefix = $wine_name;
+  if (!empty($wine['grape'])) {
+    $descPrefix .= ' (' . $wine['grape'] . ')';
+  }
+  if (!empty($geoStr)) {
+    $descPrefix .= ' from ' . $geoStr . '.';
+  } else {
+    $descPrefix .= '.';
+  }
+  
+  if (!empty($wine['wine_desc'])) {
+    $descPrefix .= ' ' . $wine['wine_desc'];
+  } elseif (!empty($wine['producer_desc'])) {
+    $descPrefix .= ' ' . $wine['producer_desc'];
+  } else {
+    $descPrefix .= ' Discover tasting notes, ratings, grape varieties, and producer background on Dominik Mueller\'s wine notebook.';
+  }
+  
+  return sanitizeMetaDescription($descPrefix, 160);
+}
+
+/**
+ * Generate Schema.org Product JSON-LD structured data for a wine page.
+ */
+function generateWineJsonLd($wine, $wine_name, $canonical_url) {
+  $data = [
+    '@context' => 'https://schema.org',
+    '@type' => 'Product',
+    'name' => $wine_name,
+    'category' => 'Wine',
+    'url' => $canonical_url,
+    'description' => generateWineDescription($wine, $wine_name)
+  ];
+  
+  if (!empty($wine['producer'])) {
+    $data['brand'] = [
+      '@type' => 'Brand',
+      'name' => $wine['producer']
+    ];
+    $data['manufacturer'] = [
+      '@type' => 'Organization',
+      'name' => $wine['producer']
+    ];
+  }
+  
+  if (!empty($wine['country']) && strtolower($wine['country']) !== 'n/a') {
+    $data['countryOfOrigin'] = [
+      '@type' => 'Country',
+      'name' => $wine['country']
+    ];
+  }
+  
+  return $data;
+}
+
+/**
+ * Generate rich keywords for a tasting note.
+ */
+function generateTastingNoteKeywords($tasting_note) {
+  if (empty($tasting_note) || !is_array($tasting_note)) {
+    return 'Dominik Mueller, tasting note, wine review, fine wine';
+  }
+  
+  $wineKeywords = generateWineKeywords($tasting_note);
+  $terms = explode(', ', $wineKeywords);
+  
+  $terms[] = 'tasting note';
+  $terms[] = 'wine review';
+  $terms[] = 'wine rating';
+  
+  if (!empty($tasting_note['displayname'])) {
+    $terms[] = $tasting_note['displayname'];
+  }
+  if (!empty($tasting_note['tasting_date'])) {
+    $year = date('Y', strtotime($tasting_note['tasting_date']));
+    if ($year) {
+      $terms[] = 'tasted ' . $year;
+    }
+  }
+  if (!empty($tasting_note['dmpts']) && ($tasting_note['flawed_yn'] ?? '') !== 'yes') {
+    $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM';
+    $terms[] = $initials . $tasting_note['dmpts'];
+    $terms[] = '20-point scale';
+  }
+  
+  return buildKeywordsList($terms);
+}
+
+/**
+ * Generate meta description for a tasting note page.
+ */
+function generateTastingNoteDescription($tasting_note, $wine_name) {
+  if (empty($tasting_note) || !is_array($tasting_note)) {
+    return 'Fine wine tasting note and independent review by Dominik Mueller.';
+  }
+  
+  $reviewer = $tasting_note['displayname'] ?? 'Dominik Mueller';
+  $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM';
+  
+  $ratingStr = '';
+  if (($tasting_note['flawed_yn'] ?? '') === 'yes') {
+    $ratingStr = ' (Flawed bottle)';
+  } elseif (!empty($tasting_note['dmpts'])) {
+    $ratingStr = ' (' . $initials . $tasting_note['dmpts'] . '/20)';
+  }
+  
+  $dateStr = '';
+  if (!empty($tasting_note['tasting_date'])) {
+    $dateStr = ' on ' . date('d M Y', strtotime($tasting_note['tasting_date']));
+  }
+  
+  $drinkStr = '';
+  if (!empty($tasting_note['drinkwindow_min']) && !empty($tasting_note['drinkwindow_max'])) {
+    $drinkStr = ' Drink ' . $tasting_note['drinkwindow_min'] . '–' . $tasting_note['drinkwindow_max'] . '.';
+  } elseif (!empty($tasting_note['drinkwindow_max'])) {
+    $drinkStr = ' Drink through ' . $tasting_note['drinkwindow_max'] . '.';
+  }
+  
+  $noteBody = strip_tags($tasting_note['tasting_note'] ?? '');
+  $summary = "Tasting note for {$wine_name}{$ratingStr} by {$reviewer}{$dateStr}.{$drinkStr} " . $noteBody;
+  
+  return sanitizeMetaDescription($summary, 160);
+}
+
+/**
+ * Generate Schema.org Review JSON-LD structured data for a tasting note page.
+ */
+function generateTastingNoteJsonLd($tasting_note, $wine_name, $canonical_url) {
+  $reviewer = $tasting_note['displayname'] ?? 'Dominik Mueller';
+  
+  $data = [
+    '@context' => 'https://schema.org',
+    '@type' => 'Review',
+    'url' => $canonical_url,
+    'itemReviewed' => [
+      '@type' => 'Product',
+      'name' => $wine_name,
+      'category' => 'Wine'
+    ],
+    'author' => [
+      '@type' => 'Person',
+      'name' => $reviewer
+    ],
+    'publisher' => [
+      '@type' => 'Organization',
+      'name' => 'Dominik Mueller',
+      'url' => 'https://dmueller.com'
+    ],
+    'reviewBody' => sanitizeMetaDescription($tasting_note['tasting_note'] ?? '', 500)
+  ];
+  
+  if (!empty($tasting_note['producer'])) {
+    $data['itemReviewed']['brand'] = [
+      '@type' => 'Brand',
+      'name' => $tasting_note['producer']
+    ];
+  }
+  
+  if (!empty($tasting_note['tasting_date'])) {
+    $data['datePublished'] = date('Y-m-d', strtotime($tasting_note['tasting_date']));
+  }
+  
+  if (!empty($tasting_note['dmpts']) && ($tasting_note['flawed_yn'] ?? '') !== 'yes') {
+    $data['reviewRating'] = [
+      '@type' => 'Rating',
+      'ratingValue' => (string)$tasting_note['dmpts'],
+      'bestRating' => '20',
+      'worstRating' => '0'
+    ];
+  }
+  
+  if (!empty($tasting_note['img'])) {
+    $data['image'] = getAbsoluteUrl('/img/' . $tasting_note['img']);
+  }
+  
+  return $data;
+}
+
+/**
+ * Fetch distinct grapes and appellations associated with a producer for richer keywords.
+ */
+function getProducerAssociatedData($conn, $producerID) {
+  if (!($conn instanceof mysqli)) {
+    global $mysqli;
+    $conn = ($mysqli instanceof mysqli) ? $mysqli : null;
+  }
+  if (!$conn) {
+    return ['grapes' => [], 'appellations' => [], 'subregions' => []];
+  }
+  
+  $data = ['grapes' => [], 'appellations' => [], 'subregions' => []];
+  $stmt = $conn->prepare("SELECT DISTINCT wm.grape, a.appellation, sr.subregion
+                          FROM wines_master wm
+                          LEFT JOIN appellations a ON wm.appellation_id = a.appellation_id
+                          LEFT JOIN subregions sr ON wm.subregion_id = sr.subregion_id
+                          WHERE wm.producer_id = ?");
+  if ($stmt) {
+    $stmt->bind_param('i', $producerID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+      if (!empty($row['grape'])) $data['grapes'][] = $row['grape'];
+      if (!empty($row['appellation'])) $data['appellations'][] = $row['appellation'];
+      if (!empty($row['subregion'])) $data['subregions'][] = $row['subregion'];
+    }
+    $stmt->close();
+  }
+  
+  $data['grapes'] = array_values(array_unique($data['grapes']));
+  $data['appellations'] = array_values(array_unique($data['appellations']));
+  $data['subregions'] = array_values(array_unique($data['subregions']));
+  
+  return $data;
+}
+
+/**
+ * Generate rich keywords for a producer page.
+ */
+function generateProducerKeywords($producer, $associated_data = []) {
+  if (empty($producer) || !is_array($producer)) {
+    return 'Dominik Mueller, wine producer, winery, fine wine';
+  }
+  
+  $terms = [];
+  $terms[] = $producer['producer'] ?? '';
+  $terms[] = $producer['region'] ?? '';
+  $terms[] = $producer['country'] ?? '';
+  
+  if (!empty($associated_data['subregions'])) {
+    foreach ($associated_data['subregions'] as $sr) $terms[] = $sr;
+  }
+  if (!empty($associated_data['appellations'])) {
+    foreach ($associated_data['appellations'] as $app) $terms[] = $app;
+  }
+  if (!empty($associated_data['grapes'])) {
+    foreach ($associated_data['grapes'] as $grp) $terms[] = $grp;
+  }
+  
+  $terms[] = 'winery';
+  $terms[] = 'domaine';
+  $terms[] = 'wine producer';
+  $terms[] = 'wine estate';
+  $terms[] = 'fine wine';
+  $terms[] = 'tasting notes';
+  $terms[] = 'Dominik Mueller';
+  
+  return buildKeywordsList($terms);
+}
+
+/**
+ * Generate meta description for a producer page.
+ */
+function generateProducerDescription($producer) {
+  if (empty($producer) || !is_array($producer)) {
+    return 'Wine producer profile, region information, and tasting notes on Dominik Mueller\'s wine notebook.';
+  }
+  
+  $name = $producer['producer'] ?? '';
+  $region = $producer['region'] ?? '';
+  $country = $producer['country'] ?? '';
+  
+  $loc = implode(', ', array_filter([$region, $country]));
+  $prefix = "Producer profile for {$name}";
+  if (!empty($loc)) {
+    $prefix .= " ({$loc})";
+  }
+  $prefix .= ".";
+  
+  if (!empty($producer['producer_desc'])) {
+    $prefix .= ' ' . $producer['producer_desc'];
+  } else {
+    $prefix .= " Discover wines produced, vineyard location, and tasting notes reviewed by Dominik Mueller.";
+  }
+  
+  return sanitizeMetaDescription($prefix, 160);
+}
+
+/**
+ * Generate Schema.org Winery / Organization JSON-LD for a producer page.
+ */
+function generateProducerJsonLd($producer, $canonical_url) {
+  $name = $producer['producer'] ?? '';
+  $data = [
+    '@context' => 'https://schema.org',
+    '@type' => 'Winery',
+    'name' => $name,
+    'url' => $canonical_url,
+    'description' => generateProducerDescription($producer)
+  ];
+  
+  $address = [];
+  if (!empty($producer['address'])) {
+    $address['streetAddress'] = $producer['address'];
+  }
+  if (!empty($producer['region'])) {
+    $address['addressRegion'] = $producer['region'];
+  }
+  if (!empty($producer['country'])) {
+    $address['addressCountry'] = $producer['country'];
+  }
+  
+  if (!empty($address)) {
+    $address['@type'] = 'PostalAddress';
+    $data['address'] = $address;
+  }
+  
+  return $data;
+}
+
+/**
+ * Fetch featured wines, producers, and regions for a blog story.
+ */
+function getBlogFeaturedData($conn, $blogID) {
+  if (!($conn instanceof mysqli)) {
+    global $mysqli;
+    $conn = ($mysqli instanceof mysqli) ? $mysqli : null;
+  }
+  if (!$conn) {
+    return ['producers' => [], 'wines' => [], 'regions' => [], 'countries' => []];
+  }
+  
+  $data = ['producers' => [], 'wines' => [], 'regions' => [], 'countries' => []];
+  $stmt = $conn->prepare("SELECT p.producer, wm.name as wine_name, r.region, r.country
+                          FROM x_blog_wines xbw
+                          LEFT JOIN wines w ON xbw.wine_id = w.wine_id
+                          LEFT JOIN wines_master wm ON w.master_id = wm.master_id
+                          LEFT JOIN producers p ON wm.producer_id = p.producer_id
+                          LEFT JOIN regions r ON wm.region_id = r.region_id
+                          WHERE xbw.blog_id = ?");
+  if ($stmt) {
+    $stmt->bind_param('i', $blogID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+      if (!empty($row['producer'])) $data['producers'][] = $row['producer'];
+      if (!empty($row['wine_name'])) $data['wine_name'] = $row['wine_name'];
+      if (!empty($row['wine_name'])) $data['wines'][] = $row['wine_name'];
+      if (!empty($row['region'])) $data['regions'][] = $row['region'];
+      if (!empty($row['country'])) $data['countries'][] = $row['country'];
+    }
+    $stmt->close();
+  }
+  
+  $data['producers'] = array_values(array_unique($data['producers']));
+  $data['wines'] = array_values(array_unique($data['wines']));
+  $data['regions'] = array_values(array_unique($data['regions']));
+  $data['countries'] = array_values(array_unique($data['countries']));
+  
+  return $data;
+}
+
+/**
+ * Generate rich keywords for a blog story.
+ */
+function generateBlogKeywords($blogpost, $featured_data = []) {
+  if (empty($blogpost) || !is_array($blogpost)) {
+    return 'Dominik Mueller, wine blog, wine stories, fine wine';
+  }
+  
+  $terms = [];
+  $terms[] = $blogpost['title'] ?? '';
+  
+  if (!empty($featured_data['producers'])) {
+    foreach ($featured_data['producers'] as $p) $terms[] = $p;
+  }
+  if (!empty($featured_data['wines'])) {
+    foreach ($featured_data['wines'] as $w) $terms[] = $w;
+  }
+  if (!empty($featured_data['regions'])) {
+    foreach ($featured_data['regions'] as $r) $terms[] = $r;
+  }
+  if (!empty($featured_data['countries'])) {
+    foreach ($featured_data['countries'] as $c) $terms[] = $c;
+  }
+  
+  $terms[] = 'wine blog';
+  $terms[] = 'wine stories';
+  $terms[] = 'wine tasting';
+  $terms[] = 'fine wine';
+  $terms[] = 'Dominik Mueller';
+  
+  return buildKeywordsList($terms);
+}
+
+/**
+ * Generate meta description for a blog post.
+ */
+function generateBlogDescription($blogpost) {
+  if (empty($blogpost) || !is_array($blogpost)) {
+    return 'Wine stories, themed tasting reports, and cellar experiences on Dominik Mueller\'s wine blog.';
+  }
+  
+  $title = $blogpost['title'] ?? '';
+  $content = $blogpost['content'] ?? '';
+  $clean = strip_tags($content);
+  
+  if (!empty($clean)) {
+    return sanitizeMetaDescription($clean, 160);
+  }
+  
+  return sanitizeMetaDescription($title . ' - A wine story and tasting experience shared by Dominik Mueller.', 160);
+}
+
+/**
+ * Generate Schema.org BlogPosting JSON-LD structured data for a blog post.
+ */
+function generateBlogJsonLd($blogpost, $canonical_url, $image_url = null) {
+  $title = $blogpost['title'] ?? '';
+  $pubDate = !empty($blogpost['pub_date']) ? date('c', strtotime($blogpost['pub_date'])) : null;
+  $editDate = !empty($blogpost['edit_date']) ? date('c', strtotime($blogpost['edit_date'])) : $pubDate;
+  
+  $data = [
+    '@context' => 'https://schema.org',
+    '@type' => 'BlogPosting',
+    'headline' => $title,
+    'description' => generateBlogDescription($blogpost),
+    'mainEntityOfPage' => [
+      '@type' => 'WebPage',
+      '@id' => $canonical_url
+    ],
+    'author' => [
+      '@type' => 'Person',
+      'name' => 'Dominik Mueller',
+      'url' => 'https://dmueller.com'
+    ],
+    'publisher' => [
+      '@type' => 'Organization',
+      'name' => 'Dominik Mueller',
+      'url' => 'https://dmueller.com',
+      'logo' => [
+        '@type' => 'ImageObject',
+        'url' => 'https://dmueller.com/img/logo_web.webp'
+      ]
+    ]
+  ];
+  
+  if ($pubDate) {
+    $data['datePublished'] = $pubDate;
+  }
+  if ($editDate) {
+    $data['dateModified'] = $editDate;
+  }
+  if ($image_url) {
+    $data['image'] = $image_url;
+  }
+  
+  return $data;
+}
+
+
 

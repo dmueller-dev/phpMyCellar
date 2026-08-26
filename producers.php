@@ -20,8 +20,17 @@
     exit;
   }
 
-  // Page title and header
-  $page_title = "Dominik Mueller - " . $producer["producer"] . "";
+  // Associated producer data for richer SEO keywords & schema
+  $associated_data = getProducerAssociatedData($conn, $producerID);
+
+  // Page title and SEO metadata
+  $page_title = "Dominik Mueller - " . $producer["producer"];
+  $meta_keywords = generateProducerKeywords($producer, $associated_data);
+  $meta_desc = generateProducerDescription($producer);
+  $canonical_url = getAbsoluteUrl('/producers.php?id=' . $producerID);
+  $og_type = 'profile';
+  $json_ld = generateProducerJsonLd($producer, $canonical_url);
+
   require_once 'includes/header.php';
 ?>
 

@@ -1,0 +1,12 @@
+User-agent: *
+Disallow: /backend/
+Disallow: /login.php
+Disallow: /logout.php
+Disallow: /accountSettings.php
+Disallow: /notifications.php
+Disallow: /winemenu.php
+Disallow: /toggle_subscription.php
+Disallow: /uploads/
+Disallow: /includes/
+
+Sitemap: https://dmueller.com/

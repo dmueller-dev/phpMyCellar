@@ -7,19 +7,92 @@
   global $conn, $mysqli;
 ?>
 
+<?php
+  // Check if page is private/backend to enforce strict no-index headers and meta tags
+  $is_private_page = function_exists('isPrivatePage') ? isPrivatePage() : (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/backend/') !== false);
+  if ($is_private_page && !headers_sent()) {
+    header('X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex', true);
+  }
+
+  $resolved_title = isset($page_title) ? $page_title : 'Dominik Mueller - Wine is my hobby';
+  $resolved_desc = isset($meta_desc) ? $meta_desc : 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
+  
+  if (isset($meta_keywords)) {
+    $resolved_keywords = is_array($meta_keywords) ? implode(', ', $meta_keywords) : $meta_keywords;
+  } else {
+    $resolved_keywords = 'Dominik Mueller, wine database, wine tastings, tasting notes, fine wine, wine collection, wine cellar';
+  }
+
+  if ($is_private_page) {
+    $resolved_robots = 'noindex, nofollow, noarchive, nosnippet, noimageindex';
+    $resolved_canonical = null;
+  } else {
+    $resolved_robots = isset($meta_robots) ? $meta_robots : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+    if (isset($canonical_url)) {
+      $resolved_canonical = function_exists('getAbsoluteUrl') ? getAbsoluteUrl($canonical_url) : $canonical_url;
+    } else {
+      $script_name = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
+      $resolved_canonical = function_exists('getAbsoluteUrl') ? getAbsoluteUrl($script_name === '/index.php' ? '/' : $script_name) : 'https://dmueller.com/';
+    }
+  }
+
+  $og_site_name = 'Dominik Mueller';
+  $og_type_val = isset($og_type) ? $og_type : 'website';
+  $og_image_val = isset($og_image) && !empty($og_image) ? (function_exists('getAbsoluteUrl') ? getAbsoluteUrl($og_image) : $og_image) : 'https://dmueller.com/img/logo_web.webp';
+  $og_image_alt_val = isset($og_image_alt) ? $og_image_alt : $resolved_title;
+  $twitter_card_val = isset($twitter_card) ? $twitter_card : (!empty($og_image) ? 'summary_large_image' : 'summary');
+?>
 <!DOCTYPE html>
 <html lang="en-GB">
 
 <head>
-  <title><?php echo isset($page_title) ? $page_title : 'Dominik Mueller - Wine is my hobby'; ?></title>
+  <title><?php echo htmlspecialchars($resolved_title, ENT_QUOTES, 'UTF-8'); ?></title>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="author" content="Dominik Mueller">
-  <meta name="description" content="<?php echo isset($meta_desc) ? $meta_desc : 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.'; ?>">
-  <meta name="keywords" content="Dominik Mueller,wine database,wine tastings,tasting notes,fine wine,wine collection,wine cellar">
+  <meta name="description" content="<?php echo htmlspecialchars($resolved_desc, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="keywords" content="<?php echo htmlspecialchars($resolved_keywords, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="robots" content="<?php echo htmlspecialchars($resolved_robots, ENT_QUOTES, 'UTF-8'); ?>">
 
-  <link rel="canonical" href="https://dmueller.com/">
+  <?php if (!$is_private_page && !empty($resolved_canonical)): ?>
+  <link rel="canonical" href="<?php echo htmlspecialchars($resolved_canonical, ENT_QUOTES, 'UTF-8'); ?>">
+
+  <!-- Open Graph / Facebook / LinkedIn / AI Summaries -->
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:site_name" content="<?php echo htmlspecialchars($og_site_name, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta property="og:type" content="<?php echo htmlspecialchars($og_type_val, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta property="og:title" content="<?php echo htmlspecialchars($resolved_title, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta property="og:description" content="<?php echo htmlspecialchars($resolved_desc, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta property="og:url" content="<?php echo htmlspecialchars($resolved_canonical, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta property="og:image" content="<?php echo htmlspecialchars($og_image_val, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta property="og:image:alt" content="<?php echo htmlspecialchars($og_image_alt_val, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php if (!empty($article_meta) && is_array($article_meta)): ?>
+  <?php if (!empty($article_meta['published_time'])): ?>
+  <meta property="article:published_time" content="<?php echo htmlspecialchars(date('c', strtotime($article_meta['published_time'])), ENT_QUOTES, 'UTF-8'); ?>">
+  <?php endif; ?>
+  <?php if (!empty($article_meta['modified_time'])): ?>
+  <meta property="article:modified_time" content="<?php echo htmlspecialchars(date('c', strtotime($article_meta['modified_time'])), ENT_QUOTES, 'UTF-8'); ?>">
+  <?php endif; ?>
+  <?php if (!empty($article_meta['author'])): ?>
+  <meta property="article:author" content="<?php echo htmlspecialchars($article_meta['author'], ENT_QUOTES, 'UTF-8'); ?>">
+  <?php endif; ?>
+  <?php endif; ?>
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="<?php echo htmlspecialchars($twitter_card_val, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="twitter:title" content="<?php echo htmlspecialchars($resolved_title, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="twitter:description" content="<?php echo htmlspecialchars($resolved_desc, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="twitter:image" content="<?php echo htmlspecialchars($og_image_val, ENT_QUOTES, 'UTF-8'); ?>">
+
+  <!-- Schema.org JSON-LD Structured Data -->
+  <?php if (!empty($json_ld)): ?>
+  <script type="application/ld+json">
+<?php echo json_encode($json_ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT); ?>
+  </script>
+  <?php endif; ?>
+  <?php endif; ?>
+
   <link rel="stylesheet" href="/includes/styles.css">
   <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
   <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">

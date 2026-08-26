@@ -107,8 +107,19 @@
       $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["name"];
     }
 
-    // Page title and header
-    $page_title = "Dominik Mueller - " . $wine_name . "";
+    // Page title and SEO metadata
+    $page_title = "Dominik Mueller - " . $wine_name . " (Tasting Note)";
+    $meta_keywords = generateTastingNoteKeywords($tasting_note);
+    $meta_desc = generateTastingNoteDescription($tasting_note, $wine_name);
+    $canonical_url = getAbsoluteUrl('/tnotes.php?id=' . $noteID);
+    $og_type = 'article';
+    $og_image = !empty($tasting_note['img']) ? getAbsoluteUrl('/img/' . $tasting_note['img']) : null;
+    $article_meta = [
+      'published_time' => !empty($tasting_note['tasting_date']) ? $tasting_note['tasting_date'] : null,
+      'author' => !empty($tasting_note['displayname']) ? $tasting_note['displayname'] : 'Dominik Mueller'
+    ];
+    $json_ld = generateTastingNoteJsonLd($tasting_note, $wine_name, $canonical_url);
+
     require_once 'includes/header.php';
 ?>
 
@@ -384,8 +395,46 @@
       $sqlOrderBy="order by wines_master.grape asc, regions.country asc, producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
     }
 
-    $page_title = 'Dominik Mueller - Browse all tasting notes';
-    $meta_desc = 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
+    $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
+    $is_fav = (isset($_GET['favourite']) && $_GET['favourite'] === 'yes');
+    if (!empty($search_query)) {
+      $page_title = 'Dominik Mueller - Tasting Notes: Search "' . htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8') . '"';
+      $meta_desc = 'Search tasting notes and ratings for "' . htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8') . '" on Dominik Mueller\'s fine wine notebook.';
+      $meta_keywords = buildKeywordsList([$search_query, 'wine tasting notes', 'wine reviews', 'wine ratings', 'Dominik Mueller']);
+    } elseif ($is_fav) {
+      $page_title = 'Dominik Mueller - Favourite Tasting Notes';
+      $meta_desc = 'Explore Dominik Mueller\'s favourite fine wine tasting notes and top-rated cellar highlights.';
+      $meta_keywords = 'Dominik Mueller, favourite wines, top rated wines, fine wine reviews, wine cellar highlights';
+    } else {
+      $sortLabels = [
+        'date' => 'by Tasting Date',
+        'rating' => 'by Rating (DM Points)',
+        'region' => 'by Region',
+        'producer' => 'by Producer',
+        'vintage' => 'by Vintage',
+        'variety' => 'by Grape Variety',
+        'tenyears' => 'Aged 10 Years',
+        'twentyplus' => 'Aged 20+ Years'
+      ];
+      $sortSuffix = isset($sortLabels[$sort]) ? ' (' . $sortLabels[$sort] . ')' : '';
+      $page_title = 'Dominik Mueller - Browse all tasting notes' . $sortSuffix;
+      $meta_desc = 'Browse fine wine tasting notes and independent 20-point DM ratings by Dominik Mueller across Bordeaux, Burgundy, Rhône, Italy, Germany, and more.';
+      $meta_keywords = 'wine tasting notes, wine reviews, wine ratings, 20-point wine scale, fine wine reviews, wine tasting notebook, Dominik Mueller';
+    }
+    $canonical_url = getAbsoluteUrl('/tnotes.php');
+    $og_type = 'website';
+    $json_ld = [
+      '@context' => 'https://schema.org',
+      '@type' => 'CollectionPage',
+      'name' => $page_title,
+      'description' => $meta_desc,
+      'url' => $canonical_url,
+      'publisher' => [
+        '@type' => 'Organization',
+        'name' => 'Dominik Mueller',
+        'url' => 'https://dmueller.com'
+      ]
+    ];
 
     $extra_head = <<<HTML
       <script>

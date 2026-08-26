@@ -31,6 +31,11 @@
   // Load backend and frontend helper functions
   require_once __DIR__ . '/functions.php';
 
+  // Enforce no-index header early for private and backend pages
+  if (function_exists('isPrivatePage') && isPrivatePage() && !headers_sent()) {
+    header('X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex', true);
+  }
+
   // Enforce Dynamic Privilege Access Control for the backend
   $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
   if (strpos($scriptName, '/backend/') !== false) {

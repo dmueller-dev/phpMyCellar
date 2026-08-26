@@ -98,8 +98,13 @@
       $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
     }
 
-    // Page header
-    $page_title = "Dominik Mueller - " . $wine_name . "";
+    // Page header & SEO metadata
+    $page_title = "Dominik Mueller - " . $wine_name;
+    $meta_keywords = generateWineKeywords($wine);
+    $meta_desc = generateWineDescription($wine, $wine_name);
+    $canonical_url = getAbsoluteUrl('/wines.php?id=' . $wineID);
+    $og_type = 'product';
+    $json_ld = generateWineJsonLd($wine, $wine_name, $canonical_url);
 
     require_once 'includes/header.php';
     $has_contribution_rights = hasPrivilege($conn, 'add_tasting_note');
@@ -359,7 +364,39 @@
       $sqlOrderBy="order by grape asc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
     }
 
-    $page_title = 'Dominik Mueller - Browse all wines';
+    $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
+    if (!empty($search_query)) {
+      $page_title = 'Dominik Mueller - Wine Database: Search "' . htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8') . '"';
+      $meta_desc = 'Search results for "' . htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8') . '" in Dominik Mueller\'s fine wine database.';
+      $meta_keywords = buildKeywordsList([$search_query, 'wine database', 'fine wine', 'wine tasting notes', 'wine search', 'Dominik Mueller']);
+    } else {
+      $sortLabels = [
+        'region' => 'by Region',
+        'producer' => 'by Producer',
+        'vintage' => 'by Vintage',
+        'variety' => 'by Grape Variety',
+        'tenyearsold' => 'Aged 10 Years',
+        'twentyplus' => 'Aged 20+ Years'
+      ];
+      $sortSuffix = isset($sortLabels[$sort]) ? ' (' . $sortLabels[$sort] . ')' : '';
+      $page_title = 'Dominik Mueller - Browse all wines' . $sortSuffix;
+      $meta_desc = 'Explore Dominik Mueller\'s fine wine database. Browse wines by region, producer, vintage, and grape variety with tasting notes and vintage details.';
+      $meta_keywords = 'Dominik Mueller, wine database, fine wine, browse wines, wine collection, wine tastings, wine producers, wine vintages, wine regions';
+    }
+    $canonical_url = getAbsoluteUrl('/wines.php');
+    $og_type = 'website';
+    $json_ld = [
+      '@context' => 'https://schema.org',
+      '@type' => 'CollectionPage',
+      'name' => $page_title,
+      'description' => $meta_desc,
+      'url' => $canonical_url,
+      'publisher' => [
+        '@type' => 'Organization',
+        'name' => 'Dominik Mueller',
+        'url' => 'https://dmueller.com'
+      ]
+    ];
     
     $extra_head = <<<HTML
       <script>
