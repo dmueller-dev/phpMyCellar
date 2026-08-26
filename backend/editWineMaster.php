@@ -90,6 +90,94 @@
       let allAppellations = [];
       let allVineyards = [];
 
+      function getSelectedProducerName() {
+        const select = document.getElementById('producer_id');
+        if (!select || select.selectedIndex < 0) return '';
+        const opt = select.options[select.selectedIndex];
+        if (!opt || !opt.value) return '';
+        if (opt.getAttribute('data-producer')) {
+          return opt.getAttribute('data-producer').trim();
+        }
+        const parts = opt.textContent.split(':');
+        return parts[parts.length - 1].trim();
+      }
+
+      function getSelectedVineyardName() {
+        const select = document.getElementById('vineyard_id');
+        if (!select || select.selectedIndex < 0) return '';
+        const opt = select.options[select.selectedIndex];
+        if (!opt || !opt.value) return '';
+        if (opt.getAttribute('data-vineyard')) {
+          return opt.getAttribute('data-vineyard').trim();
+        }
+        const parts = opt.textContent.split(':');
+        return parts[parts.length - 1].trim();
+      }
+
+      function getSelectedGrape() {
+        const select = document.getElementById('grape');
+        if (!select || select.selectedIndex < 0) return '';
+        const opt = select.options[select.selectedIndex];
+        return (opt && opt.value) ? opt.value.trim() : '';
+      }
+
+      function getEnteredName() {
+        const input = document.getElementById('name');
+        return input ? input.value.trim() : '';
+      }
+
+      function getSelectedConvention() {
+        const select = document.getElementById('nameconvention');
+        if (!select || select.selectedIndex < 0) return '';
+        const opt = select.options[select.selectedIndex];
+        return (opt && opt.value) ? opt.value.trim() : '';
+      }
+
+      function updateWineNamePreview() {
+        const previewWine = document.getElementById('previewWineName');
+        const previewBadge = document.getElementById('previewConventionBadge');
+        if (!previewWine || !previewBadge) return;
+
+        const convention = getSelectedConvention();
+        const producer = getSelectedProducerName();
+        const vineyard = getSelectedVineyardName();
+        const grape = getSelectedGrape();
+        const name = getEnteredName();
+
+        if (!convention) {
+          previewBadge.textContent = 'none selected';
+          previewWine.innerHTML = '<span style="color: #999; font-weight: normal; font-style: italic;">Select a naming convention to preview the wine name</span>';
+          return;
+        }
+
+        previewBadge.textContent = convention;
+
+        const sampleVintage = new Date().getFullYear() - 1;
+        const p = producer || '<span style="color: #999; font-weight: normal;">[Producer]</span>';
+        const v = vineyard || '<span style="color: #999; font-weight: normal;">[Vineyard]</span>';
+        const g = grape || '<span style="color: #999; font-weight: normal;">[Variety]</span>';
+        const n = name || '<span style="color: #999; font-weight: normal;">[Name]</span>';
+
+        let parts = [sampleVintage];
+
+        if (convention === 'vintage_name') {
+          parts.push(n);
+        } else if (convention === 'vintage_producer') {
+          parts.push(p);
+        } else if (convention === 'vintage_producer_grape_name') {
+          parts.push(p, g, n);
+        } else if (convention === 'vintage_producer_vineyard_grape_name') {
+          parts.push(p, v, g, n);
+        } else if (convention === 'vintage_producer_vineyard_name') {
+          parts.push(p, v, n);
+        } else {
+          // Default: vintage_producer_name or fallback
+          parts.push(p, n);
+        }
+
+        previewWine.innerHTML = parts.join(' ');
+      }
+
       document.addEventListener("DOMContentLoaded", function() {
         const masterSelect = document.getElementById('master_id');
         if (masterSelect) {
@@ -103,8 +191,14 @@
         if (producerSelect) {
           for (let i = 1; i < producerSelect.options.length; i++) {
             const opt = producerSelect.options[i];
-            allProducers.push({ value: opt.value, text: opt.textContent, selected: opt.selected });
+            allProducers.push({
+              value: opt.value,
+              text: opt.textContent,
+              selected: opt.selected,
+              producer: opt.getAttribute('data-producer') || ''
+            });
           }
+          producerSelect.addEventListener('change', updateWineNamePreview);
         }
 
         const regionSelect = document.getElementById('region_id');
@@ -135,9 +229,34 @@
         if (vineyardSelect) {
           for (let i = 1; i < vineyardSelect.options.length; i++) {
             const opt = vineyardSelect.options[i];
-            allVineyards.push({ value: opt.value, text: opt.textContent, selected: opt.selected });
+            allVineyards.push({
+              value: opt.value,
+              text: opt.textContent,
+              selected: opt.selected,
+              vineyard: opt.getAttribute('data-vineyard') || ''
+            });
           }
+          vineyardSelect.addEventListener('change', updateWineNamePreview);
         }
+
+        const grapeSelect = document.getElementById('grape');
+        if (grapeSelect) {
+          grapeSelect.addEventListener('change', updateWineNamePreview);
+        }
+
+        const nameInput = document.getElementById('name');
+        if (nameInput) {
+          nameInput.addEventListener('input', updateWineNamePreview);
+          nameInput.addEventListener('keyup', updateWineNamePreview);
+          nameInput.addEventListener('change', updateWineNamePreview);
+        }
+
+        const nameConvSelect = document.getElementById('nameconvention');
+        if (nameConvSelect) {
+          nameConvSelect.addEventListener('change', updateWineNamePreview);
+        }
+
+        updateWineNamePreview();
       });
 
       function filterMasters() {
@@ -169,7 +288,9 @@
           const matches = terms.every(term => r.text.toLowerCase().includes(term));
           if (matches) {
             const opt = document.createElement('option');
-            opt.value = r.value; opt.textContent = r.text;
+            opt.value = r.value;
+            opt.textContent = r.text;
+            if (r.producer) opt.setAttribute('data-producer', r.producer);
             if (r.value === currentValue) opt.selected = true;
             select.appendChild(opt);
           }
@@ -241,7 +362,9 @@
           const matches = terms.every(term => r.text.toLowerCase().includes(term));
           if (matches) {
             const opt = document.createElement('option');
-            opt.value = r.value; opt.textContent = r.text;
+            opt.value = r.value;
+            opt.textContent = r.text;
+            if (r.vineyard) opt.setAttribute('data-vineyard', r.vineyard);
             if (r.value === currentValue) opt.selected = true;
             select.appendChild(opt);
           }
@@ -314,7 +437,7 @@ HTML;
                 style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
                 <option value="">Select a producer</option>
                 <?php foreach ($producers as $producer): ?>
-                  <option value="<?php echo $producer['producer_id']; ?>" <?php echo ($selected_wine['producer_id'] == $producer['producer_id']) ? 'selected' : ''; ?>>
+                  <option value="<?php echo $producer['producer_id']; ?>" data-producer="<?php echo htmlspecialchars($producer['producer'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo ($selected_wine['producer_id'] == $producer['producer_id']) ? 'selected' : ''; ?>>
                     <?php echo htmlspecialchars($producer['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($producer['region'], ENT_QUOTES, 'UTF-8') . ": " .  htmlspecialchars($producer['producer'], ENT_QUOTES, 'UTF-8'); ?>
                   </option>
                 <?php endforeach; ?>
@@ -382,7 +505,7 @@ HTML;
                 style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
                 <option value="" <?php echo (empty($selected_wine['vineyard_id'])) ? 'selected' : ''; ?>>Select a vineyard</option>
                 <?php foreach ($vineyards as $vineyard): ?>
-                  <option value="<?php echo $vineyard['vineyard_id']; ?>" <?php echo ($selected_wine['vineyard_id'] == $vineyard['vineyard_id']) ? 'selected' : ''; ?>>
+                  <option value="<?php echo $vineyard['vineyard_id']; ?>" data-vineyard="<?php echo htmlspecialchars($vineyard['vineyard'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo ($selected_wine['vineyard_id'] == $vineyard['vineyard_id']) ? 'selected' : ''; ?>>
                     <?php echo htmlspecialchars($vineyard['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($vineyard['region'], ENT_QUOTES, 'UTF-8') . ": " . (($vineyard['appellation']!=null) ? htmlspecialchars($vineyard['appellation'], ENT_QUOTES, 'UTF-8') . ": " : "") . htmlspecialchars($vineyard['vineyard'], ENT_QUOTES, 'UTF-8'); ?>
                   </option>
                 <?php endforeach; ?>
@@ -443,6 +566,20 @@ HTML;
                 </option>
               <?php endforeach; ?>
             </select>
+
+            <div id="wineNamePreviewCard" style="margin-top: 15px; margin-bottom: 20px; padding: 12px 15px; background: #fafafa; border: 1px solid #e0e0e0; border-left: 4px solid firebrick; border-radius: 4px; max-width: 500px; font-family: Georgia, serif; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #888;">
+                  🍷 Wine Name Preview
+                </span>
+                <span id="previewConventionBadge" style="font-size: 11px; background: #eee; color: #555; padding: 2px 6px; border-radius: 3px; font-family: monospace;">
+                  none selected
+                </span>
+              </div>
+              <div id="previewWineName" style="font-size: 15px; font-weight: bold; color: firebrick; min-height: 20px; word-break: break-word;">
+                <span style="color: #999; font-weight: normal; font-style: italic;">Select a naming convention to preview the wine name</span>
+              </div>
+            </div>
 
             <br><br>
             <input type="submit" name="update" value="Update Master">
