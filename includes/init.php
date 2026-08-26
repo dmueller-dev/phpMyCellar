@@ -31,9 +31,6 @@
   // Load backend and frontend helper functions
   require_once __DIR__ . '/functions.php';
 
-  // Ensure privilege tables and seed data exist
-  ensurePrivilegeTablesExist($mysqli);
-
   // Enforce Dynamic Privilege Access Control for the backend
   $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
   if (strpos($scriptName, '/backend/') !== false) {

@@ -98,7 +98,7 @@
   <div class="column main">
     <div class="card">
       <h3 style="margin-bottom:0;"><?php echo $blogpost["title"];?></h3>
-      <p style="margin-top:0;">Posted on <?php echo date_format(date_create($blogpost["pub_date"]),"l, j F Y");?></p>
+      <p style="margin-top:0;">Posted on <?php echo date_format(date_create($blogpost["pub_date"]),"l, j F Y");?><?php if (!empty($blogpost['edit_date']) && strtotime($blogpost['edit_date']) > strtotime($blogpost['pub_date'])): ?> (Last edited: <?php echo date_format(date_create($blogpost['edit_date']),"l, j F Y");?>)<?php endif; ?></p>
     </div>
     <div class="card">
       <section>

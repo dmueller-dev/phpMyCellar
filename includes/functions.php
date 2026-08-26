@@ -1705,10 +1705,13 @@ function validateBlogpostInput($title, $content, $status) {
 }
 
 // Function to insert a new blogpost
-function insertBlogpost($conn, $user_id, $pub_date, $title, $content, $status) {
-  $sql = "INSERT INTO blogposts (user_id, pub_date, title, content, status) VALUES (?, ?, ?, ?, ?)";
+function insertBlogpost($conn, $user_id, $pub_date, $title, $content, $status, $edit_date = null) {
+  if ($edit_date === null) {
+    $edit_date = $pub_date;
+  }
+  $sql = "INSERT INTO blogposts (user_id, pub_date, edit_date, title, content, status) VALUES (?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
-  $stmt->bind_param("issss", $user_id, $pub_date, $title, $content, $status);
+  $stmt->bind_param("isssss", $user_id, $pub_date, $edit_date, $title, $content, $status);
   return $stmt->execute();
 }
 
@@ -1718,7 +1721,7 @@ function getBlogposts($conn) {
     throw new Exception("Invalid database connection");
   }
 
-  $sql = "select blogposts.blog_id, blogposts.user_id, blogposts.pub_date, blogposts.title, blogposts.status, users.displayname 
+  $sql = "select blogposts.blog_id, blogposts.user_id, blogposts.pub_date, blogposts.edit_date, blogposts.title, blogposts.status, users.displayname 
           from blogposts 
           left join users on blogposts.user_id=users.user_id
           order by blogposts.pub_date desc, blogposts.blog_id desc";
@@ -1749,10 +1752,13 @@ function getBlogpostDetails($conn, $blog_id) {
 }
 
 // Function to update a blogpost
-function updateBlogpost($conn, $blog_id, $pub_date, $title, $content, $status) {
-  $sql = "UPDATE blogposts SET pub_date = ?, title = ?, content = ?, status = ? WHERE blog_id = ?";
+function updateBlogpost($conn, $blog_id, $pub_date, $title, $content, $status, $edit_date = null) {
+  if ($edit_date === null) {
+    $edit_date = date('Y-m-d');
+  }
+  $sql = "UPDATE blogposts SET pub_date = ?, edit_date = ?, title = ?, content = ?, status = ? WHERE blog_id = ?";
   $stmt = $conn->prepare($sql);
-  $stmt->bind_param("ssssi", $pub_date, $title, $content, $status, $blog_id);
+  $stmt->bind_param("sssssi", $pub_date, $edit_date, $title, $content, $status, $blog_id);
   return $stmt->execute();
 }
 
