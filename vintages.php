@@ -62,7 +62,7 @@
     <div class="column main">
       <!-- Vintage Header Card -->
       <div class="card">
-        <h3 style="margin-top:0; margin-bottom: 5px;">Vintage Report: <?php echo $selected_vintage; ?></h3>
+        <h3 style="margin-top:0; margin-bottom: 5px;">Vintage report: <?php echo $selected_vintage; ?></h3>
         <p style="margin-top:0; color: #64748b;"><small>Detailed analysis of published tasting notes for the <?php echo $selected_vintage; ?> vintage.</small></p>
 
         <div class="vintage-stats-grid">
@@ -97,7 +97,7 @@
 
       <!-- Regional Averages & Expandable Descriptions -->
       <div class="card">
-        <h3 style="margin-top:0;">Average Ratings by Country &amp; Region</h3>
+        <h3 style="margin-top:0;">Average ratings by country &amp; region</h3>
         <p style="margin-top:0; margin-bottom:15px;"><small>Average DM points (out of 20, to one decimal place). Click on an entry to reveal vintage descriptions where available.</small></p>
 
         <?php if (empty($region_stats)): ?>
@@ -141,7 +141,7 @@
 
       <!-- Top Wines of Vintage DM8+ -->
       <div class="card">
-        <h3 style="margin-top:0;">Top Wines of the <?php echo $selected_vintage; ?> Vintage</h3>
+        <h3 style="margin-top:0;">Top wines of the <?php echo $selected_vintage; ?> vintage</h3>
         <p style="margin-top:0; margin-bottom:15px;"><small>Ranked from best to worst. Showing wines rated DM8 and higher.</small></p>
 
         <?php if (empty($top_wines)): ?>
@@ -198,7 +198,7 @@
     <div class="column side">
       <!-- % of Notes per Country -->
       <div class="card">
-        <h3 style="margin-top:0;">Tasting Notes by Country</h3>
+        <h3 style="margin-top:0;">Tasting notes by country</h3>
         <p style="margin-top:0; margin-bottom:10px;"><small>Distribution of published notes across countries for <?php echo $selected_vintage; ?>.</small></p>
 
         <?php if (empty($country_stats)): ?>
@@ -227,7 +227,7 @@
 
       <!-- Adjacent Vintages Switcher -->
       <div class="card">
-        <h3 style="margin-top:0;">Switch Vintage</h3>
+        <h3 style="margin-top:0;">Switch vintage</h3>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
           <?php if (!empty($adjacent['prev_vintage'])): ?>
             <a class="filter-nav" href="/vintages.php?vintage=<?php echo (int)$adjacent['prev_vintage']; ?>">← <?php echo (int)$adjacent['prev_vintage']; ?></a>
@@ -259,16 +259,19 @@
 
       <!-- Rating Scale Info -->
       <div class="card">
-        <h3 style="margin-top:0;">Dominik's Rating Scale</h3>
+        <h3 style="margin-top:0;">My rating scale</h3>
         <p style="font-size: small; line-height: 1.4;">
           Wines are evaluated using the 20-point scale:
         </p>
         <ul style="font-size: small; padding-left: 18px; margin: 0;">
-          <li><b>18-20</b>: Exceptional / Benchmark</li>
-          <li><b>16-17.5</b>: Outstanding</li>
-          <li><b>14-15.5</b>: Very Good</li>
-          <li><b>12-13.5</b>: Good</li>
-          <li><b>8-11.5</b>: Everyday / Acceptable</li>
+          <li><b>20</b>: one-of-a-kind</li>
+          <li><b>17-19</b>: grand vin</li>
+          <li><b>13-16</b>: excellent</li>
+          <li><b>9-12</b>: very good</li>
+          <li><b>5-8</b>: good</li>
+          <li><b>3-4</b>: passable</li>
+          <li><b>1-2</b>: subpar</li>
+          <li><b>0</b>: poor</li>
         </ul>
         <p style="margin-top:10px;"><small><a href="https://dmueller.com/blog.php?id=26">Learn more about how I rate wines &rarr;</a></small></p>
       </div>
@@ -349,7 +352,7 @@
     <!-- Main Column: Vintage Chart -->
     <div class="column main">
       <div class="card">
-        <h3 style="margin-top:0; margin-bottom:5px;">Vintage Chart &amp; Reports</h3>
+        <h3 style="margin-top:0; margin-bottom:5px;">Vintage chart &amp; reports</h3>
         <p style="margin-top:0; color:#475569;"><small>Explore wines by vintage year. Click any vintage to view regional performance, top rated wines, and country breakdowns.</small></p>
       </div>
 
@@ -418,7 +421,7 @@
       </div>
 
       <div class="card">
-        <h3 style="margin-top:0;">Direct Vintage Lookup</h3>
+        <h3 style="margin-top:0;">Direct vintage lookup</h3>
         <p style="font-size:small;">Select a vintage to jump directly to its report:</p>
         <select onchange="if(this.value) window.location.href='/vintages.php?vintage=' + this.value;" style="width: 100%; padding: 6px; font-family: Georgia, serif;">
           <option value="">-- Choose a vintage --</option>
@@ -432,9 +435,9 @@
 
       <div class="card">
         <aside>
-          <h3 style="margin-top:0;">About Vintage Reports</h3>
+          <h3 style="margin-top:0;">About vintage reports</h3>
           <p style="font-size:small; line-height:1.4;">
-            Vintage scores reflect Dominik's personal tasting notes on published wines. They are updated dynamically as new tasting notes are posted.
+            Vintage scores reflect my personal tasting notes on the wines reviewed. They are updated dynamically as new tasting notes are posted.
           </p>
           <p style="font-size:small;"><a href="/tnotes.php">Browse all tasting notes &rarr;</a></p>
         </aside>

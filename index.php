@@ -71,12 +71,11 @@
     <div class="card">
       <h3>Get in touch</h3>
       <p>
-        I control access to some parts of this website. My tasting notes and blog posts are reserved for members only - as is
-        my <em>carte des vins</em>, an interactive account of the wines in my personal cellar, which are ready to be drunk. 
-        Registered users can also leave comments on my notes and enjoy a safe and well-behaved place to discuss their favourite
-        topic, wine. User accounts are free, I don't want to make money from this site, but usually only friends and family have
-        access. If you'd like to introduce yourself and connect with me, you may do so using my details below. I'm always happy
-        to hear and learn from other wine enthusiasts.
+        Access to certain areas of this website is restricted. While my tasting notes and blog posts are open to everyone, my <em>carte des vins</em>
+        — an interactive catalogue of the bottles in my personal cellar — is reserved for members. Registered users can also comment on tasting notes
+        and enjoy a civil, friendly space to discuss our shared passion: wine. Membership is entirely free (I have no wish to monetise the site),
+        though accounts are generally reserved for friends and family at this stage. If you would like to introduce yourself and connect, please feel
+        free to reach out using the contact details below. I am always delighted to hear from and exchange notes with fellow wine enthusiasts.
       </p>
     </div>
   </div>
