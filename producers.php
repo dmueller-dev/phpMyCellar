@@ -46,10 +46,10 @@
       <p>
         <ul style="list-style-type:none;padding:0;margin:0;">
           <?php
-            if (!isset($_SESSION['user_id'])) {
-              echo "<p>Please log in to see my tasting notes.</p>";
-            } elseif (isset($_SESSION['user_id'])) {
+            if (hasPrivilege($conn, 'view_tnotes')) {
               latestNotes($producer["producer_id"]);
+            } else {
+              echo "<p>Please <a href='/login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']) . "'>log in</a> to see my tasting notes.</p>";
             }
           ?>
         </ul>
