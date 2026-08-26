@@ -201,6 +201,13 @@
         }
         </script>
       <?php endif; ?>
+    <?php else: ?>
+      <div class="card" id="comments">
+        <h3>Discussion</h3>
+        <p>
+          <strong>Join the discussion:</strong> <?php if (!isset($_SESSION['user_id'])): ?>Only logged-in members can read and write comments. Please <a href="/login.php?redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>">log in</a> to participate.<?php else: ?>Only authorized members can read and write comments.<?php endif; ?>
+        </p>
+      </div>
     <?php endif; ?>
   </div>
 </div>
