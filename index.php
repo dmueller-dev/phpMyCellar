@@ -59,7 +59,7 @@
 
     <div class="card">
       <h3>Recent comments</h3>
-      <?php if (isset($_SESSION['user_id'])): ?>
+      <?php if (hasPrivilege($conn, 'view_comments')): ?>
         <ul style="list-style-type:none;padding:0;margin:0;">
           <?php latestComments(5); ?>
         </ul>

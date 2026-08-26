@@ -24,7 +24,8 @@
       $pub_date = sanitizeInput($_POST['pub_date']);
       $title = sanitizeInput($_POST['title']);
       $content = sanitizeInput($_POST['content']);
-      $status = sanitizeInput($_POST['status'] ?? 'draft'); // Default to 'draft' if status not sent (i.e. for users with write privileges)
+      $canPublish = hasPrivilege($conn, 'publish_blogpost');
+      $status = $canPublish ? sanitizeInput($_POST['status'] ?? 'draft') : 'draft';
 
       $errorsBlogpost = validateBlogpostInput($title, $content, $status);
       
@@ -136,11 +137,12 @@
             <br><br>
             <label for="status">Publish story?</label>
             <br>
-            <select name="status" id="status" required <?php echo ($role === 'write') ? 'disabled' : ''; ?>>
-              <option value="draft" <?php echo ($role === 'write' || empty($_POST['status']) || (isset($_POST['status']) && $_POST['status'] == 'draft')) ? 'selected' : ''; ?>>draft</option>
-              <option value="published" <?php echo ($role !== 'write' && isset($_POST['status']) && $_POST['status'] == 'published') ? 'selected' : ''; ?>>published</option>
+            <?php $canPublish = hasPrivilege($conn, 'publish_blogpost'); ?>
+            <select name="status" id="status" required <?php echo (!$canPublish) ? 'disabled' : ''; ?>>
+              <option value="draft" <?php echo (!$canPublish || empty($_POST['status']) || (isset($_POST['status']) && $_POST['status'] == 'draft')) ? 'selected' : ''; ?>>draft</option>
+              <option value="published" <?php echo ($canPublish && isset($_POST['status']) && $_POST['status'] == 'published') ? 'selected' : ''; ?>>published</option>
             </select>
-            <?php if ($role === 'write'): ?>
+            <?php if (!$canPublish): ?>
               <p><small><i>Note: Once an admin publishes your story, it will be locked and can no longer be edited.</i></small></p>
             <?php endif; ?>
             

@@ -1473,6 +1473,11 @@ function renderComments($conn, $id, $type) {
     throw new Exception("Invalid comment type");
   }
 
+  // Check permission to view comments
+  if (!hasPrivilege($conn, 'view_comments')) {
+    return;
+  }
+
   $sql = "select * from $table_prefix
             left join comments on $table_prefix.comment_id=comments.comment_id
             left join users on comments.user_id=users.user_id
@@ -1527,6 +1532,11 @@ function latestComments($num = 5) {
   global $conn, $mysqli;
   $db = ($conn instanceof mysqli) ? $conn : $mysqli;
   if (!($db instanceof mysqli)) {
+    return;
+  }
+
+  if (!hasPrivilege($db, 'view_comments')) {
+    echo "<li><i>Please log in to view comments.</i></li>";
     return;
   }
 
@@ -2454,3 +2464,663 @@ function getAdjacentVintages($conn, $vintage) {
   $stmt->close();
   return $res ?: ['prev_vintage' => null, 'next_vintage' => null];
 }
+
+/* ==========================================================================
+   USER & ROLE PRIVILEGES / RBAC SUBSYSTEM
+   ========================================================================== */
+
+/**
+ * Ensure privilege tables exist and seed default roles and privileges
+ */
+function ensurePrivilegeTablesExist($conn) {
+  if (!($conn instanceof mysqli)) {
+    return;
+  }
+
+  // Create roles table
+  $conn->query("CREATE TABLE IF NOT EXISTS `roles` (
+    `role_name` varchar(50) NOT NULL,
+    `display_name` varchar(100) NOT NULL,
+    `description` text DEFAULT NULL,
+    `is_system` tinyint(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (`role_name`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+  // Create privileges table
+  $conn->query("CREATE TABLE IF NOT EXISTS `privileges` (
+    `privilege_code` varchar(50) NOT NULL,
+    `privilege_name` varchar(100) NOT NULL,
+    `category` varchar(50) NOT NULL,
+    `description` text DEFAULT NULL,
+    `is_admin_only` tinyint(1) NOT NULL DEFAULT 0,
+    `sort_order` int(11) NOT NULL DEFAULT 0,
+    PRIMARY KEY (`privilege_code`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+  // Create role_privileges table
+  $conn->query("CREATE TABLE IF NOT EXISTS `role_privileges` (
+    `role_name` varchar(50) NOT NULL,
+    `privilege_code` varchar(50) NOT NULL,
+    PRIMARY KEY (`role_name`, `privilege_code`),
+    INDEX `idx_rp_role` (`role_name`),
+    INDEX `idx_rp_priv` (`privilege_code`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+  // Create user_privileges table
+  $conn->query("CREATE TABLE IF NOT EXISTS `user_privileges` (
+    `user_id` smallint(5) UNSIGNED NOT NULL,
+    `privilege_code` varchar(50) NOT NULL,
+    `granted` tinyint(1) NOT NULL COMMENT '1 = Explicitly Granted, 0 = Explicitly Revoked',
+    PRIMARY KEY (`user_id`, `privilege_code`),
+    INDEX `idx_up_user` (`user_id`),
+    INDEX `idx_up_priv` (`privilege_code`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+  // Seed default system roles
+  $roles = [
+    ['public', 'Public / Guest (Logged Out)', 'Unauthenticated visitors to the website', 1],
+    ['read', 'Reader / Member', 'Registered members who can read notes, stories, and participate in discussions', 1],
+    ['write', 'Contributor / Writer', 'Contributors who can write tasting notes and stories in addition to reading', 1],
+    ['admin', 'Administrator', 'Full system access and user/privilege administration', 1],
+  ];
+  $stmt_role = $conn->prepare("INSERT INTO `roles` (`role_name`, `display_name`, `description`, `is_system`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `display_name`=VALUES(`display_name`), `description`=VALUES(`description`), `is_system`=VALUES(`is_system`)");
+  if ($stmt_role) {
+    foreach ($roles as $r) {
+      $stmt_role->bind_param("sssi", $r[0], $r[1], $r[2], $r[3]);
+      $stmt_role->execute();
+    }
+    $stmt_role->close();
+  }
+
+  // Seed defined privileges
+  $privileges = [
+    // Viewing & Reading
+    ['view_tnotes', 'View Tasting Notes & Vintages', 'Viewing & Reading', 'Browse and read tasting notes and vintage reports', 0, 10],
+    ['view_stories', 'Read Stories / Blog', 'Viewing & Reading', 'Read full blog posts and stories', 0, 20],
+    ['view_comments', 'View Comments', 'Viewing & Reading', 'View discussions and comments across the site', 0, 30],
+    ['view_cellar_menu', 'View Carte des vins', 'Viewing & Reading', 'Access the interactive cellar menu for friends', 0, 40],
+    // Community
+    ['post_comments', 'Post Comments', 'Community', 'Submit comments on tasting notes, stories, and wines', 0, 50],
+    // Tasting Notes
+    ['add_tasting_note', 'Write Tasting Notes', 'Tasting Notes', 'Create regular and blind tasting notes', 0, 60],
+    ['edit_tasting_note', 'Edit Own Tasting Notes', 'Tasting Notes', 'Edit tasting notes created by yourself', 0, 70],
+    ['edit_all_tasting_notes', 'Edit All Tasting Notes', 'Tasting Notes', 'Edit tasting notes created by any user', 0, 80],
+    ['publish_tasting_note', 'Publish Tasting Notes', 'Tasting Notes', 'Publish tasting notes directly (without forcing draft status)', 0, 90],
+    // Blog Stories
+    ['add_blogpost', 'Write Stories', 'Blog Stories', 'Create new blog stories and articles', 0, 100],
+    ['edit_blogpost', 'Edit Own Stories', 'Blog Stories', 'Edit stories created by yourself', 0, 110],
+    ['edit_all_blogposts', 'Edit All Stories', 'Blog Stories', 'Edit stories created by any author', 0, 120],
+    ['publish_blogpost', 'Publish Stories', 'Blog Stories', 'Publish stories directly (without forcing draft status)', 0, 130],
+    // Cellar & Orders
+    ['browse_bottles', 'Browse Bottles', 'Cellar & Orders', 'View bottles and storage locations in backend', 0, 140],
+    ['add_bottle', 'Add Bottle', 'Cellar & Orders', 'Add new bottles to the cellar', 0, 100],
+    ['edit_bottle', 'Edit Bottle', 'Cellar & Orders', 'Update bottle details, drink windows, and status', 0, 160],
+    ['add_order', 'Create Order', 'Cellar & Orders', 'Create wine purchasing orders', 0, 170],
+    ['manage_orders', 'Manage Orders', 'Cellar & Orders', 'Manage open wine orders and accept deliveries', 0, 180],
+    // Wines & Masters
+    ['browse_wines', 'Browse Wines', 'Wines & Masters', 'Search and view wines in the backend database', 0, 190],
+    ['add_wine', 'Add Wine', 'Wines & Masters', 'Add new individual wine vintage entries', 0, 200],
+    ['edit_wine', 'Edit Wine', 'Wines & Masters', 'Edit individual wine vintage details', 0, 210],
+    ['add_wine_master', 'Add Wine Master', 'Wines & Masters', 'Create new wine master profiles', 0, 220],
+    ['edit_wine_master', 'Edit Wine Master', 'Wines & Masters', 'Edit wine master profiles and naming conventions', 0, 230],
+    // Geography & Producers
+    ['manage_producers', 'Manage Producers', 'Geography & Producers', 'Add and edit wine producers', 0, 240],
+    ['manage_countries', 'Manage Countries', 'Geography & Producers', 'Add and edit countries', 0, 250],
+    ['manage_regions', 'Manage Regions', 'Geography & Producers', 'Add and edit regions', 0, 260],
+    ['manage_subregions', 'Manage Subregions', 'Geography & Producers', 'Add and edit subregions', 0, 270],
+    ['manage_appellations', 'Manage Appellations', 'Geography & Producers', 'Add and edit appellations', 0, 280],
+    ['manage_vineyards', 'Manage Vineyards', 'Geography & Producers', 'Add and edit vineyards', 0, 290],
+    // Administration
+    ['manage_users', 'Manage Users', 'Administration', 'Add and edit user accounts', 1, 300],
+    ['manage_privileges', 'Manage Privileges', 'Administration', 'Configure role permissions and user privilege overrides', 1, 310],
+  ];
+
+  $stmt_priv = $conn->prepare("INSERT INTO `privileges` (`privilege_code`, `privilege_name`, `category`, `description`, `is_admin_only`, `sort_order`) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `privilege_name`=VALUES(`privilege_name`), `category`=VALUES(`category`), `description`=VALUES(`description`), `is_admin_only`=VALUES(`is_admin_only`), `sort_order`=VALUES(`sort_order`)");
+  if ($stmt_priv) {
+    foreach ($privileges as $p) {
+      $stmt_priv->bind_param("ssssii", $p[0], $p[1], $p[2], $p[3], $p[4], $p[5]);
+      $stmt_priv->execute();
+    }
+    $stmt_priv->close();
+  }
+
+  // Seed default role privileges if empty
+  $res = $conn->query("SELECT COUNT(*) AS c FROM `role_privileges`");
+  $row = $res ? $res->fetch_assoc() : null;
+  if (!$row || (int)$row['c'] === 0) {
+    // Admin gets all
+    $conn->query("INSERT IGNORE INTO `role_privileges` (`role_name`, `privilege_code`) SELECT 'admin', `privilege_code` FROM `privileges`");
+    // Write gets viewing, community, and write privileges
+    $conn->query("INSERT IGNORE INTO `role_privileges` (`role_name`, `privilege_code`) VALUES
+      ('write', 'view_tnotes'),
+      ('write', 'view_stories'),
+      ('write', 'view_comments'),
+      ('write', 'view_cellar_menu'),
+      ('write', 'post_comments'),
+      ('write', 'add_tasting_note'),
+      ('write', 'edit_tasting_note'),
+      ('write', 'add_blogpost'),
+      ('write', 'edit_blogpost')");
+    // Read gets viewing and community privileges
+    $conn->query("INSERT IGNORE INTO `role_privileges` (`role_name`, `privilege_code`) VALUES
+      ('read', 'view_tnotes'),
+      ('read', 'view_stories'),
+      ('read', 'view_comments'),
+      ('read', 'view_cellar_menu'),
+      ('read', 'post_comments')");
+  }
+}
+
+/**
+ * Return mapping of backend scripts to required privileges
+ */
+function getPrivilegeScriptMap() {
+  return [
+    'addTastingNote.php'   => 'add_tasting_note',
+    'blindTasting.php'     => 'add_tasting_note',
+    'editTastingNote.php'  => 'edit_tasting_note',
+    'addBlogpost.php'      => 'add_blogpost',
+    'editBlogpost.php'     => 'edit_blogpost',
+    'browseBottles.php'    => 'browse_bottles',
+    'addBottle.php'        => 'add_bottle',
+    'editBottle.php'       => 'edit_bottle',
+    'addOrder.php'         => 'add_order',
+    'manageOrders.php'     => 'manage_orders',
+    'browseWines.php'      => 'browse_wines',
+    'addWine.php'          => 'add_wine',
+    'editWine.php'         => 'edit_wine',
+    'addWineMaster.php'    => 'add_wine_master',
+    'editWineMaster.php'   => 'edit_wine_master',
+    'addProducer.php'      => 'manage_producers',
+    'editProducer.php'     => 'manage_producers',
+    'addCountry.php'       => 'manage_countries',
+    'editCountry.php'      => 'manage_countries',
+    'addRegion.php'        => 'manage_regions',
+    'editRegion.php'       => 'manage_regions',
+    'addSubregion.php'     => 'manage_subregions',
+    'editSubregion.php'    => 'manage_subregions',
+    'addAppellation.php'   => 'manage_appellations',
+    'editAppellation.php'  => 'manage_appellations',
+    'addVineyard.php'      => 'manage_vineyards',
+    'editVineyard.php'     => 'manage_vineyards',
+    'addUser.php'          => 'manage_users',
+    'managePrivileges.php' => 'manage_privileges',
+  ];
+}
+
+/**
+ * Get privileges granted to the 'public' (guest) role
+ */
+function getPublicPrivileges($conn) {
+  static $publicCache = null;
+  if ($publicCache !== null) {
+    return $publicCache;
+  }
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $publicCache = [];
+  try {
+    $res = $conn->query("SELECT privilege_code FROM role_privileges WHERE role_name = 'public'");
+    if ($res) {
+      while ($r = $res->fetch_assoc()) {
+        $publicCache[$r['privilege_code']] = true;
+      }
+      $res->free_result();
+    }
+  } catch (Throwable $e) {
+    $publicCache = [];
+  }
+  return $publicCache;
+}
+
+/**
+ * Get all effective privileges for a specific user ID
+ */
+function getUserEffectivePrivileges($conn, $user_id) {
+  static $cache = [];
+  if (isset($cache[$user_id])) {
+    return $cache[$user_id];
+  }
+  if (!($conn instanceof mysqli) || empty($user_id)) {
+    return [];
+  }
+
+  $user_id = (int)$user_id;
+  
+  // Fetch user role
+  $role = 'read';
+  try {
+    $stmt = $conn->prepare("SELECT role FROM users WHERE user_id = ?");
+    if ($stmt) {
+      $stmt->bind_param("i", $user_id);
+      $stmt->execute();
+      $res = $stmt->get_result();
+      $user = $res ? $res->fetch_assoc() : null;
+      $stmt->close();
+      if ($user && !empty($user['role'])) {
+        $role = $user['role'];
+      }
+    }
+  } catch (Throwable $e) {
+    // Fallback if error
+  }
+
+  // Root Admin check (user_id = 1) or admin role
+  if ($user_id === 1 || $role === 'admin') {
+    $effective = [];
+    try {
+      $all = $conn->query("SELECT privilege_code FROM privileges");
+      if ($all) {
+        while ($p = $all->fetch_assoc()) {
+          $effective[$p['privilege_code']] = true;
+        }
+        $all->free_result();
+      }
+    } catch (Throwable $e) {}
+    $cache[$user_id] = $effective;
+    return $effective;
+  }
+
+  // Start with public privileges
+  $effective = getPublicPrivileges($conn);
+
+  // Merge role privileges
+  try {
+    $stmt = $conn->prepare("SELECT privilege_code FROM role_privileges WHERE role_name = ?");
+    if ($stmt) {
+      $stmt->bind_param("s", $role);
+      $stmt->execute();
+      $res = $stmt->get_result();
+      if ($res) {
+        while ($r = $res->fetch_assoc()) {
+          $effective[$r['privilege_code']] = true;
+        }
+        $res->free_result();
+      }
+      $stmt->close();
+    }
+  } catch (Throwable $e) {}
+
+  // Apply individual user overrides
+  try {
+    $stmt = $conn->prepare("SELECT privilege_code, granted FROM user_privileges WHERE user_id = ?");
+    if ($stmt) {
+      $stmt->bind_param("i", $user_id);
+      $stmt->execute();
+      $res = $stmt->get_result();
+      if ($res) {
+        while ($r = $res->fetch_assoc()) {
+          if ((int)$r['granted'] === 1) {
+            $effective[$r['privilege_code']] = true;
+          } else {
+            $effective[$r['privilege_code']] = false;
+          }
+        }
+        $res->free_result();
+      }
+      $stmt->close();
+    }
+  } catch (Throwable $e) {}
+
+  // Security Backstop: Non-admins CANNOT have is_admin_only privileges
+  try {
+    $adminOnlyRes = $conn->query("SELECT privilege_code FROM privileges WHERE is_admin_only = 1");
+    if ($adminOnlyRes) {
+      while ($ao = $adminOnlyRes->fetch_assoc()) {
+        $effective[$ao['privilege_code']] = false;
+      }
+      $adminOnlyRes->free_result();
+    }
+  } catch (Throwable $e) {}
+
+  $cache[$user_id] = $effective;
+  return $effective;
+}
+
+/**
+ * Check if the specified or current user has a privilege
+ * If user is not logged in ($user_id is null and session is empty), checks 'public' role.
+ */
+function hasPrivilege($conn, $privilege_code, $user_id = null) {
+  if (!($conn instanceof mysqli)) {
+    global $mysqli;
+    if ($mysqli instanceof mysqli) {
+      $conn = $mysqli;
+    } else {
+      return false;
+    }
+  }
+
+  if ($user_id === null) {
+    $user_id = $_SESSION['user_id'] ?? null;
+  }
+
+  if ($user_id === null) {
+    $pub = getPublicPrivileges($conn);
+    return !empty($pub[$privilege_code]);
+  }
+
+  $effective = getUserEffectivePrivileges($conn, $user_id);
+  return !empty($effective[$privilege_code]);
+}
+
+/**
+ * Check if the user has permission to access the backend dashboard or any backend tool
+ */
+function canAccessBackend($conn, $user_id = null) {
+  if ($user_id === null) {
+    $user_id = $_SESSION['user_id'] ?? null;
+  }
+  if (!$user_id) {
+    return false;
+  }
+
+  $eff = getUserEffectivePrivileges($conn, $user_id);
+  $backendPrivs = [
+    'add_tasting_note', 'edit_tasting_note', 'edit_all_tasting_notes', 'publish_tasting_note',
+    'add_blogpost', 'edit_blogpost', 'edit_all_blogposts', 'publish_blogpost',
+    'browse_bottles', 'add_bottle', 'edit_bottle', 'add_order', 'manage_orders',
+    'browse_wines', 'add_wine', 'edit_wine', 'add_wine_master', 'edit_wine_master',
+    'manage_producers', 'manage_countries', 'manage_regions', 'manage_subregions',
+    'manage_appellations', 'manage_vineyards', 'manage_users', 'manage_privileges'
+  ];
+
+  foreach ($backendPrivs as $bp) {
+    if (!empty($eff[$bp])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Get all roles with member counts
+ */
+function getAllRoles($conn) {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+  $sql = "SELECT r.role_name, r.display_name, r.description, r.is_system, COUNT(u.user_id) AS user_count
+          FROM roles r
+          LEFT JOIN users u ON r.role_name = u.role
+          GROUP BY r.role_name, r.display_name, r.description, r.is_system
+          ORDER BY r.is_system DESC, r.role_name ASC";
+  $res = $conn->query($sql);
+  if (!$res) return [];
+  $roles = [];
+  while ($row = $res->fetch_assoc()) {
+    $roles[] = $row;
+  }
+  $res->free_result();
+  return $roles;
+}
+
+/**
+ * Get all privileges grouped by category
+ */
+function getAllPrivilegesByCategory($conn) {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+  $sql = "SELECT privilege_code, privilege_name, category, description, is_admin_only, sort_order 
+          FROM privileges 
+          ORDER BY sort_order ASC, privilege_name ASC";
+  $res = $conn->query($sql);
+  if (!$res) return [];
+  $categories = [];
+  while ($row = $res->fetch_assoc()) {
+    $cat = $row['category'];
+    if (!isset($categories[$cat])) {
+      $categories[$cat] = [];
+    }
+    $categories[$cat][] = $row;
+  }
+  $res->free_result();
+  return $categories;
+}
+
+/**
+ * Get granted privilege codes for a specific role
+ */
+function getRolePrivileges($conn, $role_name) {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+  $privs = [];
+  $stmt = $conn->prepare("SELECT privilege_code FROM role_privileges WHERE role_name = ?");
+  if ($stmt) {
+    $stmt->bind_param("s", $role_name);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res) {
+      while ($r = $res->fetch_assoc()) {
+        $privs[] = $r['privilege_code'];
+      }
+      $res->free_result();
+    }
+    $stmt->close();
+  }
+  return $privs;
+}
+
+/**
+ * Update privileges for a role (Enforces security backstop)
+ */
+function updateRolePrivileges($conn, $role_name, array $privilege_codes) {
+  if (!($conn instanceof mysqli)) {
+    return false;
+  }
+  if ($role_name === 'admin') {
+    // Admin role privileges are fixed to full access
+    return true;
+  }
+
+  // Get admin-only privileges to enforce backstop
+  $adminOnly = [];
+  $aoRes = $conn->query("SELECT privilege_code FROM privileges WHERE is_admin_only = 1");
+  if ($aoRes) {
+    while ($r = $aoRes->fetch_assoc()) {
+      $adminOnly[$r['privilege_code']] = true;
+    }
+    $aoRes->free_result();
+  }
+
+  // Filter out any admin-only privileges for non-admin roles
+  $filtered = array_filter($privilege_codes, function($code) use ($adminOnly) {
+    return !isset($adminOnly[$code]);
+  });
+
+  $conn->begin_transaction();
+  try {
+    $del = $conn->prepare("DELETE FROM role_privileges WHERE role_name = ?");
+    $del->bind_param("s", $role_name);
+    $del->execute();
+    $del->close();
+
+    if (!empty($filtered)) {
+      $ins = $conn->prepare("INSERT INTO role_privileges (role_name, privilege_code) VALUES (?, ?)");
+      foreach ($filtered as $code) {
+        $ins->bind_param("ss", $role_name, $code);
+        $ins->execute();
+      }
+      $ins->close();
+    }
+
+    $conn->commit();
+    return true;
+  } catch (Throwable $e) {
+    $conn->rollback();
+    return false;
+  }
+}
+
+/**
+ * Get user privilege overrides (code => 1 for grant, 0 for deny)
+ */
+function getUserPrivilegeOverrides($conn, $user_id) {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+  $user_id = (int)$user_id;
+  $overrides = [];
+  $stmt = $conn->prepare("SELECT privilege_code, granted FROM user_privileges WHERE user_id = ?");
+  if ($stmt) {
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res) {
+      while ($r = $res->fetch_assoc()) {
+        $overrides[$r['privilege_code']] = (int)$r['granted'];
+      }
+      $res->free_result();
+    }
+    $stmt->close();
+  }
+  return $overrides;
+}
+
+/**
+ * Update user privilege overrides (Enforces security backstop)
+ * $overrides is associative array: ['privilege_code' => 'inherit'|'grant'|'deny'|1|0|null]
+ */
+function updateUserPrivilegeOverrides($conn, $user_id, array $overrides) {
+  if (!($conn instanceof mysqli)) {
+    return false;
+  }
+  $user_id = (int)$user_id;
+
+  // Root admin cannot have overrides modified
+  if ($user_id === 1) {
+    return false;
+  }
+
+  // Get admin-only privileges
+  $adminOnly = [];
+  $aoRes = $conn->query("SELECT privilege_code FROM privileges WHERE is_admin_only = 1");
+  if ($aoRes) {
+    while ($r = $aoRes->fetch_assoc()) {
+      $adminOnly[$r['privilege_code']] = true;
+    }
+    $aoRes->free_result();
+  }
+
+  $conn->begin_transaction();
+  try {
+    $del = $conn->prepare("DELETE FROM user_privileges WHERE user_id = ?");
+    $del->bind_param("i", $user_id);
+    $del->execute();
+    $del->close();
+
+    $ins = $conn->prepare("INSERT INTO user_privileges (user_id, privilege_code, granted) VALUES (?, ?, ?)");
+    foreach ($overrides as $code => $val) {
+      // Backstop: skip admin-only privileges
+      if (isset($adminOnly[$code])) {
+        continue;
+      }
+      if ($val === 'grant' || $val === 1 || $val === '1') {
+        $granted = 1;
+        $ins->bind_param("isi", $user_id, $code, $granted);
+        $ins->execute();
+      } elseif ($val === 'deny' || $val === 0 || $val === '0') {
+        $granted = 0;
+        $ins->bind_param("isi", $user_id, $code, $granted);
+        $ins->execute();
+      }
+      // 'inherit' or null: do not insert (row absent = inherit)
+    }
+    $ins->close();
+
+    $conn->commit();
+    return true;
+  } catch (Throwable $e) {
+    $conn->rollback();
+    return false;
+  }
+}
+
+/**
+ * Reset all user privilege overrides to inherit from role
+ */
+function resetUserPrivilegeOverrides($conn, $user_id) {
+  if (!($conn instanceof mysqli)) {
+    return false;
+  }
+  $user_id = (int)$user_id;
+  if ($user_id === 1) {
+    return false;
+  }
+
+  $stmt = $conn->prepare("DELETE FROM user_privileges WHERE user_id = ?");
+  if ($stmt) {
+    $stmt->bind_param("i", $user_id);
+    $res = $stmt->execute();
+    $stmt->close();
+    return $res;
+  }
+  return false;
+}
+
+/**
+ * Update user role (Enforces security backstop)
+ */
+function updateUserRole($conn, $user_id, $role_name) {
+  if (!($conn instanceof mysqli)) {
+    return false;
+  }
+  $user_id = (int)$user_id;
+
+  // Root admin cannot have role changed
+  if ($user_id === 1) {
+    return false;
+  }
+
+  // Non-admins cannot be assigned 'admin' role via interface
+  if ($role_name === 'admin') {
+    return false;
+  }
+
+  $stmt = $conn->prepare("UPDATE users SET role = ? WHERE user_id = ?");
+  if ($stmt) {
+    $stmt->bind_param("si", $role_name, $user_id);
+    $res = $stmt->execute();
+    $stmt->close();
+    return $res;
+  }
+  return false;
+}
+
+/**
+ * Create a new custom role
+ */
+function createCustomRole($conn, $role_name, $display_name, $description) {
+  if (!($conn instanceof mysqli)) {
+    return false;
+  }
+
+  $role_name = strtolower(trim($role_name));
+  $display_name = trim($display_name);
+  $description = trim($description);
+
+  // Validate
+  if (!preg_match('/^[a-z0-9_]{2,30}$/', $role_name)) {
+    return false;
+  }
+  if (in_array($role_name, ['admin', 'public', 'root', 'administrator'])) {
+    return false;
+  }
+  if (empty($display_name)) {
+    return false;
+  }
+
+  $stmt = $conn->prepare("INSERT INTO roles (role_name, display_name, description, is_system) VALUES (?, ?, ?, 0)");
+  if ($stmt) {
+    $stmt->bind_param("sss", $role_name, $display_name, $description);
+    $res = $stmt->execute();
+    $stmt->close();
+    return $res;
+  }
+  return false;
+}
+

@@ -25,24 +25,28 @@
       $pub_date = sanitizeInput($_POST['pub_date']);
       $title = sanitizeInput($_POST['title']);
       $content = sanitizeInput($_POST['content']);
-      $status = sanitizeInput($_POST['status'] ?? 'draft'); // Default to 'draft' if status not sent (i.e. for users with write privileges)
 
       if ($blog_id === false || $blog_id === null) {
         $errors[] = "Invalid blog ID.";
       }
 
-      $errorsBlogpost = validateBlogpostInput($title, $content, $status);
-      $errors = array_merge($errors, $errorsBlogpost);
-      
-      // Ownership and published check for 'write' users
-      if ($role === 'write' && $blog_id !== false && $blog_id !== null) {
-        $check_post = getBlogpostDetails($conn, $blog_id);
-        if (!$check_post || $check_post['user_id'] != $_SESSION['user_id']) {
+      $canEditAll = hasPrivilege($conn, 'edit_all_blogposts');
+      $canPublish = hasPrivilege($conn, 'publish_blogpost');
+      $check_post = ($blog_id !== false && $blog_id !== null) ? getBlogpostDetails($conn, $blog_id) : null;
+
+      // Ownership and published check
+      if (!$canEditAll && $check_post) {
+        if ($check_post['user_id'] != $_SESSION['user_id']) {
           $errors[] = "You do not have permission to edit this story.";
-        } elseif ($check_post['status'] === 'published') {
+        } elseif ($check_post['status'] === 'published' && !$canPublish) {
           $errors[] = "This story has been published and can no longer be edited.";
         }
       }
+
+      $status = $canPublish ? sanitizeInput($_POST['status'] ?? 'draft') : ($check_post ? $check_post['status'] : 'draft');
+
+      $errorsBlogpost = validateBlogpostInput($title, $content, $status);
+      $errors = array_merge($errors, $errorsBlogpost);
 
       if (empty($errors)) {
         // Start transaction
@@ -97,11 +101,14 @@
     }
   }
 
-  // List only their own stories for 'write' users
+  $canEditAll = hasPrivilege($conn, 'edit_all_blogposts');
+  $canPublish = hasPrivilege($conn, 'publish_blogpost');
+
+  // List only their own stories for non-editors
   $all_posts = getBlogposts($conn);
   $posts = [];
   foreach ($all_posts as $p) {
-    if ($role === 'admin' || $p['user_id'] == $_SESSION['user_id']) {
+    if ($canEditAll || $p['user_id'] == $_SESSION['user_id']) {
       $posts[] = $p;
     }
   }
@@ -196,7 +203,7 @@
         </form>
 
         <?php if ($selected_post): ?>
-          <?php if ($role === 'write' && $selected_post['status'] === 'published'): ?>
+          <?php if (!$canPublish && !$canEditAll && $selected_post['status'] === 'published'): ?>
             <div style="padding: 15px; margin-top: 20px; background-color: #f9f9f9; border-left: 4px solid #f39c12;">
               <p><strong>Notice:</strong> This story has been published and can no longer be edited. Please contact an admin if you need to make changes.</p>
             </div>
@@ -220,11 +227,11 @@
               <br><br>
               <label for="status">Publish story?</label>
               <br>
-              <select name="status" id="status" required <?php echo ($role === 'write') ? 'disabled' : ''; ?>>
-                <option value="draft" <?php echo ($role === 'write' || $selected_post['status'] == 'draft') ? 'selected' : ''; ?>>draft</option>
-                <option value="published" <?php echo ($role !== 'write' && $selected_post['status'] == 'published') ? 'selected' : ''; ?>>published</option>
+              <select name="status" id="status" required <?php echo (!$canPublish) ? 'disabled' : ''; ?>>
+                <option value="draft" <?php echo (!$canPublish || $selected_post['status'] == 'draft') ? 'selected' : ''; ?>>draft</option>
+                <option value="published" <?php echo ($canPublish && $selected_post['status'] == 'published') ? 'selected' : ''; ?>>published</option>
               </select>
-              <?php if ($role === 'write'): ?>
+              <?php if (!$canPublish): ?>
                 <p><small><i>Note: Once an admin publishes your story, it will be locked and can no longer be edited.</i></small></p>
               <?php endif; ?>
               

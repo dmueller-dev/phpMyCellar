@@ -138,7 +138,7 @@
   $prevProducer="";
   $prevVintage="";
   $prevVariety="";
-  $has_contribution_rights = isset($_SESSION['user_id']) && (($_SESSION['role'] ?? 'read') === 'write' || ($_SESSION['role'] ?? 'read') === 'admin');
+  $has_contribution_rights = hasPrivilege($conn, 'add_tasting_note');
 
   // Base WHERE condition
   $sqlWhere = " WHERE 1=1 ";

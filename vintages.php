@@ -4,8 +4,8 @@
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/includes/init.php';
 
-  // Accessible to members
-  if (!isset($_SESSION['user_id'])) {
+  // Accessible if user has view_tnotes privilege
+  if (!hasPrivilege($conn, 'view_tnotes')) {
     header("Location: login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
     exit();
   }

@@ -43,8 +43,11 @@
 
     // Process form submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-      // Validate the token before processing the comment
-      if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+      if (!hasPrivilege($conn, 'post_comments')) {
+        $error = "You do not have permission to post comments.";
+      } elseif (!isset($_SESSION['user_id'])) {
+        $error = "You must be logged in to post comments.";
+      } elseif (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $error = "Security check failed. Please refresh the page and try again.";
       } else {
         $comment = $_POST['comment'] ?? '';
@@ -74,7 +77,6 @@
           $mysqli->rollback();
           $mysqli->autocommit(TRUE);
         }
-        $post->close();
       }
     }
 
@@ -100,7 +102,7 @@
     $page_title = "Dominik Mueller - " . $wine_name . "";
 
     require_once 'includes/header.php';
-    $has_contribution_rights = isset($_SESSION['user_id']) && (($_SESSION['role'] ?? 'read') === 'write' || ($_SESSION['role'] ?? 'read') === 'admin');
+    $has_contribution_rights = hasPrivilege($conn, 'add_tasting_note');
 ?>
 
 <div class="row">
@@ -129,10 +131,10 @@
       </div>
       <p><ul style="list-style-type:none;padding:0;margin:0;">
         <?php
-          if (!isset($_SESSION['user_id'])) {
-            echo "<p>Please log in to see my tasting notes.</p>";
-          } elseif (isset($_SESSION['user_id'])) {
+          if (hasPrivilege($conn, 'view_tnotes')) {
             latestNotes($wine["wine_id"]);
+          } else {
+            echo "<p>Please <a href='/login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']) . "'>log in</a> to see tasting notes.</p>";
           }
         ?>
       </ul></p>
@@ -239,40 +241,52 @@
         otherVintages($wineID, $wine["master_id"]);
       }
     ?>
-    <?php
-      // Check if user is logged in
-      if (isset($_SESSION['user_id'])) {
-        // Fetch subscription state and display toggle button
-        $is_subbed = isSubscribed($conn, $_SESSION['user_id'], $wineID, 'wine');
-        echo "<div class='card' id='comments' style='display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;'>";
-        echo "<div><h3 style='margin:0;'>Discussion</h3></div>";
-        echo "<div class='subscription-container' style='margin:0;'>";
-        if ($is_subbed) {
-          echo "<button id='btn-sub-toggle' class='btn-subscription subscribed' onclick='toggleSubscriptionAjax($wineID, \"wine\")'>🔕 Unsubscribe</button>";
-        } else {
-          echo "<button id='btn-sub-toggle' class='btn-subscription' onclick='toggleSubscriptionAjax($wineID, \"wine\")'>🔔 Subscribe to discussion</button>";
-        }
-        echo "</div></div>";
+    <?php if (hasPrivilege($conn, 'view_comments')): ?>
+      <?php
+        $is_subbed = isset($_SESSION['user_id']) ? isSubscribed($conn, $_SESSION['user_id'], $wineID, 'wine') : false;
+      ?>
+      <div class="card" id="comments" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div><h3 style="margin:0;">Discussion</h3></div>
+        <?php if (isset($_SESSION['user_id'])): ?>
+          <div class="subscription-container" style="margin:0;">
+            <?php if ($is_subbed): ?>
+              <button id="btn-sub-toggle" class="btn-subscription subscribed" onclick="toggleSubscriptionAjax(<?= $wineID ?>, 'wine')">🔕 Unsubscribe</button>
+            <?php else: ?>
+              <button id="btn-sub-toggle" class="btn-subscription" onclick="toggleSubscriptionAjax(<?= $wineID ?>, 'wine')">🔔 Subscribe to discussion</button>
+            <?php endif; ?>
+          </div>
+        <?php endif; ?>
+      </div>
 
-        echo "<div class='card'><details><summary><h3 style='display:inline;margin:0;'>Post a comment</h3></summary>";
-        if ($error!="") {
-          echo "<div style='color:red;'>$error</div>";
-        } elseif ($success!="") {
-          echo "<div style='color:green;'>$success</div>";
-        }
-        echo "<form method='post' autocomplete='off' accept-charset='UTF-8' style='margin-bottom:10px;'>";
-        echo "<input type='hidden' name='csrf_token' value='" . $csrf_token . "'>";
-        echo "<label for='username'>Your name:</label>";
-        echo "<br><input type='text' id='username' value='".htmlspecialchars($displayname, ENT_QUOTES, 'UTF-8')."' disabled readonly>";
-        echo "<br><br>";
-        echo "<label for='comment'>Your comment:</label>";
-        echo "<br><textarea name='comment' id='comment' rows='15' cols='35' maxlength='2000' placeholder='...'></textarea>";
-        echo "<br><br>";
-        echo "<button type='submit'>Post comment</button>";
-        echo "</form></details>";
-        echo "</div>";
+      <?php if (hasPrivilege($conn, 'post_comments')): ?>
+        <div class="card"><details><summary><h3 style="display:inline;margin:0;">Post a comment</h3></summary>
+        <?php
+          if ($error!="") {
+            echo "<div style='color:red;'>$error</div>";
+          } elseif ($success!="") {
+            echo "<div style='color:green;'>$success</div>";
+          }
         ?>
-        
+        <form method="post" autocomplete="off" accept-charset="UTF-8" style="margin-bottom:10px;">
+          <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
+          <label for="username">Your name:</label>
+          <br><input type="text" id="username" value="<?= htmlspecialchars($displayname ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
+          <br><br>
+          <label for="comment">Your comment:</label>
+          <br><textarea name="comment" id="comment" rows="15" cols="35" maxlength="2000" placeholder="..."></textarea>
+          <br><br>
+          <button type="submit">Post comment</button>
+        </form></details>
+        </div>
+      <?php elseif (!isset($_SESSION['user_id'])): ?>
+        <div class="card">
+          <p style="margin:0; font-size:0.95em; color:#666;">Please <a href="/login.php?redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>">log in</a> to post a comment or join the discussion.</p>
+        </div>
+      <?php endif; ?>
+
+      <?php renderComments($conn, $wineID, 'wine'); ?>
+
+      <?php if (isset($_SESSION['user_id'])): ?>
         <script>
         function toggleSubscriptionAjax(id, type) {
           const btn = document.getElementById('btn-sub-toggle');
@@ -313,10 +327,8 @@
           xhr.send(formData);
         }
         </script>
-        <?php
-      }
-      renderComments($conn, $wineID, 'wine');
-    ?>
+      <?php endif; ?>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -517,7 +529,7 @@
 <?php function renderWines($num,$sort,$sqlOrderBy)
 {
   global $mysqli, $conn;
-  $has_contribution_rights = isset($_SESSION['user_id']) && (($_SESSION['role'] ?? 'read') === 'write' || ($_SESSION['role'] ?? 'read') === 'admin');
+  $has_contribution_rights = hasPrivilege($conn, 'add_tasting_note');
 
   // Base WHERE condition
   $sqlWhere = " WHERE 1=1 ";

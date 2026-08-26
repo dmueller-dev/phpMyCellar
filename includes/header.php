@@ -89,8 +89,6 @@
             "<a class='notification-bell " . (($currentPage == 'notifications.php') ? 'active ' : '') . "' href='/notifications.php' title='Notifications'>🔔" . $badge_html . "</a>" .
             "</li>";
 
-          $role = $_SESSION['role'] ?? 'read';
-
           $isContributeActive = in_array($currentPage, [
             'addTastingNote.php',
             'blindTasting.php',
@@ -100,42 +98,81 @@
           ]);
           $isAdminActive = (strpos($currentPath, '/backend/') !== false && !$isContributeActive);
 
-          if ($role === 'admin') {
+          $canManagePrivileges = hasPrivilege($conn, 'manage_privileges');
+          $canManageUsers = hasPrivilege($conn, 'manage_users');
+          $canBrowseBottles = hasPrivilege($conn, 'browse_bottles');
+          $canAddBottle = hasPrivilege($conn, 'add_bottle');
+          $canBrowseWines = hasPrivilege($conn, 'browse_wines');
+          $canAddWine = hasPrivilege($conn, 'add_wine');
+
+          $hasAdminMenuItems = $canManagePrivileges || $canManageUsers || $canBrowseBottles || $canAddBottle || $canBrowseWines || $canAddWine;
+
+          if ($hasAdminMenuItems) {
             echo "<li class='dropdown right'>" .
               "<label for='drop-admin' class='menu-label" . ($isAdminActive ? ' active' : '') . "'>Admin</label>" .
               "<input type='checkbox' id='drop-admin' class='drop-check'>" .
               "<label for='drop-admin' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
-              "<li><a class='" . (($currentPath == '/backend/index.php') ? 'active' : '') . "' href='/backend/index.php' title='Dashboard'>Dashboard</a></li>" .
-              "<li><a class='" . (($currentPath == '/backend/browseBottles.php') ? 'active' : '') . "' href='/backend/browseBottles.php' title='Browse all bottles'>Browse bottles</a></li>" .
-              "<li><a class='" . (($currentPath == '/backend/addBottle.php') ? 'active' : '') . "' href='/backend/addBottle.php' title='Add bottle'>Add bottle</a></li>" .
-              "<li><a class='" . (($currentPath == '/backend/browseWines.php') ? 'active' : '') . "' href='/backend/browseWines.php' title='Browse all wines'>Browse wines</a></li>" .
-              "<li><a class='" . (($currentPath == '/backend/addWine.php') ? 'active' : '') . "' href='/backend/addWine.php' title='Add wine'>Add wine</a></li>" .
-              "<li><a class='" . (($currentPath == '/backend/addUser.php') ? 'active' : '') . "' href='/backend/addUser.php' title='User management'>Add user</a></li>" .
-              "</ul></li>";
+              "<li><a class='" . (($currentPath == '/backend/index.php') ? 'active' : '') . "' href='/backend/index.php' title='Dashboard'>Dashboard</a></li>";
+            if ($canBrowseBottles) {
+              echo "<li><a class='" . (($currentPath == '/backend/browseBottles.php') ? 'active' : '') . "' href='/backend/browseBottles.php' title='Browse all bottles'>Browse bottles</a></li>";
+            }
+            if ($canAddBottle) {
+              echo "<li><a class='" . (($currentPath == '/backend/addBottle.php') ? 'active' : '') . "' href='/backend/addBottle.php' title='Add bottle'>Add bottle</a></li>";
+            }
+            if ($canBrowseWines) {
+              echo "<li><a class='" . (($currentPath == '/backend/browseWines.php') ? 'active' : '') . "' href='/backend/browseWines.php' title='Browse all wines'>Browse wines</a></li>";
+            }
+            if ($canAddWine) {
+              echo "<li><a class='" . (($currentPath == '/backend/addWine.php') ? 'active' : '') . "' href='/backend/addWine.php' title='Add wine'>Add wine</a></li>";
+            }
+            if ($canManagePrivileges) {
+              echo "<li><a class='" . (($currentPath == '/backend/managePrivileges.php') ? 'active' : '') . "' href='/backend/managePrivileges.php' title='User & role privileges'>User & role privileges</a></li>";
+            }
+            if ($canManageUsers) {
+              echo "<li><a class='" . (($currentPath == '/backend/addUser.php') ? 'active' : '') . "' href='/backend/addUser.php' title='User management'>Add user</a></li>";
+            }
+            echo "</ul></li>";
           }
 
-          if ($role === 'write' || $role === 'admin') {
+          $canAddNote = hasPrivilege($conn, 'add_tasting_note');
+          $canEditNote = hasPrivilege($conn, 'edit_tasting_note') || hasPrivilege($conn, 'edit_all_tasting_notes');
+          $canAddBlog = hasPrivilege($conn, 'add_blogpost');
+          $canEditBlog = hasPrivilege($conn, 'edit_blogpost') || hasPrivilege($conn, 'edit_all_blogposts');
+
+          $hasContributeMenuItems = $canAddNote || $canEditNote || $canAddBlog || $canEditBlog;
+
+          if ($hasContributeMenuItems) {
             echo "<li class='dropdown right'>" .
               "<label for='drop-contribute' class='menu-label" . ($isContributeActive ? ' active' : '') . "'>Contribute</label>" .
               "<input type='checkbox' id='drop-contribute' class='drop-check'>" .
               "<label for='drop-contribute' class='drop-icon'>&#9660;</label>" .
-              "<ul class='submenu'>" .
-              "<li><a class='" . (($currentPath == '/backend/addTastingNote.php') ? 'active' : '') . "' href='/backend/addTastingNote.php' title='New tasting note'>Write tasting note</a></li>" .
-              "<li><a class='" . (($currentPath == '/backend/blindTasting.php') ? 'active' : '') . "' href='/backend/blindTasting.php' title='New blind tasting note'>Write <em>blind</em> tasting note</a></li>" .
-              "<li><a class='" . (($currentPath == '/backend/editTastingNote.php') ? 'active' : '') . "' href='/backend/editTastingNote.php' title='Edit tasting notes'>Edit tasting note</a></li>" .
-              "<li><a class='" . (($currentPath == '/backend/addBlogpost.php') ? 'active' : '') . "' href='/backend/addBlogpost.php' title='Add new story'>Write story</a></li>" .
-              "<li><a class='" . (($currentPath == '/backend/editBlogpost.php') ? 'active' : '') . "' href='/backend/editBlogpost.php' title='Edit a blogpost'>Edit story</a></li>" .
-              "</ul></li>";
+              "<ul class='submenu'>";
+            if ($canAddNote) {
+              echo "<li><a class='" . (($currentPath == '/backend/addTastingNote.php') ? 'active' : '') . "' href='/backend/addTastingNote.php' title='New tasting note'>Write tasting note</a></li>" .
+                   "<li><a class='" . (($currentPath == '/backend/blindTasting.php') ? 'active' : '') . "' href='/backend/blindTasting.php' title='New blind tasting note'>Write <em>blind</em> tasting note</a></li>";
+            }
+            if ($canEditNote) {
+              echo "<li><a class='" . (($currentPath == '/backend/editTastingNote.php') ? 'active' : '') . "' href='/backend/editTastingNote.php' title='Edit tasting notes'>Edit tasting note</a></li>";
+            }
+            if ($canAddBlog) {
+              echo "<li><a class='" . (($currentPath == '/backend/addBlogpost.php') ? 'active' : '') . "' href='/backend/addBlogpost.php' title='Add new story'>Write story</a></li>";
+            }
+            if ($canEditBlog) {
+              echo "<li><a class='" . (($currentPath == '/backend/editBlogpost.php') ? 'active' : '') . "' href='/backend/editBlogpost.php' title='Edit a blogpost'>Edit story</a></li>";
+            }
+            echo "</ul></li>";
           }
 
-          echo "<li class='dropdown right'>" .
-            "<label for='drop-friends' class='menu-label" . (($currentPage == 'winemenu.php') ? ' active' : '') . "'>For friends</label>" .
-            "<input type='checkbox' id='drop-friends' class='drop-check'>" .
-            "<label for='drop-friends' class='drop-icon'>&#9660;</label>" .
-            "<ul class='submenu'>" .
-            "<li><a class='" . (($currentPage == 'winemenu.php') ? 'active ' : '') . "' href='/winemenu.php' title='Carte des vins'>Carte des vins</a></li>" .
-            "</ul></li>";
+          if (hasPrivilege($conn, 'view_cellar_menu')) {
+            echo "<li class='dropdown right'>" .
+              "<label for='drop-friends' class='menu-label" . (($currentPage == 'winemenu.php') ? ' active' : '') . "'>For friends</label>" .
+              "<input type='checkbox' id='drop-friends' class='drop-check'>" .
+              "<label for='drop-friends' class='drop-icon'>&#9660;</label>" .
+              "<ul class='submenu'>" .
+              "<li><a class='" . (($currentPage == 'winemenu.php') ? 'active ' : '') . "' href='/winemenu.php' title='Carte des vins'>Carte des vins</a></li>" .
+              "</ul></li>";
+          }
         }
       ?>
     </ul>

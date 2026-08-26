@@ -4,8 +4,8 @@
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/includes/init.php';
 
-  // Check if user is not logged in
-  if (!isset($_SESSION['user_id'])) {
+  // Check if user has permission to view tasting notes
+  if (!hasPrivilege($conn, 'view_tnotes')) {
     header("Location: login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
     exit();
   }
@@ -29,17 +29,21 @@
     // Generate the token for the form
     $csrf_token = generateCSRFToken();
 
-    // Fetch user details
-    $user_id = $_SESSION['user_id'];
-    $stmt = $mysqli->prepare("SELECT username, displayname FROM users WHERE user_id = ?");
-    $stmt->bind_param('i', $user_id);
-    $stmt->execute();
-    $stmt->bind_result($username, $displayname);
-    if (!$stmt->fetch()) {
+    // Fetch user details if logged in
+    $user_id = $_SESSION['user_id'] ?? null;
+    $username = '';
+    $displayname = '';
+    if ($user_id) {
+      $stmt = $mysqli->prepare("SELECT username, displayname FROM users WHERE user_id = ?");
+      $stmt->bind_param('i', $user_id);
+      $stmt->execute();
+      $stmt->bind_result($username, $displayname);
+      if (!$stmt->fetch()) {
+        $stmt->close();
+        die("<h2>User not found.</h2>");
+      }
       $stmt->close();
-      die("<h2>User not found.</h2>");
     }
-    $stmt->close();
 
     // Initialize error and success messages
     $error = "";
@@ -47,8 +51,11 @@
 
     // Process form submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-      // Validate the token before processing the comment
-      if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+      if (!hasPrivilege($conn, 'post_comments')) {
+        $error = "You do not have permission to post comments.";
+      } elseif (!$user_id) {
+        $error = "You must be logged in to post comments.";
+      } elseif (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $error = "Security check failed. Please refresh the page and try again.";
       } else {
         $comment = $_POST['comment'] ?? '';
@@ -254,83 +261,94 @@
     </div>
     <?php moreNotes($noteID, $tasting_note["wine_id"], $wine_name); ?>
     <?php if ($tasting_note["vintage"]!="NV") { otherVintages($tasting_note["wine_id"], $tasting_note["master_id"]); } ?>
-    <?php if (isset($_SESSION['user_id'])): ?>
+    <?php if (hasPrivilege($conn, 'view_comments')): ?>
       <?php
-        $is_subbed = isSubscribed($conn, $_SESSION['user_id'], $noteID, 'tnote');
+        $is_subbed = isset($_SESSION['user_id']) ? isSubscribed($conn, $_SESSION['user_id'], $noteID, 'tnote') : false;
       ?>
       <div class="card" id="comments" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div><h3 style="margin:0;">Discussion</h3></div>
-        <div class="subscription-container" style="margin:0;">
-          <?php if ($is_subbed): ?>
-            <button id="btn-sub-toggle" class="btn-subscription subscribed" onclick="toggleSubscriptionAjax(<?= $noteID ?>, 'tnote')">🔕 Unsubscribe</button>
-          <?php else: ?>
-            <button id="btn-sub-toggle" class="btn-subscription" onclick="toggleSubscriptionAjax(<?= $noteID ?>, 'tnote')">🔔 Subscribe to discussion</button>
-          <?php endif; ?>
-        </div>
+        <?php if (isset($_SESSION['user_id'])): ?>
+          <div class="subscription-container" style="margin:0;">
+            <?php if ($is_subbed): ?>
+              <button id="btn-sub-toggle" class="btn-subscription subscribed" onclick="toggleSubscriptionAjax(<?= $noteID ?>, 'tnote')">🔕 Unsubscribe</button>
+            <?php else: ?>
+              <button id="btn-sub-toggle" class="btn-subscription" onclick="toggleSubscriptionAjax(<?= $noteID ?>, 'tnote')">🔔 Subscribe to discussion</button>
+            <?php endif; ?>
+          </div>
+        <?php endif; ?>
       </div>
 
-      <div class="card">
-        <details><summary><h3 style="display:inline;margin:0;">Post a comment</h3></summary>
-        <?php
-          if ($error!="") {
-            echo "<div style='color:red;'>$error</div>";
-          } elseif ($success!="") {
-            echo "<div style='color:green;'>$success</div>";
-          }
-        ?>
-        <form method="post" autocomplete="off" accept-charset="UTF-8" style="margin-bottom:10px;">
-          <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-          <label for="username">Your name:</label>
-          <br><input type="text" id="username" value="<?= htmlspecialchars($displayname ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
-          <br><br>
-          <label for="comment">Your comment:</label>
-          <br><textarea name="comment" id="comment" rows="15" cols="35" maxlength="2000" placeholder="..."></textarea>
-          <br><br>
-          <button type="submit">Post comment</button>
-        </form></details>
-      </div>
+      <?php if (hasPrivilege($conn, 'post_comments')): ?>
+        <div class="card">
+          <details><summary><h3 style="display:inline;margin:0;">Post a comment</h3></summary>
+          <?php
+            if ($error!="") {
+              echo "<div style='color:red;'>$error</div>";
+            } elseif ($success!="") {
+              echo "<div style='color:green;'>$success</div>";
+            }
+          ?>
+          <form method="post" autocomplete="off" accept-charset="UTF-8" style="margin-bottom:10px;">
+            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+            <label for="username">Your name:</label>
+            <br><input type="text" id="username" value="<?= htmlspecialchars($displayname ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled readonly>
+            <br><br>
+            <label for="comment">Your comment:</label>
+            <br><textarea name="comment" id="comment" rows="15" cols="35" maxlength="2000" placeholder="..."></textarea>
+            <br><br>
+            <button type="submit">Post comment</button>
+          </form></details>
+        </div>
+      <?php elseif (!isset($_SESSION['user_id'])): ?>
+        <div class="card">
+          <p style="margin:0; font-size:0.95em; color:#666;">Please <a href="/login.php?redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>">log in</a> to post a comment or join the discussion.</p>
+        </div>
+      <?php endif; ?>
+
       <?php renderComments($conn, $noteID, 'tnote'); ?>
 
-      <script>
-      function toggleSubscriptionAjax(id, type) {
-        const btn = document.getElementById('btn-sub-toggle');
-        if (!btn) return;
-        
-        btn.disabled = true;
-        
-        const formData = new FormData();
-        formData.append('id', id);
-        formData.append('type', type);
-        formData.append('csrf_token', '<?= $csrf_token ?>');
-        
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/toggle_subscription.php', true);
-        xhr.onload = function() {
-          btn.disabled = false;
-          if (xhr.status === 200) {
-            try {
-              const res = JSON.parse(xhr.responseText);
-              if (res.status === 'success') {
-                if (res.action === 'subscribed') {
-                  btn.textContent = '🔕 Unsubscribe';
-                  btn.className = 'btn-subscription subscribed';
+      <?php if (isset($_SESSION['user_id'])): ?>
+        <script>
+        function toggleSubscriptionAjax(id, type) {
+          const btn = document.getElementById('btn-sub-toggle');
+          if (!btn) return;
+          
+          btn.disabled = true;
+          
+          const formData = new FormData();
+          formData.append('id', id);
+          formData.append('type', type);
+          formData.append('csrf_token', '<?= $csrf_token ?>');
+          
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/toggle_subscription.php', true);
+          xhr.onload = function() {
+            btn.disabled = false;
+            if (xhr.status === 200) {
+              try {
+                const res = JSON.parse(xhr.responseText);
+                if (res.status === 'success') {
+                  if (res.action === 'subscribed') {
+                    btn.textContent = '🔕 Unsubscribe';
+                    btn.className = 'btn-subscription subscribed';
+                  } else {
+                    btn.textContent = '🔔 Subscribe to discussion';
+                    btn.className = 'btn-subscription';
+                  }
                 } else {
-                  btn.textContent = '🔔 Subscribe to discussion';
-                  btn.className = 'btn-subscription';
+                  alert(res.message);
                 }
-              } else {
-                alert(res.message);
+              } catch (e) {
+                alert('An error occurred. Please try again.');
               }
-            } catch (e) {
+            } else {
               alert('An error occurred. Please try again.');
             }
-          } else {
-            alert('An error occurred. Please try again.');
-          }
-        };
-        xhr.send(formData);
-      }
-      </script>
+          };
+          xhr.send(formData);
+        }
+        </script>
+      <?php endif; ?>
     <?php endif; ?>
   </div>
 </div>

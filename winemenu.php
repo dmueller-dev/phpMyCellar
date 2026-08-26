@@ -4,8 +4,8 @@
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/includes/init.php';
 
-  // Check if user is not logged in
-  if (!isset($_SESSION['user_id'])) {
+  // Check if user has permission to view cellar menu
+  if (!hasPrivilege($conn, 'view_cellar_menu')) {
     header("Location: login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
     exit();
   }

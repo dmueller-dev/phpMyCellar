@@ -28,7 +28,13 @@
   // Alias for backend compatibility
   $conn = $mysqli;
 
-  // Enforce Role-Based Access Control (RBAC) for the backend
+  // Load backend and frontend helper functions
+  require_once __DIR__ . '/functions.php';
+
+  // Ensure privilege tables and seed data exist
+  ensurePrivilegeTablesExist($mysqli);
+
+  // Enforce Dynamic Privilege Access Control for the backend
   $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
   if (strpos($scriptName, '/backend/') !== false) {
     if (!isset($_SESSION['user_id'])) {
@@ -37,24 +43,25 @@
       exit();
     }
 
-    $role = $_SESSION['role'] ?? 'read';
-
-    if ($role === 'read') {
-      // Read-only users have no backend access
-      header("Location: /index.php");
-      exit();
-    }
-
-    if ($role === 'write') {
-      // Write users only have access to specific scripts
-      $allowedScripts = ['addTastingNote.php', 'editTastingNote.php', 'blindTasting.php', 'addBlogpost.php', 'editBlogpost.php'];
-      $currentScript = basename($scriptName);
-      if (!in_array($currentScript, $allowedScripts)) {
+    $currentScript = basename($scriptName);
+    if ($currentScript === 'index.php') {
+      if (!canAccessBackend($mysqli, $_SESSION['user_id'])) {
         header("Location: /index.php");
         exit();
       }
+    } else {
+      $scriptMap = getPrivilegeScriptMap();
+      if (isset($scriptMap[$currentScript])) {
+        $requiredPriv = $scriptMap[$currentScript];
+        if (!hasPrivilege($mysqli, $requiredPriv, $_SESSION['user_id'])) {
+          header("Location: /backend/index.php");
+          exit();
+        }
+      } else {
+        if (!canAccessBackend($mysqli, $_SESSION['user_id'])) {
+          header("Location: /index.php");
+          exit();
+        }
+      }
     }
   }
-
-  // Load backend and frontend helper functions
-  require_once __DIR__ . '/functions.php';

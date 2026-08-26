@@ -38,22 +38,24 @@
       $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
       $errorsDrinkDates = validateDrinkDatesInput($drink_from, $drink_through);
       $blind = sanitizeInput($_POST['blind']);
-      $status = sanitizeInput($_POST['status'] ?? 'draft');
+      $canEditAll = hasPrivilege($conn, 'edit_all_tasting_notes');
+      $canPublish = hasPrivilege($conn, 'publish_tasting_note');
+      $check_note = getNoteDetails($conn, $note_id);
+
+      if (!$canEditAll) {
+        if (!$check_note || $check_note['user_id'] != $_SESSION['user_id']) {
+          $errors[] = "You do not have permission to edit this tasting note.";
+        } elseif ($check_note['status'] === 'published' && !$canPublish) {
+          $errors[] = "This tasting note has been published and can no longer be edited.";
+        }
+      }
+
+      $status = $canPublish ? sanitizeInput($_POST['status'] ?? 'draft') : ($check_note ? $check_note['status'] : 'draft');
       $img = sanitizeInput($_POST['img']);
       $img_class = sanitizeInput($_POST['img_class']);
       if ($img_class == "null") { $img_class = null; }
       $errorsImg = validateImageInput($img, $img_class);
       $errors = validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $blind, $status, $img, $img_class, $favourite);
-      
-      // Ownership and published check for 'write' users
-      if ($role === 'write') {
-        $check_note = getNoteDetails($conn, $note_id);
-        if (!$check_note || $check_note['user_id'] != $_SESSION['user_id']) {
-          $errors[] = "You do not have permission to edit this tasting note.";
-        } elseif ($check_note['status'] === 'published') {
-          $errors[] = "This tasting note has been published and can no longer be edited.";
-        }
-      }
 
       if (empty($errorsDrinkDates) && empty($errorsImg) && empty($errors)) {
         // Start transaction
@@ -80,11 +82,14 @@
     }
   }
 
-  // List only their own tasting notes for 'write' users
+  $canEditAll = hasPrivilege($conn, 'edit_all_tasting_notes');
+  $canPublish = hasPrivilege($conn, 'publish_tasting_note');
+
+  // List only their own tasting notes for non-editors
   $all_notes = getTastingNotes($conn);
   $notes = [];
   foreach ($all_notes as $n) {
-    if ($role === 'admin' || $n['user_id'] == $_SESSION['user_id']) {
+    if ($canEditAll || $n['user_id'] == $_SESSION['user_id']) {
       $notes[] = $n;
     }
   }
@@ -205,7 +210,7 @@
         </form>
 
         <?php if ($selected_note): ?>
-          <?php if ($role === 'write' && $selected_note['status'] === 'published'): ?>
+          <?php if (!$canPublish && !$canEditAll && $selected_note['status'] === 'published'): ?>
             <div style="padding: 15px; margin-top: 20px; background-color: #f9f9f9; border-left: 4px solid #f39c12;">
               <p><strong>Notice:</strong> This tasting note has been published and can no longer be edited. Please contact an admin if you need to make changes.</p>
             </div>
@@ -350,9 +355,9 @@
             <br><br>
             <label for="status">Publish note?</label>
             <br>
-            <select name="status" id="status" required <?php echo ($role === 'write') ? 'disabled' : ''; ?>>
-              <option value="draft" <?php echo ($role === 'write' || $selected_note['status'] == 'draft') ? 'selected' : ''; ?>>draft</option>
-              <option value="published" <?php echo ($role !== 'write' && $selected_note['status'] == 'published') ? 'selected' : ''; ?>>published</option>
+            <select name="status" id="status" required <?php echo (!$canPublish) ? 'disabled' : ''; ?>>
+              <option value="draft" <?php echo (!$canPublish || $selected_note['status'] == 'draft') ? 'selected' : ''; ?>>draft</option>
+              <option value="published" <?php echo ($canPublish && $selected_note['status'] == 'published') ? 'selected' : ''; ?>>published</option>
             </select>
 
             <br><br>

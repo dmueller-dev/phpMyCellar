@@ -158,7 +158,7 @@
   $prevProducer="";
   $prevVintage="";
   $prevLocation="";
-  $is_admin = isset($_SESSION['user_id']) && ($_SESSION['role'] ?? 'read') === 'admin';
+  $can_add_note = hasPrivilege($conn, 'add_tasting_note');
 
   // Base WHERE condition
   $sqlWhere = " WHERE 1=1 ";
@@ -286,9 +286,9 @@
     // Get wine name
     $wine_name = getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']);
 
-    // Generate shortcut link if user is admin
+    // Generate shortcut link if user can add tasting notes
     $blind_taste_link = "";
-    if ($is_admin) {
+    if ($can_add_note) {
       $blind_taste_link = " <a href='/backend/blindTasting.php?bottle_id=" . $wine["bottle_id"] . "' title='Write blind tasting note' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
     }
 
