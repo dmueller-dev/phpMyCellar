@@ -2,3 +2,6 @@
 .htaccess
 .htpasswd
 .antigravitycli/
+*.dump
+private_*.sql
+
