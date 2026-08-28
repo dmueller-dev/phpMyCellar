@@ -129,7 +129,7 @@ try {
 }
 
 // Page header details
-$page_title = 'Dominik Mueller - Notifications';
+$page_title = getSiteTitle() . ' - Notifications';
 $meta_desc = 'Manage your tasting notes and wine comment notifications.';
 
 require_once 'includes/header.php';

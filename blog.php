@@ -93,7 +93,8 @@
     $featured_data = getBlogFeaturedData($conn, $blogID);
 
     // Page title and SEO metadata
-    $page_title = "Dominik Mueller - " . $blogpost["title"];
+    $owner_name = getOwnerName();
+    $page_title = getSiteTitle() . " - " . $blogpost["title"];
     $meta_keywords = generateBlogKeywords($blogpost, $featured_data);
     $meta_desc = generateBlogDescription($blogpost);
     $canonical_url = getAbsoluteUrl('/blog.php?id=' . $blogID);
@@ -102,7 +103,7 @@
     $article_meta = [
       'published_time' => !empty($blogpost['pub_date']) ? $blogpost['pub_date'] : null,
       'modified_time' => !empty($blogpost['edit_date']) ? $blogpost['edit_date'] : (!empty($blogpost['pub_date']) ? $blogpost['pub_date'] : null),
-      'author' => 'Dominik Mueller'
+      'author' => $owner_name
     ];
     $json_ld = generateBlogJsonLd($blogpost, $canonical_url, $og_image);
 
@@ -231,9 +232,11 @@
 <?php
   } else {
     // Browse all blog posts list view
-    $page_title = 'Dominik Mueller - Browse all stories';
-    $meta_desc = 'Read wine stories, themed tasting reports, winery visits, and vintage horizontals by Dominik Mueller.';
-    $meta_keywords = 'wine blog, wine stories, fine wine tastings, tasting reports, vintage reports, wine travel, Dominik Mueller';
+    $site_title = getSiteTitle();
+    $owner_name = getOwnerName();
+    $page_title = $site_title . ' - Browse all stories';
+    $meta_desc = 'Read wine stories, themed tasting reports, winery visits, and vintage horizontals by ' . $owner_name . '.';
+    $meta_keywords = 'wine blog, wine stories, fine wine tastings, tasting reports, vintage reports, wine travel, ' . $owner_name;
     $canonical_url = getAbsoluteUrl('/blog.php');
     $og_type = 'website';
     $json_ld = [
@@ -244,8 +247,8 @@
       'url' => $canonical_url,
       'publisher' => [
         '@type' => 'Organization',
-        'name' => 'Dominik Mueller',
-        'url' => 'https://dmueller.com'
+        'name' => $site_title,
+        'url' => getSiteUrl()
       ]
     ];
     require_once 'includes/header.php';

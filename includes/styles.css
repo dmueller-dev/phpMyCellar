@@ -1,4 +1,9 @@
 @charset "utf-8";
+ 
+:root {
+  --primary-accent: #7B1113;
+  --primary-accent-hover: #5c0d0e;
+}
 
 html {
   overflow-y: scroll;
@@ -120,19 +125,19 @@ img.logo {
 }
 
 a:link, a:visited {
-  color: firebrick;
+  color: var(--primary-accent, firebrick);
   text-decoration: underline;
 }
 
 a:hover, a:active {
-  color: firebrick;
+  color: var(--primary-accent-hover, firebrick);
   text-decoration: none;
 }
 
 a.filter-nav {
   margin-top: 2px;
   border-radius: 4px;
-  background-color: indianred;
+  background-color: var(--primary-accent, indianred);
   color: white;
   padding: 4px;
   text-align: center;
@@ -141,7 +146,7 @@ a.filter-nav {
 }
 
 a.filter-nav:hover {
-  background-color: firebrick;
+  background-color: var(--primary-accent-hover, firebrick);
 }
 
 ul.top-menu {
@@ -149,7 +154,7 @@ ul.top-menu {
   margin-top: 15px;
   margin-bottom: 15px;
   padding: 0;
-  background-color: indianred;
+  background-color: var(--primary-accent, indianred);
 }
 
 ul.top-menu::after {
@@ -180,7 +185,7 @@ ul.top-menu li label.menu-label {
 
 ul.top-menu li a:hover:not(.active),
 ul.top-menu li label.menu-label:hover:not(.active) {
-  background-color: darkred;
+  background-color: var(--primary-accent-hover, darkred);
   padding-left: 12px;
   border-left-style: solid;
   border-left-width: 3px;
@@ -189,7 +194,7 @@ ul.top-menu li label.menu-label:hover:not(.active) {
 
 ul.top-menu li a.active,
 ul.top-menu li label.menu-label.active {
-  background-color: darkred;
+  background-color: var(--primary-accent-hover, darkred);
   padding-left: 12px;
   border-left-style: solid;
   border-left-width: 3px;
@@ -209,7 +214,7 @@ ul.submenu {
   position: absolute;
   top: 100%;
   left: 0;
-  background-color: indianred;
+  background-color: var(--primary-accent, indianred);
   min-width: 180px;
   z-index: 10;
   list-style-type: none;
@@ -237,7 +242,7 @@ ul.submenu li a {
 
 /* Preserve hover effect for sub-items */
 ul.submenu li a:hover {
-  background-color: darkred;
+  background-color: var(--primary-accent-hover, darkred);
   padding-left: 13px; /* Adjusted to accommodate the border smoothly */
   border-left-style: solid;
   border-left-width: 3px;
@@ -291,7 +296,7 @@ ul.submenu li a:hover {
   left: 50%;
   margin-top: 6px;
   margin-left: -100px;
-  background-color: darkred;
+  background-color: var(--primary-accent-hover, darkred);
   font-size: 12px;
   color: white;
   text-align: center;
@@ -309,7 +314,7 @@ ul.submenu li a:hover {
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: transparent transparent darkred transparent;
+  border-color: transparent transparent var(--primary-accent-hover, darkred) transparent;
 }
 
 .tooltip:hover .tooltiptext {
@@ -325,7 +330,7 @@ ul.submenu li a:hover {
 }
 
 .mobile-icon-line {
-  background-color: indianred;
+  background-color: var(--primary-accent, indianred);
   display: block;
   height: 2px;
   position: relative;
@@ -333,7 +338,7 @@ ul.submenu li a:hover {
 }
 
 .mobile-icon-line::before, .mobile-icon-line::after {
-  background-color: indianred;
+  background-color: var(--primary-accent, indianred);
   content: '';
   display: block;
   height: 100%;
@@ -444,7 +449,7 @@ ul.submenu li a:hover {
   position: absolute;
   top: 5px;
   right: 5px;
-  background-color: darkred;
+  background-color: var(--primary-accent-hover, darkred);
   color: white;
   border-radius: 50%;
   padding: 2px 6px;
@@ -467,7 +472,7 @@ ul.submenu li a:hover {
   margin: 15px 0;
 }
 .btn-subscription {
-  background-color: indianred;
+  background-color: var(--primary-accent, indianred);
   color: white !important;
   border: none;
   padding: 8px 15px;
@@ -480,7 +485,7 @@ ul.submenu li a:hover {
   transition: background-color 0.2s;
 }
 .btn-subscription:hover {
-  background-color: darkred;
+  background-color: var(--primary-accent-hover, darkred);
 }
 .btn-subscription.subscribed {
   background-color: #6c757d;
@@ -499,7 +504,7 @@ ul.submenu li a:hover {
   margin-bottom: 20px;
 }
 .btn-action {
-  background-color: indianred;
+  background-color: var(--primary-accent, indianred);
   color: white !important;
   border: none;
   padding: 6px 12px;
@@ -510,7 +515,7 @@ ul.submenu li a:hover {
   text-decoration: none !important;
 }
 .btn-action:hover {
-  background-color: darkred;
+  background-color: var(--primary-accent-hover, darkred);
 }
 .btn-action.btn-secondary {
   background-color: #6c757d;
@@ -520,7 +525,7 @@ ul.submenu li a:hover {
 }
 
 .notification-item {
-  border-left: 4px solid indianred;
+  border-left: 4px solid var(--primary-accent, indianred);
   padding: 12px 15px;
   margin-bottom: 15px;
   background-color: white;
@@ -633,7 +638,7 @@ ul.submenu li a:hover {
 
 .vintage-tile:hover {
   background-color: #fef2f2;
-  border-color: indianred;
+  border-color: var(--primary-accent, indianred);
   transform: translateY(-2px);
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
@@ -641,7 +646,7 @@ ul.submenu li a:hover {
 .vintage-tile .vintage-year {
   font-size: 18px;
   font-weight: bold;
-  color: firebrick;
+  color: var(--primary-accent, firebrick);
   margin-bottom: 4px;
 }
 
@@ -654,7 +659,7 @@ ul.submenu li a:hover {
 }
 
 .vintage-tile .vintage-score-pill {
-  background-color: indianred;
+  background-color: var(--primary-accent, indianred);
   color: white;
   padding: 1px 6px;
   border-radius: 10px;
@@ -690,7 +695,7 @@ ul.submenu li a:hover {
 }
 
 .vintage-bar-fill {
-  background-color: indianred;
+  background-color: var(--primary-accent, indianred);
   height: 100%;
   border-radius: 4px;
   transition: width 0.3s ease;
@@ -738,7 +743,7 @@ ul.submenu li a:hover {
 .vintage-desc-box {
   padding: 12px 14px;
   background-color: #fff;
-  border-left: 3px solid indianred;
+  border-left: 3px solid var(--primary-accent, indianred);
   font-size: 13px;
   line-height: 1.5;
   color: #334155;
@@ -769,7 +774,7 @@ ul.submenu li a:hover {
 
 .vintage-score-badge {
   font-weight: bold;
-  color: darkred;
+  color: var(--primary-accent-hover, darkred);
   white-space: nowrap;
   font-size: 14px;
 }
@@ -793,7 +798,7 @@ ul.submenu li a:hover {
 .vintage-stat-box .stat-val {
   font-size: 18px;
   font-weight: bold;
-  color: firebrick;
+  color: var(--primary-accent, firebrick);
 }
 
 .vintage-stat-box .stat-lbl {
@@ -835,11 +840,11 @@ ul.submenu li a:hover {
 a.comment-badge:hover {
   background-color: #fee2e2;
   border-color: #fca5a5;
-  color: firebrick !important;
+  color: var(--primary-accent, firebrick) !important;
 }
 
 a.comment-badge:hover .comment-icon {
-  stroke: firebrick;
+  stroke: var(--primary-accent, firebrick);
 }
 
 /* --- GROUP HEADERS & ACCORDIONS (WINES & TNOTES) --- */
@@ -857,7 +862,7 @@ details > summary > b {
 }
 
 details > summary:hover > b {
-  color: firebrick;
+  color: var(--primary-accent, firebrick);
 }
 
 details li details > summary > i {
@@ -868,7 +873,7 @@ details li details > summary > i {
 }
 
 details li details > summary:hover > i {
-  color: firebrick;
+  color: var(--primary-accent, firebrick);
 }
 
 details summary + ul {
@@ -895,7 +900,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 
 .wine-item-action {
   font-size: 0.85em;
-  color: indianred !important;
+  color: var(--primary-accent, indianred) !important;
   text-decoration: none !important;
   margin-left: 6px;
 }
@@ -929,7 +934,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 }
 
 .vintage-chip:hover {
-  border-color: indianred;
+  border-color: var(--primary-accent, indianred);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
@@ -937,7 +942,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   display: inline-flex;
   align-items: center;
   padding: 3px 7px;
-  color: firebrick !important;
+  color: var(--primary-accent, firebrick) !important;
   font-weight: 600;
   text-decoration: none !important;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -945,12 +950,12 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 
 .vintage-chip .chip-link:hover {
   background-color: #fee2e2;
-  color: darkred !important;
+  color: var(--primary-accent-hover, darkred) !important;
 }
 
 .vintage-chip .chip-rating {
   font-weight: 600;
-  color: firebrick;
+  color: var(--primary-accent, firebrick);
 }
 
 .vintage-chip .chip-sep {
@@ -1000,11 +1005,11 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 
 .vintage-chip .chip-badge:hover {
   background-color: #fee2e2;
-  color: firebrick !important;
+  color: var(--primary-accent, firebrick) !important;
 }
 
 .vintage-chip .chip-badge:hover .comment-icon {
-  stroke: firebrick;
+  stroke: var(--primary-accent, firebrick);
 }
 
 .vintage-chip .chip-action {
@@ -1024,7 +1029,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 
 .vintage-chip .chip-action:hover {
   background-color: #fee2e2;
-  color: firebrick !important;
+  color: var(--primary-accent, firebrick) !important;
 }
 
 /* --- WINE MENU VINTAGE ACCORDION CHIPS & STORAGE DRAWER --- */
@@ -1058,7 +1063,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 .vintage-menu-detail summary.vintage-chip:hover {
   background-color: #fee2e2;
   border-color: #fca5a5;
-  color: darkred;
+  color: var(--primary-accent-hover, darkred);
 }
 
 .vintage-menu-detail[open] summary.vintage-chip {
@@ -1077,7 +1082,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   padding: 8px 12px;
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-left: 3px solid indianred;
+  border-left: 3px solid var(--primary-accent, indianred);
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   font-size: 0.88em;

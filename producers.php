@@ -24,7 +24,7 @@
   $associated_data = getProducerAssociatedData($conn, $producerID);
 
   // Page title and SEO metadata
-  $page_title = "Dominik Mueller - " . $producer["producer"];
+  $page_title = getSiteTitle() . " - " . $producer["producer"];
   $meta_keywords = generateProducerKeywords($producer, $associated_data);
   $meta_desc = generateProducerDescription($producer);
   $canonical_url = getAbsoluteUrl('/producers.php?id=' . $producerID);

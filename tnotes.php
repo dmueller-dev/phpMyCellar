@@ -108,7 +108,8 @@
     }
 
     // Page title and SEO metadata
-    $page_title = "Dominik Mueller - " . $wine_name . " (Tasting Note)";
+    $owner_name = getOwnerName();
+    $page_title = getSiteTitle() . " - " . $wine_name . " (Tasting Note)";
     $meta_keywords = generateTastingNoteKeywords($tasting_note);
     $meta_desc = generateTastingNoteDescription($tasting_note, $wine_name);
     $canonical_url = getAbsoluteUrl('/tnotes.php?id=' . $noteID);
@@ -116,7 +117,7 @@
     $og_image = !empty($tasting_note['img']) ? getAbsoluteUrl('/img/' . $tasting_note['img']) : null;
     $article_meta = [
       'published_time' => !empty($tasting_note['tasting_date']) ? $tasting_note['tasting_date'] : null,
-      'author' => !empty($tasting_note['displayname']) ? $tasting_note['displayname'] : 'Dominik Mueller'
+      'author' => !empty($tasting_note['displayname']) ? $tasting_note['displayname'] : $owner_name
     ];
     $json_ld = generateTastingNoteJsonLd($tasting_note, $wine_name, $canonical_url);
 
@@ -397,18 +398,20 @@
 
     $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
     $is_fav = (isset($_GET['favourite']) && $_GET['favourite'] === 'yes');
+    $site_title = getSiteTitle();
+    $owner_name = getOwnerName();
     if (!empty($search_query)) {
-      $page_title = 'Dominik Mueller - Tasting Notes: Search "' . htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8') . '"';
-      $meta_desc = 'Search tasting notes and ratings for "' . htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8') . '" on Dominik Mueller\'s fine wine notebook.';
-      $meta_keywords = buildKeywordsList([$search_query, 'wine tasting notes', 'wine reviews', 'wine ratings', 'Dominik Mueller']);
+      $page_title = $site_title . ' - Tasting Notes: Search "' . htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8') . '"';
+      $meta_desc = 'Search tasting notes and ratings for "' . htmlspecialchars($search_query, ENT_QUOTES, 'UTF-8') . '" on ' . $site_title . ' fine wine notebook.';
+      $meta_keywords = buildKeywordsList([$search_query, 'wine tasting notes', 'wine reviews', 'wine ratings', $owner_name]);
     } elseif ($is_fav) {
-      $page_title = 'Dominik Mueller - Favourite Tasting Notes';
-      $meta_desc = 'Explore Dominik Mueller\'s favourite fine wine tasting notes and top-rated cellar highlights.';
-      $meta_keywords = 'Dominik Mueller, favourite wines, top rated wines, fine wine reviews, wine cellar highlights';
+      $page_title = $site_title . ' - Favourite Tasting Notes';
+      $meta_desc = 'Explore ' . $site_title . ' favourite fine wine tasting notes and top-rated cellar highlights.';
+      $meta_keywords = $owner_name . ', favourite wines, top rated wines, fine wine reviews, wine cellar highlights';
     } else {
       $sortLabels = [
         'date' => 'by Tasting Date',
-        'rating' => 'by Rating (DM Points)',
+        'rating' => 'by Rating',
         'region' => 'by Region',
         'producer' => 'by Producer',
         'vintage' => 'by Vintage',
@@ -417,9 +420,9 @@
         'twentyplus' => 'Aged 20+ Years'
       ];
       $sortSuffix = isset($sortLabels[$sort]) ? ' (' . $sortLabels[$sort] . ')' : '';
-      $page_title = 'Dominik Mueller - Browse all tasting notes' . $sortSuffix;
-      $meta_desc = 'Browse fine wine tasting notes and independent 20-point DM ratings by Dominik Mueller across Bordeaux, Burgundy, Rhône, Italy, Germany, and more.';
-      $meta_keywords = 'wine tasting notes, wine reviews, wine ratings, 20-point wine scale, fine wine reviews, wine tasting notebook, Dominik Mueller';
+      $page_title = $site_title . ' - Browse all tasting notes' . $sortSuffix;
+      $meta_desc = 'Browse fine wine tasting notes and independent wine ratings by ' . $owner_name . ' across wine regions worldwide.';
+      $meta_keywords = 'wine tasting notes, wine reviews, wine ratings, fine wine reviews, wine tasting notebook, ' . $owner_name;
     }
     $canonical_url = getAbsoluteUrl('/tnotes.php');
     $og_type = 'website';
@@ -431,8 +434,8 @@
       'url' => $canonical_url,
       'publisher' => [
         '@type' => 'Organization',
-        'name' => 'Dominik Mueller',
-        'url' => 'https://dmueller.com'
+        'name' => $site_title,
+        'url' => getSiteUrl()
       ]
     ];
 

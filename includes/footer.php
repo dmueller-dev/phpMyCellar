@@ -3,6 +3,10 @@
   if (!defined('INCLUDED_VIA_APP')) {
     die('Direct access not permitted');
   }
+
+  $owner_name = function_exists('getOwnerName') ? getOwnerName() : 'Cellar Master';
+  $owner_email = function_exists('getOwnerEmail') ? getOwnerEmail() : 'cellar@example.com';
+  $owner_address = function_exists('getSiteSetting') ? getSiteSetting('owner_address', '') : '';
 ?>
 
 <div class="footer">
@@ -13,11 +17,11 @@
     </p>
     <address>
       Contact details:<br>
-      Dominik Mueller<br>
-      Muehlstr. 24<br>
-      76532 Baden-Baden<br>
-      GERMANY<br><br>
-      E-Mail: <a href="mailto:dm@dmueller.com" title="Contact me by email">dm@dmueller.com</a>
+      <?php echo htmlspecialchars($owner_name, ENT_QUOTES, 'UTF-8'); ?><br>
+      <?php if (!empty($owner_address)): ?>
+        <?php echo nl2br(htmlspecialchars($owner_address, ENT_QUOTES, 'UTF-8')); ?><br><br>
+      <?php endif; ?>
+      E-Mail: <a href="mailto:<?php echo htmlspecialchars($owner_email, ENT_QUOTES, 'UTF-8'); ?>" title="Contact cellar owner by email"><?php echo htmlspecialchars($owner_email, ENT_QUOTES, 'UTF-8'); ?></a>
     </address>
     <p style="text-align:center;">
       <small><u>Cookie notice:</u><br>This website uses session cookies for members logging in only. Aside from that,<br>the

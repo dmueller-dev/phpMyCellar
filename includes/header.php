@@ -14,13 +14,19 @@
     header('X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex', true);
   }
 
-  $resolved_title = isset($page_title) ? $page_title : 'Dominik Mueller - Wine is my hobby';
-  $resolved_desc = isset($meta_desc) ? $meta_desc : 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
+  $site_title = function_exists('getSiteTitle') ? getSiteTitle() : 'phpMyCellar';
+  $site_tagline = function_exists('getSiteTagline') ? getSiteTagline() : 'Fine Wine Cellar & Tasting Notes';
+  $owner_name = function_exists('getOwnerName') ? getOwnerName() : 'Cellar Master';
+  $default_desc = function_exists('getSiteSetting') ? getSiteSetting('meta_description', 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.') : 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
+  $logo_path = function_exists('getSiteSetting') ? getSiteSetting('logo_url', '/img/logo_web.webp') : '/img/logo_web.webp';
+
+  $resolved_title = isset($page_title) ? $page_title : ($site_title . ' - ' . $site_tagline);
+  $resolved_desc = isset($meta_desc) ? $meta_desc : $default_desc;
   
   if (isset($meta_keywords)) {
     $resolved_keywords = is_array($meta_keywords) ? implode(', ', $meta_keywords) : $meta_keywords;
   } else {
-    $resolved_keywords = 'Dominik Mueller, wine database, wine tastings, tasting notes, fine wine, wine collection, wine cellar';
+    $resolved_keywords = $owner_name . ', ' . $site_title . ', wine database, wine tastings, tasting notes, fine wine, wine collection, wine cellar';
   }
 
   if ($is_private_page) {
@@ -32,13 +38,13 @@
       $resolved_canonical = function_exists('getAbsoluteUrl') ? getAbsoluteUrl($canonical_url) : $canonical_url;
     } else {
       $script_name = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
-      $resolved_canonical = function_exists('getAbsoluteUrl') ? getAbsoluteUrl($script_name === '/index.php' ? '/' : $script_name) : 'https://dmueller.com/';
+      $resolved_canonical = function_exists('getAbsoluteUrl') ? getAbsoluteUrl($script_name === '/index.php' ? '/' : $script_name) : '/';
     }
   }
 
-  $og_site_name = 'Dominik Mueller';
+  $og_site_name = $site_title;
   $og_type_val = isset($og_type) ? $og_type : 'website';
-  $og_image_val = isset($og_image) && !empty($og_image) ? (function_exists('getAbsoluteUrl') ? getAbsoluteUrl($og_image) : $og_image) : 'https://dmueller.com/img/logo_web.webp';
+  $og_image_val = isset($og_image) && !empty($og_image) ? (function_exists('getAbsoluteUrl') ? getAbsoluteUrl($og_image) : $og_image) : (function_exists('getAbsoluteUrl') ? getAbsoluteUrl($logo_path) : $logo_path);
   $og_image_alt_val = isset($og_image_alt) ? $og_image_alt : $resolved_title;
   $twitter_card_val = isset($twitter_card) ? $twitter_card : (!empty($og_image) ? 'summary_large_image' : 'summary');
 ?>
@@ -50,7 +56,7 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="author" content="Dominik Mueller">
+  <meta name="author" content="<?php echo htmlspecialchars($owner_name, ENT_QUOTES, 'UTF-8'); ?>">
   <meta name="description" content="<?php echo htmlspecialchars($resolved_desc, ENT_QUOTES, 'UTF-8'); ?>">
   <meta name="keywords" content="<?php echo htmlspecialchars($resolved_keywords, ENT_QUOTES, 'UTF-8'); ?>">
   <meta name="robots" content="<?php echo htmlspecialchars($resolved_robots, ENT_QUOTES, 'UTF-8'); ?>">
@@ -94,6 +100,18 @@
   <?php endif; ?>
 
   <link rel="stylesheet" href="/includes/styles.css">
+  <?php
+    $theme_accent = function_exists('getSiteSetting') ? getSiteSetting('theme_accent_color', '#7B1113') : '#7B1113';
+    $theme_hover  = function_exists('getSiteSetting') ? getSiteSetting('theme_accent_hover', '#5c0d0e') : '#5c0d0e';
+    if (!empty($theme_accent) || !empty($theme_hover)):
+  ?>
+  <style>
+    :root {
+      <?php if (!empty($theme_accent)): ?>--primary-accent: <?php echo htmlspecialchars($theme_accent, ENT_QUOTES, 'UTF-8'); ?>;<?php endif; ?>
+      <?php if (!empty($theme_hover)): ?>--primary-accent-hover: <?php echo htmlspecialchars($theme_hover, ENT_QUOTES, 'UTF-8'); ?>;<?php endif; ?>
+    }
+  </style>
+  <?php endif; ?>
   <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
   <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
   <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
@@ -111,8 +129,8 @@
 <body>
 
 <header>
-  <a href="https://dmueller.com" title="Dominik Mueller - Fine wine tasting notes">
-    <img src="/img/logo_web.webp" class="logo" alt="Dominik Mueller - Fine wine tasting notes">
+  <a href="/" title="<?php echo htmlspecialchars($site_title . ' - ' . $site_tagline, ENT_QUOTES, 'UTF-8'); ?>">
+    <img src="<?php echo htmlspecialchars($logo_path, ENT_QUOTES, 'UTF-8'); ?>" class="logo" alt="<?php echo htmlspecialchars($site_title . ' - ' . $site_tagline, ENT_QUOTES, 'UTF-8'); ?>">
   </a>
 </header>
 
@@ -200,6 +218,8 @@
               echo "<li><a class='" . (($currentPath == '/backend/addWine.php') ? 'active' : '') . "' href='/backend/addWine.php' title='Add wine'>Add wine</a></li>";
             }
             if ($canManagePrivileges) {
+              echo "<li><a class='" . (($currentPath == '/backend/settings.php') ? 'active' : '') . "' href='/backend/settings.php' title='Site settings & branding'>Site settings</a></li>";
+              echo "<li><a class='" . (($currentPath == '/backend/manageStaticPages.php' || $currentPath == '/backend/editStaticPage.php') ? 'active' : '') . "' href='/backend/manageStaticPages.php' title='Manage static pages'>Static pages</a></li>";
               echo "<li><a class='" . (($currentPath == '/backend/managePrivileges.php') ? 'active' : '') . "' href='/backend/managePrivileges.php' title='User & role privileges'>User & role privileges</a></li>";
             }
             if ($canManageUsers) {

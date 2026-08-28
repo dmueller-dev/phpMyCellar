@@ -74,8 +74,8 @@
 ?>
 
 <?php
-  $page_title = 'Dominik Mueller - Wine is my hobby';
-  $meta_desc = 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
+  $page_title = getSiteTitle() . ' - ' . getSiteTagline();
+  $meta_desc = getSiteSetting('meta_description', 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.');
   
   require_once 'includes/header.php';
 ?>

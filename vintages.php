@@ -34,9 +34,9 @@
 
   // Set Page Title
   if ($selected_vintage && !$vintage_error) {
-    $page_title = "Dominik Mueller - Vintage Report " . $selected_vintage;
+    $page_title = getSiteTitle() . " - Vintage Report " . $selected_vintage;
   } else {
-    $page_title = "Dominik Mueller - Vintage Chart & Reports";
+    $page_title = getSiteTitle() . " - Vintage Chart & Reports";
   }
 
   require_once 'includes/header.php';
@@ -273,7 +273,7 @@
           <li><b>1-2</b>: subpar</li>
           <li><b>0</b>: poor</li>
         </ul>
-        <p style="margin-top:10px;"><small><a href="https://dmueller.com/blog.php?id=26">Learn more about how I rate wines &rarr;</a></small></p>
+        <p style="margin-top:10px;"><small><a href="/blog.php">Explore tasting notes &amp; stories &rarr;</a></small></p>
       </div>
     </div>
 

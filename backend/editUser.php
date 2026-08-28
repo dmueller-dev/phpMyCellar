@@ -72,7 +72,7 @@
 ?>
 
 <?php
-  $page_title = 'Dominik Mueller - Edit user';
+  $page_title = getSiteTitle() . ' - Edit user';
   require_once __DIR__ . '/../includes/header.php';
 ?>
 

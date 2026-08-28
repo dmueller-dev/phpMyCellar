@@ -3,12 +3,20 @@
   define('INCLUDED_VIA_APP', true);
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/includes/init.php';
-?>
 
-<?php
-  $page_title = 'Dominik Mueller - Wine is my hobby';
-  $meta_desc = 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
+  $site_title = getSiteTitle();
+  $site_tagline = getSiteTagline();
+  $page_title = $site_title . ' - ' . $site_tagline;
+  $meta_desc = getSiteSetting('meta_description', 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.');
   
+  $welcome_page = getStaticPage('welcome');
+  $welcome_title = $welcome_page['page_title'] ?? 'Welcome';
+  $welcome_content = $welcome_page['page_content'] ?? '<p>Welcome to my wine notebook! Here, I share wines I have tasted and tell you about my wine and food experiences.</p>';
+
+  $get_in_touch_page = getStaticPage('get_in_touch');
+  $get_in_touch_title = $get_in_touch_page['page_title'] ?? 'Get in touch';
+  $get_in_touch_content = $get_in_touch_page['page_content'] ?? '<p>Access to certain areas of this website is restricted. While my tasting notes and blog posts are open to everyone, my carte des vins is reserved for members. Feel free to reach out using the contact details below.</p>';
+
   require_once 'includes/header.php';
 ?>
 
@@ -23,28 +31,10 @@
     </div>
     <div class="card">
       <section>
-        <h3>Welcome</h3>
-        <img class="inline left" src="/img/me2026.jpg" alt="Dominik Mueller">
-        <p>
-          Welcome to my personal wine notebook! Here, I share wines I have tasted and tell you about my wine and food experiences. I am
-          not a professional. Wine is my hobby. The French would call me an <em>amateur des vins</em>. With this website, I hope to connect
-          with like-minded people interested in all kinds of wines.
-        </p>
-        <p>
-         The site is organized around a wine database, including information on producers, plus my tasting notes with ratings and usually
-         photos. There is also a blog where I occasionally write about other wine experiences, such as travel reports or themed tastings.
-       </p>
-       <p>
-         I programmed the website myself, old-school in a text editor, so not everything may be perfect yet. But there is one big advantage:
-         I manage almost entirely without cookies! Only when you log in will an anonymous session cookie keep your session active. There are
-         no third-party services or visitor counters. You are incognito here, if you want. Everything is free of charge. I hope you enjoy it!
-       </p>
-       <img src="/img/dmsig.bmp" width="300" height="370" style="margin:5px 10px 0px 0px;max-width:15%;height:auto;">
-       <p>
-         <em>Dominik Mueller</em>
-       </p>
-     </section>
-   </div>
+        <h3><?php echo htmlspecialchars($welcome_title, ENT_QUOTES, 'UTF-8'); ?></h3>
+        <?php echo $welcome_content; ?>
+      </section>
+    </div>
   </div>
 
   <div class="column side">
@@ -69,14 +59,8 @@
     </div>
 
     <div class="card">
-      <h3>Get in touch</h3>
-      <p>
-        Access to certain areas of this website is restricted. While my tasting notes and blog posts are open to everyone, my <em>carte des vins</em>
-        — an interactive catalogue of the bottles in my personal cellar — is reserved for members. Registered users can also comment on tasting notes
-        and enjoy a civil, friendly space to discuss our shared passion: wine. Membership is entirely free (I have no wish to monetise the site),
-        though accounts are generally reserved for friends and family at this stage. If you would like to introduce yourself and connect, please feel
-        free to reach out using the contact details below. I am always delighted to hear from and exchange notes with fellow wine enthusiasts.
-      </p>
+      <h3><?php echo htmlspecialchars($get_in_touch_title, ENT_QUOTES, 'UTF-8'); ?></h3>
+      <?php echo $get_in_touch_content; ?>
     </div>
   </div>
 </div>

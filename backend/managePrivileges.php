@@ -148,7 +148,7 @@
   // Fetch selected role privileges
   $selectedRolePrivileges = getRolePrivileges($conn, $selectedRoleName);
 
-  $page_title = "Dominik Mueller - Manage Privileges & Roles";
+  $page_title = getSiteTitle() . " - Manage Privileges & Roles";
   require_once __DIR__ . '/../includes/header.php';
 ?>
 

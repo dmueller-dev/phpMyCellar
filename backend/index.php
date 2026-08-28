@@ -9,7 +9,7 @@
 ?>
 
 <?php
-  $page_title = 'Dominik Mueller - Wine database backend';
+  $page_title = getSiteTitle() . ' - Wine database backend';
   require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -131,6 +131,15 @@
             <?php if (hasPrivilege($conn, 'edit_blogpost') || hasPrivilege($conn, 'edit_all_blogposts')): ?>
               <li><a href="editBlogpost.php" title="Edit stories">Edit story</a></li>
             <?php endif; ?>
+          </ul>
+          <hr>
+        <?php endif; ?>
+
+        <?php if (hasPrivilege($conn, 'manage_privileges')): ?>
+          <h3>Site Administration</h3>
+          <ul>
+            <li><a href="settings.php" title="Manage site settings and branding"><strong>Site settings &amp; branding</strong></a></li>
+            <li><a href="manageStaticPages.php" title="Manage static content pages"><strong>Manage static pages</strong></a></li>
           </ul>
           <hr>
         <?php endif; ?>

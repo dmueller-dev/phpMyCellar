@@ -115,7 +115,7 @@
 
           if (!empty($success_message)) {
             echo "<div style='color: green;'>" . $success_message . "</div>";
-            echo "<p><a href='https://dmueller.com/backend/addBlogpost.php'>New story.</a></p>";
+            echo "<p><a href='/backend/addBlogpost.php'>New story.</a></p>";
           }
         ?>
 

@@ -82,7 +82,7 @@
 ?>
 
 <?php
-  $page_title = 'Dominik Mueller - Add user';
+  $page_title = getSiteTitle() . ' - Add user';
   require_once __DIR__ . '/../includes/header.php';
 ?>
 

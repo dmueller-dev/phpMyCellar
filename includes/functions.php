@@ -1913,7 +1913,7 @@ function createNotificationsForComment($conn, $sender_id, $item_id, $item_type, 
       } else {
         $item_name = "Wine #" . $item_id;
       }
-      $item_url = "https://dmueller.com/wines.php?id=" . $item_id . "#comment-" . $comment_id;
+      $item_url = getAbsoluteUrl("wines.php?id=" . $item_id . "#comment-" . $comment_id);
     } elseif ($item_type === 'tnote') {
       $stmt = $conn->prepare("SELECT wines.vintage, wines_master.name, producers.producer 
                               FROM tnotes 
@@ -1935,7 +1935,7 @@ function createNotificationsForComment($conn, $sender_id, $item_id, $item_type, 
       } else {
         $item_name = "Tasting Note #" . $item_id;
       }
-      $item_url = "https://dmueller.com/tnotes.php?id=" . $item_id . "#comment-" . $comment_id;
+      $item_url = getAbsoluteUrl("tnotes.php?id=" . $item_id . "#comment-" . $comment_id);
     } elseif ($item_type === 'blog') {
       $stmt = $conn->prepare("SELECT title FROM blogposts WHERE blog_id = ?");
       if ($stmt) {
@@ -1951,7 +1951,7 @@ function createNotificationsForComment($conn, $sender_id, $item_id, $item_type, 
       } else {
         $item_name = "Story #" . $item_id;
       }
-      $item_url = "https://dmueller.com/blog.php?id=" . $item_id . "#comment-" . $comment_id;
+      $item_url = getAbsoluteUrl("blog.php?id=" . $item_id . "#comment-" . $comment_id);
     }
 
     // 4. Fetch comment snippet
@@ -1994,9 +1994,14 @@ function createNotificationsForComment($conn, $sender_id, $item_id, $item_type, 
   }
 }
 
-// Mail helper function using standard PHP mail() with dm@dmueller.com sender
+// Mail helper function using configurable site settings with fallback
 function sendNotificationEmail($to_email, $displayname, $item_name, $item_url, $comment_author, $comment_snippet) {
-  $subject = "[Dominik Mueller Fine Wine] New comment on \"" . $item_name . "\"";
+  $site_title = getSiteTitle();
+  $owner_name = getOwnerName();
+  $owner_email = getOwnerEmail();
+  $account_settings_url = getAbsoluteUrl('accountSettings.php');
+
+  $subject = "[" . $site_title . "] New comment on \"" . $item_name . "\"";
   
   $message = "Hello " . $displayname . ",\n\n" .
              $comment_author . " has posted a new comment on \"" . $item_name . "\", which you are following.\n\n" .
@@ -2006,12 +2011,12 @@ function sendNotificationEmail($to_email, $displayname, $item_name, $item_url, $
              "You can read the full comment and reply here:\n" .
              $item_url . "\n\n" .
              "To manage your subscriptions or unsubscribe from this discussion, visit your Account Settings:\n" .
-             "https://dmueller.com/accountSettings.php\n\n" .
+             $account_settings_url . "\n\n" .
              "Best regards,\n" .
-             "Dominik Mueller";
+             $owner_name;
   
-  $headers = "From: dm@dmueller.com\r\n" .
-             "Reply-To: dm@dmueller.com\r\n" .
+  $headers = "From: " . $owner_email . "\r\n" .
+             "Reply-To: " . $owner_email . "\r\n" .
              "X-Mailer: PHP/" . phpversion();
   
   @mail($to_email, $subject, $message, $headers);
@@ -2652,6 +2657,9 @@ function getPrivilegeScriptMap() {
     'addUser.php'          => 'manage_users',
     'editUser.php'         => 'manage_users',
     'managePrivileges.php' => 'manage_privileges',
+    'settings.php'         => 'manage_privileges',
+    'manageStaticPages.php' => 'manage_privileges',
+    'editStaticPage.php'   => 'manage_privileges',
   ];
 }
 
@@ -3349,16 +3357,215 @@ function sanitizeMetaDescription($text, $maxLength = 160) {
 }
 
 /**
+ * Retrieve a site setting from database, environment variable, or default fallback.
+ * Uses a static cache array to avoid redundant queries during the same request.
+ */
+function getSiteSetting($key, $default = '') {
+  global $conn;
+  static $settings_cache = null;
+  
+  if ($settings_cache === null) {
+    $settings_cache = [];
+    if (isset($conn) && $conn instanceof mysqli) {
+      try {
+        $result = $conn->query("SELECT setting_key, setting_value FROM site_settings");
+        if ($result) {
+          while ($row = $result->fetch_assoc()) {
+            $settings_cache[$row['setting_key']] = $row['setting_value'];
+          }
+          $result->free();
+        }
+      } catch (Throwable $e) {
+        // Fallback gracefully if table does not exist
+      }
+    }
+  }
+  
+  if (array_key_exists($key, $settings_cache) && $settings_cache[$key] !== null && $settings_cache[$key] !== '') {
+    return $settings_cache[$key];
+  }
+  
+  // Secondary source: environment variables
+  $envKey = strtoupper($key);
+  if (!empty($_ENV[$envKey])) {
+    return $_ENV[$envKey];
+  }
+  if (!empty($_SERVER[$envKey])) {
+    return $_SERVER[$envKey];
+  }
+  
+  return $default;
+}
+
+/**
+ * Retrieve all site settings grouped by setting group.
+ */
+function getAllSiteSettings() {
+  global $conn;
+  $settings = [];
+  if (isset($conn) && $conn instanceof mysqli) {
+    try {
+      $result = $conn->query("SELECT setting_key, setting_value, setting_group FROM site_settings ORDER BY setting_group, setting_key");
+      if ($result) {
+        while ($row = $result->fetch_assoc()) {
+          $settings[$row['setting_key']] = $row;
+        }
+        $result->free();
+      }
+    } catch (Throwable $e) {
+      // Fallback
+    }
+  }
+  return $settings;
+}
+
+/**
+ * Update or insert a site setting.
+ */
+function updateSiteSetting($key, $value, $group = 'general') {
+  global $conn;
+  if (!isset($conn) || !($conn instanceof mysqli)) {
+    return false;
+  }
+  $stmt = $conn->prepare("INSERT INTO site_settings (setting_key, setting_value, setting_group) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), setting_group = VALUES(setting_group)");
+  if (!$stmt) {
+    return false;
+  }
+  $stmt->bind_param("sss", $key, $value, $group);
+  $success = $stmt->execute();
+  $stmt->close();
+  return $success;
+}
+
+/**
+ * Retrieve a static content page by its unique key.
+ */
+function getStaticPage($page_key) {
+  global $conn;
+  if (!isset($conn) || !($conn instanceof mysqli)) {
+    return null;
+  }
+  try {
+    $stmt = $conn->prepare("SELECT page_key, page_title, page_content, meta_description, last_updated FROM static_pages WHERE page_key = ?");
+    if (!$stmt) {
+      return null;
+    }
+    $stmt->bind_param("s", $page_key);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $page = $result ? $result->fetch_assoc() : null;
+    $stmt->close();
+    return $page;
+  } catch (Throwable $e) {
+    return null;
+  }
+}
+
+/**
+ * Retrieve all static content pages.
+ */
+function getAllStaticPages() {
+  global $conn;
+  $pages = [];
+  if (isset($conn) && $conn instanceof mysqli) {
+    try {
+      $result = $conn->query("SELECT page_key, page_title, meta_description, last_updated FROM static_pages ORDER BY page_key");
+      if ($result) {
+        while ($row = $result->fetch_assoc()) {
+          $pages[] = $row;
+        }
+        $result->free();
+      }
+    } catch (Throwable $e) {
+      // Fallback
+    }
+  }
+  return $pages;
+}
+
+/**
+ * Create or update a static content page.
+ */
+function saveStaticPage($page_key, $title, $content, $meta_description = '') {
+  global $conn;
+  if (!isset($conn) || !($conn instanceof mysqli)) {
+    return false;
+  }
+  $stmt = $conn->prepare("INSERT INTO static_pages (page_key, page_title, page_content, meta_description) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE page_title = VALUES(page_title), page_content = VALUES(page_content), meta_description = VALUES(meta_description)");
+  if (!$stmt) {
+    return false;
+  }
+  $stmt->bind_param("ssss", $page_key, $title, $content, $meta_description);
+  $success = $stmt->execute();
+  $stmt->close();
+  return $success;
+}
+
+/**
+ * Get configured site URL (e.g. https://example.com or http://localhost:8000).
+ */
+function getSiteUrl() {
+  $url = getSiteSetting('site_url', '');
+  if (!empty($url)) {
+    return rtrim($url, '/');
+  }
+  if (!empty($_ENV['APP_URL'])) {
+    return rtrim($_ENV['APP_URL'], '/');
+  }
+  if (!empty($_SERVER['HTTP_HOST'])) {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    return $protocol . '://' . $_SERVER['HTTP_HOST'];
+  }
+  return 'http://localhost:8000';
+}
+
+/**
+ * Get configured site title.
+ */
+function getSiteTitle() {
+  return getSiteSetting('site_name', 'phpMyCellar');
+}
+
+/**
+ * Get configured site tagline.
+ */
+function getSiteTagline() {
+  return getSiteSetting('site_tagline', 'Fine Wine Cellar & Tasting Notes');
+}
+
+/**
+ * Get configured cellar owner / administrator name.
+ */
+function getOwnerName() {
+  return getSiteSetting('owner_name', 'Cellar Master');
+}
+
+/**
+ * Get configured cellar contact email.
+ */
+function getOwnerEmail() {
+  return getSiteSetting('owner_email', 'cellar@example.com');
+}
+
+/**
+ * Get configured currency symbol (e.g. €, $, £, CHF).
+ */
+function getCurrencySymbol() {
+  return getSiteSetting('currency_symbol', '€');
+}
+
+/**
  * Helper to ensure a full absolute URL for canonical links, Open Graph, and JSON-LD.
  */
 function getAbsoluteUrl($pathOrUrl) {
+  $baseUrl = getSiteUrl();
   if (empty($pathOrUrl)) {
-    return 'https://dmueller.com/';
+    return $baseUrl . '/';
   }
   if (preg_match('#^https?://#i', $pathOrUrl)) {
     return $pathOrUrl;
   }
-  return 'https://dmueller.com' . (strpos($pathOrUrl, '/') === 0 ? $pathOrUrl : '/' . $pathOrUrl);
+  return $baseUrl . (strpos($pathOrUrl, '/') === 0 ? $pathOrUrl : '/' . $pathOrUrl);
 }
 
 /**
@@ -3414,8 +3621,9 @@ function buildKeywordsList(array $terms) {
  * Features: producer, wine name (if distinct), vintage, country, region, sub-region, appellation, vineyard, grape variety, colour, style.
  */
 function generateWineKeywords($wine) {
+  $owner = getOwnerName();
   if (empty($wine) || !is_array($wine)) {
-    return 'Dominik Mueller, fine wine, wine database, wine tasting';
+    return $owner . ', fine wine, wine database, wine tasting';
   }
   
   $producer = trim($wine['producer'] ?? '');
@@ -3469,7 +3677,7 @@ function generateWineKeywords($wine) {
   
   $terms[] = 'fine wine';
   $terms[] = 'wine tasting';
-  $terms[] = 'Dominik Mueller';
+  $terms[] = $owner;
   
   return buildKeywordsList($terms);
 }
@@ -3478,8 +3686,9 @@ function generateWineKeywords($wine) {
  * Generate a meta description for a single wine page.
  */
 function generateWineDescription($wine, $wine_name) {
+  $owner = getOwnerName();
   if (empty($wine) || !is_array($wine)) {
-    return 'Explore Dominik Mueller\'s wine database with tasting notes, producer details, and vintage reports.';
+    return 'Explore ' . $owner . '\'s wine database with tasting notes, producer details, and vintage reports.';
   }
   
   $geo = array_filter([$wine['appellation'] ?? '', $wine['subregion'] ?? '', $wine['region'] ?? '', $wine['country'] ?? ''], function($v) {
@@ -3502,7 +3711,7 @@ function generateWineDescription($wine, $wine_name) {
   } elseif (!empty($wine['producer_desc'])) {
     $descPrefix .= ' ' . $wine['producer_desc'];
   } else {
-    $descPrefix .= ' Discover tasting notes, ratings, grape varieties, and producer background on Dominik Mueller\'s wine notebook.';
+    $descPrefix .= ' Discover tasting notes, ratings, grape varieties, and producer background on ' . $owner . '\'s wine notebook.';
   }
   
   return sanitizeMetaDescription($descPrefix, 160);
@@ -3546,8 +3755,9 @@ function generateWineJsonLd($wine, $wine_name, $canonical_url) {
  * Generate rich keywords for a tasting note.
  */
 function generateTastingNoteKeywords($tasting_note) {
+  $owner = getOwnerName();
   if (empty($tasting_note) || !is_array($tasting_note)) {
-    return 'Dominik Mueller, tasting note, wine review, fine wine';
+    return $owner . ', tasting note, wine review, fine wine';
   }
   
   $wineKeywords = generateWineKeywords($tasting_note);
@@ -3579,11 +3789,12 @@ function generateTastingNoteKeywords($tasting_note) {
  * Generate meta description for a tasting note page.
  */
 function generateTastingNoteDescription($tasting_note, $wine_name) {
+  $owner = getOwnerName();
   if (empty($tasting_note) || !is_array($tasting_note)) {
-    return 'Fine wine tasting note and independent review by Dominik Mueller.';
+    return 'Fine wine tasting note and independent review by ' . $owner . '.';
   }
   
-  $reviewer = $tasting_note['displayname'] ?? 'Dominik Mueller';
+  $reviewer = $tasting_note['displayname'] ?? $owner;
   $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM';
   
   $ratingStr = '';
@@ -3615,7 +3826,7 @@ function generateTastingNoteDescription($tasting_note, $wine_name) {
  * Generate Schema.org Review JSON-LD structured data for a tasting note page.
  */
 function generateTastingNoteJsonLd($tasting_note, $wine_name, $canonical_url) {
-  $reviewer = $tasting_note['displayname'] ?? 'Dominik Mueller';
+  $reviewer = $tasting_note['displayname'] ?? getOwnerName();
   
   $data = [
     '@context' => 'https://schema.org',
@@ -3632,8 +3843,8 @@ function generateTastingNoteJsonLd($tasting_note, $wine_name, $canonical_url) {
     ],
     'publisher' => [
       '@type' => 'Organization',
-      'name' => 'Dominik Mueller',
-      'url' => 'https://dmueller.com'
+      'name' => getOwnerName(),
+      'url' => getSiteUrl()
     ],
     'reviewBody' => sanitizeMetaDescription($tasting_note['tasting_note'] ?? '', 500)
   ];
@@ -3707,7 +3918,7 @@ function getProducerAssociatedData($conn, $producerID) {
  */
 function generateProducerKeywords($producer, $associated_data = []) {
   if (empty($producer) || !is_array($producer)) {
-    return 'Dominik Mueller, wine producer, winery, fine wine';
+    return getOwnerName() . ', wine producer, winery, fine wine';
   }
   
   $terms = [];
@@ -3731,7 +3942,7 @@ function generateProducerKeywords($producer, $associated_data = []) {
   $terms[] = 'wine estate';
   $terms[] = 'fine wine';
   $terms[] = 'tasting notes';
-  $terms[] = 'Dominik Mueller';
+  $terms[] = getOwnerName();
   
   return buildKeywordsList($terms);
 }
@@ -3740,8 +3951,9 @@ function generateProducerKeywords($producer, $associated_data = []) {
  * Generate meta description for a producer page.
  */
 function generateProducerDescription($producer) {
+  $owner = getOwnerName();
   if (empty($producer) || !is_array($producer)) {
-    return 'Wine producer profile, region information, and tasting notes on Dominik Mueller\'s wine notebook.';
+    return 'Wine producer profile, region information, and tasting notes on ' . $owner . '\'s wine notebook.';
   }
   
   $name = $producer['producer'] ?? '';
@@ -3758,7 +3970,7 @@ function generateProducerDescription($producer) {
   if (!empty($producer['producer_desc'])) {
     $prefix .= ' ' . $producer['producer_desc'];
   } else {
-    $prefix .= " Discover wines produced, vineyard location, and tasting notes reviewed by Dominik Mueller.";
+    $prefix .= " Discover wines produced, vineyard location, and tasting notes reviewed by " . $owner . ".";
   }
   
   return sanitizeMetaDescription($prefix, 160);
@@ -3842,8 +4054,9 @@ function getBlogFeaturedData($conn, $blogID) {
  * Generate rich keywords for a blog story.
  */
 function generateBlogKeywords($blogpost, $featured_data = []) {
+  $owner = getOwnerName();
   if (empty($blogpost) || !is_array($blogpost)) {
-    return 'Dominik Mueller, wine blog, wine stories, fine wine';
+    return $owner . ', wine blog, wine stories, fine wine';
   }
   
   $terms = [];
@@ -3866,7 +4079,7 @@ function generateBlogKeywords($blogpost, $featured_data = []) {
   $terms[] = 'wine stories';
   $terms[] = 'wine tasting';
   $terms[] = 'fine wine';
-  $terms[] = 'Dominik Mueller';
+  $terms[] = $owner;
   
   return buildKeywordsList($terms);
 }
@@ -3875,8 +4088,9 @@ function generateBlogKeywords($blogpost, $featured_data = []) {
  * Generate meta description for a blog post.
  */
 function generateBlogDescription($blogpost) {
+  $owner = getOwnerName();
   if (empty($blogpost) || !is_array($blogpost)) {
-    return 'Wine stories, themed tasting reports, and cellar experiences on Dominik Mueller\'s wine blog.';
+    return 'Wine stories, themed tasting reports, and cellar experiences on ' . $owner . '\'s wine blog.';
   }
   
   $title = $blogpost['title'] ?? '';
@@ -3887,7 +4101,7 @@ function generateBlogDescription($blogpost) {
     return sanitizeMetaDescription($clean, 160);
   }
   
-  return sanitizeMetaDescription($title . ' - A wine story and tasting experience shared by Dominik Mueller.', 160);
+  return sanitizeMetaDescription($title . ' - A wine story and tasting experience shared by ' . $owner . '.', 160);
 }
 
 /**
@@ -3897,6 +4111,9 @@ function generateBlogJsonLd($blogpost, $canonical_url, $image_url = null) {
   $title = $blogpost['title'] ?? '';
   $pubDate = !empty($blogpost['pub_date']) ? date('c', strtotime($blogpost['pub_date'])) : null;
   $editDate = !empty($blogpost['edit_date']) ? date('c', strtotime($blogpost['edit_date'])) : $pubDate;
+  $owner_name = getOwnerName();
+  $site_url = getSiteUrl();
+  $logo_url = getAbsoluteUrl(getSiteSetting('logo_url', '/img/logo_web.webp'));
   
   $data = [
     '@context' => 'https://schema.org',
@@ -3909,16 +4126,16 @@ function generateBlogJsonLd($blogpost, $canonical_url, $image_url = null) {
     ],
     'author' => [
       '@type' => 'Person',
-      'name' => 'Dominik Mueller',
-      'url' => 'https://dmueller.com'
+      'name' => $owner_name,
+      'url' => $site_url
     ],
     'publisher' => [
       '@type' => 'Organization',
-      'name' => 'Dominik Mueller',
-      'url' => 'https://dmueller.com',
+      'name' => $owner_name,
+      'url' => $site_url,
       'logo' => [
         '@type' => 'ImageObject',
-        'url' => 'https://dmueller.com/img/logo_web.webp'
+        'url' => $logo_url
       ]
     ]
   ];
