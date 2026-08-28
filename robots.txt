@@ -8,3 +8,4 @@ Disallow: /winemenu.php
 Disallow: /toggle_subscription.php
 Disallow: /uploads/
 Disallow: /includes/
+Disallow: /install/
