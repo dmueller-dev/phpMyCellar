@@ -534,7 +534,7 @@
   <div class="column side">
     <div class="card">
       <p>
-        This is a chronological list of all the tasting notes I have published. Keep in mind that this is not my main job, but a hobby.
+        This is a list of all the tasting notes I have published. Keep in mind that this is not my main job, but a hobby.
         However, I usually manage to write at least one new note per week.
       </p>
       <aside>
@@ -579,7 +579,7 @@
           </tr>
         </table>
         <p>As you can see, &quot;good&quot; wines start at 5 points already!</p>
-        <p><a href="/blogpost.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>
+        <p><a href="/blog.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>
       </aside>
     </div>
   </div>
