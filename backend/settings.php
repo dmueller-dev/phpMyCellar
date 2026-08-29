@@ -27,8 +27,9 @@
     $currency_symbol = trim($_POST['currency_symbol'] ?? '€');
     $rating_scale = trim($_POST['rating_scale'] ?? '20-point');
     $meta_description = sanitizeInput($_POST['meta_description'] ?? '');
-    $theme_accent_color = trim($_POST['theme_accent_color'] ?? '#7B1113');
-    $theme_accent_hover = trim($_POST['theme_accent_hover'] ?? '#5c0d0e');
+    $theme_accent_color = trim($_POST['theme_accent_color'] ?? '#CD5C5C');
+    $theme_accent_secondary = trim($_POST['theme_accent_secondary'] ?? '#B22222');
+    $theme_accent_hover = trim($_POST['theme_accent_hover'] ?? '#8B0000');
     $logo_url = trim($_POST['logo_url'] ?? '/img/logo_web.webp');
 
     if (empty($site_name)) {
@@ -49,6 +50,7 @@
       updateSiteSetting('rating_scale', $rating_scale, 'general');
       updateSiteSetting('meta_description', $meta_description, 'general');
       updateSiteSetting('theme_accent_color', $theme_accent_color, 'theme');
+      updateSiteSetting('theme_accent_secondary', $theme_accent_secondary, 'theme');
       updateSiteSetting('theme_accent_hover', $theme_accent_hover, 'theme');
       updateSiteSetting('logo_url', $logo_url, 'theme');
 
@@ -65,8 +67,9 @@
   $currency_symbol = getCurrencySymbol();
   $rating_scale = getSiteSetting('rating_scale', '20-point');
   $meta_description = getSiteSetting('meta_description', '');
-  $theme_accent_color = getSiteSetting('theme_accent_color', '#7B1113');
-  $theme_accent_hover = getSiteSetting('theme_accent_hover', '#5c0d0e');
+  $theme_accent_color = getSiteSetting('theme_accent_color', '#CD5C5C');
+  $theme_accent_secondary = getSiteSetting('theme_accent_secondary', '#B22222');
+  $theme_accent_hover = getSiteSetting('theme_accent_hover', '#8B0000');
   $logo_url = getSiteSetting('logo_url', '/img/logo_web.webp');
 
   $page_title = 'Site Settings - Administration';
@@ -168,15 +171,24 @@
           <h3>Theme &amp; Branding</h3>
 
           <div style="margin-bottom:15px;">
-            <label for="theme_accent_color"><strong>Primary Accent Colour:</strong></label><br>
+            <label for="theme_accent_color"><strong>Primary Accent Colour (IndianRed):</strong></label><br>
             <input type="color" id="theme_accent_color" name="theme_accent_color" value="<?php echo htmlspecialchars($theme_accent_color, ENT_QUOTES, 'UTF-8'); ?>" style="height:40px;width:80px;vertical-align:middle;">
             <input type="text" value="<?php echo htmlspecialchars($theme_accent_color, ENT_QUOTES, 'UTF-8'); ?>" onchange="document.getElementById('theme_accent_color').value=this.value;" style="width:120px;padding:8px;margin-left:10px;">
+            <br><small style="color:#666;">Used for navigation bar, interactive buttons, borders, and pills (default: <code>#CD5C5C</code>).</small>
           </div>
 
           <div style="margin-bottom:15px;">
-            <label for="theme_accent_hover"><strong>Accent Hover Colour:</strong></label><br>
+            <label for="theme_accent_secondary"><strong>Secondary Accent Colour (Firebrick):</strong></label><br>
+            <input type="color" id="theme_accent_secondary" name="theme_accent_secondary" value="<?php echo htmlspecialchars($theme_accent_secondary, ENT_QUOTES, 'UTF-8'); ?>" style="height:40px;width:80px;vertical-align:middle;">
+            <input type="text" value="<?php echo htmlspecialchars($theme_accent_secondary, ENT_QUOTES, 'UTF-8'); ?>" onchange="document.getElementById('theme_accent_secondary').value=this.value;" style="width:120px;padding:8px;margin-left:10px;">
+            <br><small style="color:#666;">Used for text links, vintage titles, stats, active tabs, and rating highlights (default: <code>#B22222</code>).</small>
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label for="theme_accent_hover"><strong>Accent Hover Colour (DarkRed):</strong></label><br>
             <input type="color" id="theme_accent_hover" name="theme_accent_hover" value="<?php echo htmlspecialchars($theme_accent_hover, ENT_QUOTES, 'UTF-8'); ?>" style="height:40px;width:80px;vertical-align:middle;">
             <input type="text" value="<?php echo htmlspecialchars($theme_accent_hover, ENT_QUOTES, 'UTF-8'); ?>" onchange="document.getElementById('theme_accent_hover').value=this.value;" style="width:120px;padding:8px;margin-left:10px;">
+            <br><small style="color:#666;">Used for hover and active states on buttons and menus (default: <code>#8B0000</code>).</small>
           </div>
 
           <div style="margin-bottom:15px;">
@@ -186,7 +198,7 @@
           </div>
 
           <div style="margin-top:30px;">
-            <button type="submit" style="padding:10px 24px;font-size:16px;background-color:#7B1113;color:#fff;border:none;border-radius:4px;cursor:pointer;">Save Settings</button>
+            <button type="submit" class="btn-action" style="padding:10px 24px;font-size:16px;">Save Settings</button>
           </div>
         </form>
       </section>

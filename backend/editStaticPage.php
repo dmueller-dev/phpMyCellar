@@ -101,7 +101,7 @@
           </div>
 
           <div style="margin-top:20px;">
-            <button type="submit" style="padding:10px 24px;font-size:16px;background-color:#7B1113;color:#fff;border:none;border-radius:4px;cursor:pointer;">Save Page Content</button>
+            <button type="submit" class="btn-action" style="padding:10px 24px;font-size:16px;">Save Page Content</button>
             <a href="manageStaticPages.php" style="margin-left:15px;color:#555;text-decoration:none;">Cancel</a>
           </div>
         </form>

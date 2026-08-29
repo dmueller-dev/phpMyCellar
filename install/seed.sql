@@ -19,8 +19,9 @@ INSERT INTO `site_settings` (`setting_key`, `setting_value`, `setting_group`) VA
 ('currency_symbol', '€', 'general'),
 ('rating_scale', '20-point', 'general'),
 ('meta_description', 'Personal wine cellar management, tasting notes, and ratings notebook.', 'general'),
-('theme_accent_color', '#7B1113', 'theme'),
-('theme_accent_hover', '#5c0d0e', 'theme'),
+('theme_accent_color', '#CD5C5C', 'theme'),
+('theme_accent_secondary', '#B22222', 'theme'),
+('theme_accent_hover', '#8B0000', 'theme'),
 ('logo_url', '/img/logo_web.webp', 'theme');
 
 -- --------------------------------------------------------

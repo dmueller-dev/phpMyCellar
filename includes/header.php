@@ -101,13 +101,15 @@
 
   <link rel="stylesheet" href="/includes/styles.css">
   <?php
-    $theme_accent = function_exists('getSiteSetting') ? getSiteSetting('theme_accent_color', '#7B1113') : '#7B1113';
-    $theme_hover  = function_exists('getSiteSetting') ? getSiteSetting('theme_accent_hover', '#5c0d0e') : '#5c0d0e';
-    if (!empty($theme_accent) || !empty($theme_hover)):
+    $theme_accent    = function_exists('getSiteSetting') ? getSiteSetting('theme_accent_color', '#CD5C5C') : '#CD5C5C';
+    $theme_secondary = function_exists('getSiteSetting') ? getSiteSetting('theme_accent_secondary', '#B22222') : '#B22222';
+    $theme_hover     = function_exists('getSiteSetting') ? getSiteSetting('theme_accent_hover', '#8B0000') : '#8B0000';
+    if (!empty($theme_accent) || !empty($theme_secondary) || !empty($theme_hover)):
   ?>
   <style>
     :root {
       <?php if (!empty($theme_accent)): ?>--primary-accent: <?php echo htmlspecialchars($theme_accent, ENT_QUOTES, 'UTF-8'); ?>;<?php endif; ?>
+      <?php if (!empty($theme_secondary)): ?>--secondary-accent: <?php echo htmlspecialchars($theme_secondary, ENT_QUOTES, 'UTF-8'); ?>;<?php endif; ?>
       <?php if (!empty($theme_hover)): ?>--primary-accent-hover: <?php echo htmlspecialchars($theme_hover, ENT_QUOTES, 'UTF-8'); ?>;<?php endif; ?>
     }
   </style>

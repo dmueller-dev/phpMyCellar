@@ -1,8 +1,9 @@
 @charset "utf-8";
  
 :root {
-  --primary-accent: #7B1113;
-  --primary-accent-hover: #5c0d0e;
+  --primary-accent: #CD5C5C;
+  --secondary-accent: #B22222;
+  --primary-accent-hover: #8B0000;
 }
 
 html {
@@ -125,12 +126,12 @@ img.logo {
 }
 
 a:link, a:visited {
-  color: var(--primary-accent, firebrick);
+  color: var(--secondary-accent, firebrick);
   text-decoration: underline;
 }
 
 a:hover, a:active {
-  color: var(--primary-accent-hover, firebrick);
+  color: var(--secondary-accent, firebrick);
   text-decoration: none;
 }
 
@@ -146,7 +147,7 @@ a.filter-nav {
 }
 
 a.filter-nav:hover {
-  background-color: var(--primary-accent-hover, firebrick);
+  background-color: var(--primary-accent-hover, darkred);
 }
 
 ul.top-menu {
@@ -646,7 +647,7 @@ ul.submenu li a:hover {
 .vintage-tile .vintage-year {
   font-size: 18px;
   font-weight: bold;
-  color: var(--primary-accent, firebrick);
+  color: var(--secondary-accent, firebrick);
   margin-bottom: 4px;
 }
 
@@ -798,7 +799,7 @@ ul.submenu li a:hover {
 .vintage-stat-box .stat-val {
   font-size: 18px;
   font-weight: bold;
-  color: var(--primary-accent, firebrick);
+  color: var(--secondary-accent, firebrick);
 }
 
 .vintage-stat-box .stat-lbl {
@@ -840,11 +841,11 @@ ul.submenu li a:hover {
 a.comment-badge:hover {
   background-color: #fee2e2;
   border-color: #fca5a5;
-  color: var(--primary-accent, firebrick) !important;
+  color: var(--secondary-accent, firebrick) !important;
 }
 
 a.comment-badge:hover .comment-icon {
-  stroke: var(--primary-accent, firebrick);
+  stroke: var(--secondary-accent, firebrick);
 }
 
 /* --- GROUP HEADERS & ACCORDIONS (WINES & TNOTES) --- */
@@ -862,7 +863,7 @@ details > summary > b {
 }
 
 details > summary:hover > b {
-  color: var(--primary-accent, firebrick);
+  color: var(--secondary-accent, firebrick);
 }
 
 details li details > summary > i {
@@ -873,7 +874,7 @@ details li details > summary > i {
 }
 
 details li details > summary:hover > i {
-  color: var(--primary-accent, firebrick);
+  color: var(--secondary-accent, firebrick);
 }
 
 details summary + ul {
@@ -942,7 +943,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   display: inline-flex;
   align-items: center;
   padding: 3px 7px;
-  color: var(--primary-accent, firebrick) !important;
+  color: var(--secondary-accent, firebrick) !important;
   font-weight: 600;
   text-decoration: none !important;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -955,7 +956,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 
 .vintage-chip .chip-rating {
   font-weight: 600;
-  color: var(--primary-accent, firebrick);
+  color: var(--secondary-accent, firebrick);
 }
 
 .vintage-chip .chip-sep {
@@ -1005,11 +1006,11 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 
 .vintage-chip .chip-badge:hover {
   background-color: #fee2e2;
-  color: var(--primary-accent, firebrick) !important;
+  color: var(--secondary-accent, firebrick) !important;
 }
 
 .vintage-chip .chip-badge:hover .comment-icon {
-  stroke: var(--primary-accent, firebrick);
+  stroke: var(--secondary-accent, firebrick);
 }
 
 .vintage-chip .chip-action {
@@ -1029,7 +1030,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 
 .vintage-chip .chip-action:hover {
   background-color: #fee2e2;
-  color: var(--primary-accent, firebrick) !important;
+  color: var(--secondary-accent, firebrick) !important;
 }
 
 /* --- WINE MENU VINTAGE ACCORDION CHIPS & STORAGE DRAWER --- */

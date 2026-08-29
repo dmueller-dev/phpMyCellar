@@ -24,7 +24,7 @@
 
         <table style="width:100%;border-collapse:collapse;margin-top:20px;">
           <thead>
-            <tr style="border-bottom:2px solid #7B1113;text-align:left;">
+            <tr style="border-bottom:2px solid var(--primary-accent, #CD5C5C);text-align:left;">
               <th style="padding:10px 8px;">Page Key</th>
               <th style="padding:10px 8px;">Page Title</th>
               <th style="padding:10px 8px;">Last Updated</th>
@@ -43,7 +43,7 @@
                   <td style="padding:10px 8px;"><strong><?php echo htmlspecialchars($p['page_title'], ENT_QUOTES, 'UTF-8'); ?></strong></td>
                   <td style="padding:10px 8px;font-size:0.9em;color:#555;"><?php echo htmlspecialchars($p['last_updated'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></td>
                   <td style="padding:10px 8px;text-align:right;">
-                    <a href="editStaticPage.php?key=<?php echo urlencode($p['page_key']); ?>" style="display:inline-block;padding:4px 10px;background-color:#7B1113;color:#fff;text-decoration:none;border-radius:3px;font-size:0.9em;">Edit</a>
+                    <a href="editStaticPage.php?key=<?php echo urlencode($p['page_key']); ?>" class="btn-action" style="display:inline-block;padding:4px 10px;font-size:0.9em;">Edit</a>
                   </td>
                 </tr>
               <?php endforeach; ?>
