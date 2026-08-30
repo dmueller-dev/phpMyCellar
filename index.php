@@ -32,7 +32,7 @@
     <div class="card">
       <section>
         <h3><?php echo htmlspecialchars($welcome_title, ENT_QUOTES, 'UTF-8'); ?></h3>
-        <?php echo $welcome_content; ?>
+        <?php echo function_exists('interpolateSiteSettings') ? interpolateSiteSettings($welcome_content) : $welcome_content; ?>
       </section>
     </div>
   </div>
@@ -60,7 +60,7 @@
 
     <div class="card">
       <h3><?php echo htmlspecialchars($get_in_touch_title, ENT_QUOTES, 'UTF-8'); ?></h3>
-      <?php echo $get_in_touch_content; ?>
+      <?php echo function_exists('interpolateSiteSettings') ? interpolateSiteSettings($get_in_touch_content) : $get_in_touch_content; ?>
     </div>
   </div>
 </div>

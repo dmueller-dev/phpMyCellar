@@ -120,6 +120,16 @@
         <li><code>privacy</code>: Privacy policy &amp; cookie notice page.</li>
         <li><code>rating_guide</code>: Guide to wine rating scales (20-point &amp; WSET).</li>
       </ul>
+      <hr style="margin:15px 0;">
+      <h4>Dynamic Site Variables</h4>
+      <p><small style="color:#555;">You can use the following tags inside page content to automatically pull live data from <a href="settings.php">Site Settings</a>:</small></p>
+      <ul style="font-size:0.9em;color:#444;">
+        <li><code>{{owner_name}}</code>: Owner / Cellar Master</li>
+        <li><code>{{owner_address}}</code>: Postal Address</li>
+        <li><code>{{owner_email}}</code>: Contact / System Email</li>
+        <li><code>{{site_name}}</code>: Site Title</li>
+        <li><code>{{site_tagline}}</code>: Site Tagline</li>
+      </ul>
     </div>
   </div>
 </div>

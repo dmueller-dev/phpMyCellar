@@ -14,7 +14,7 @@
 <div class="card">
   <section>
     <?php if (!empty($page['page_content'])): ?>
-      <?php echo $page['page_content']; ?>
+      <?php echo function_exists('interpolateSiteSettings') ? interpolateSiteSettings($page['page_content']) : $page['page_content']; ?>
     <?php else: ?>
       <h3>Privacy policy</h3>
       <p>

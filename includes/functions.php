@@ -3502,6 +3502,31 @@ function saveStaticPage($page_key, $title, $content, $meta_description = '') {
 }
 
 /**
+ * Interpolate dynamic site setting variables into static content.
+ */
+function interpolateSiteSettings($content) {
+  if (empty($content) || !is_string($content)) {
+    return $content;
+  }
+  $owner_name = function_exists('getOwnerName') ? getOwnerName() : 'Cellar Master';
+  $owner_email = function_exists('getOwnerEmail') ? getOwnerEmail() : 'cellar@example.com';
+  $owner_address = function_exists('getSiteSetting') ? getSiteSetting('owner_address', '') : '';
+  $site_title = function_exists('getSiteTitle') ? getSiteTitle() : 'phpMyCellar';
+  $site_tagline = function_exists('getSiteTagline') ? getSiteTagline() : '';
+
+  $vars = [
+    '{{owner_name}}'    => htmlspecialchars($owner_name, ENT_QUOTES, 'UTF-8'),
+    '{{owner_email}}'   => htmlspecialchars($owner_email, ENT_QUOTES, 'UTF-8'),
+    '{{owner_address}}' => $owner_address,
+    '{{site_name}}'     => htmlspecialchars($site_title, ENT_QUOTES, 'UTF-8'),
+    '{{site_title}}'    => htmlspecialchars($site_title, ENT_QUOTES, 'UTF-8'),
+    '{{site_tagline}}'  => htmlspecialchars($site_tagline, ENT_QUOTES, 'UTF-8'),
+  ];
+
+  return strtr($content, $vars);
+}
+
+/**
  * Get configured site URL (e.g. https://example.com or http://localhost:8000).
  */
 function getSiteUrl() {
