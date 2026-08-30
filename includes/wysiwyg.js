@@ -96,9 +96,9 @@ document.addEventListener("DOMContentLoaded", function () {
     Quill.register(CaptionedImageBlot);
 
     // Create custom Embed blot for soft line breaks (<br>)
-    const Embed = Quill.import('blots/embed');
     const Parchment = Quill.import('parchment') || window.Parchment;
-    class SoftBreakBlot extends Embed {
+    const EmbedBase = (Parchment && Parchment.EmbedBlot) ? Parchment.EmbedBlot : (Quill.import('blots/block/embed') || Object);
+    class SoftBreakBlot extends EmbedBase {
       static create() {
         const node = super.create();
         return node;
@@ -110,8 +110,11 @@ document.addEventListener("DOMContentLoaded", function () {
     SoftBreakBlot.blotName = 'softbreak';
     SoftBreakBlot.tagName = 'br';
     SoftBreakBlot.className = 'ql-soft-break';
-    SoftBreakBlot.scope = (Parchment && Parchment.Scope) ? Parchment.Scope.INLINE_BLOT : 3;
+    if (Parchment && Parchment.Scope) {
+      SoftBreakBlot.scope = Parchment.Scope.INLINE_BLOT;
+    }
     Quill.register(SoftBreakBlot, true);
+    Quill.register('formats/softbreak', SoftBreakBlot, true);
 
     // --- 2. Inject Dynamic CSS Styles for Overlay & Editor Previews ---
     const styleEl = document.createElement("style");
@@ -566,19 +569,6 @@ document.addEventListener("DOMContentLoaded", function () {
         theme: "snow",
         placeholder: textarea.placeholder || "Write something beautiful...",
         modules: {
-          keyboard: {
-            bindings: {
-              shiftEnter: {
-                key: 13,
-                shiftKey: true,
-                handler: function (range) {
-                  this.quill.insertEmbed(range.index, 'softbreak', true, 'user');
-                  this.quill.setSelection(range.index + 1, 'user');
-                  return false;
-                }
-              }
-            }
-          },
           toolbar: {
             container: [
               [{ 'header': [1, 2, 3, 4, false] }],
@@ -606,6 +596,24 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
 
+      // Intercept Shift+Enter in DOM capture phase to reliably insert <br> soft break before Quill paragraph split
+      quill.root.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && e.shiftKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+
+          const range = quill.getSelection(true);
+          if (range) {
+            if (range.length > 0) {
+              quill.deleteText(range.index, range.length, 'user');
+            }
+            quill.insertEmbed(range.index, 'softbreak', true, 'user');
+            quill.setSelection(range.index + 1, 0, 'user');
+          }
+        }
+      }, true);
+
       // Inject beautiful SVG icon for our customImage button in the toolbar
       const toolbarEl = container.previousSibling;
       if (toolbarEl && toolbarEl.classList.contains("ql-toolbar")) {
@@ -619,13 +627,23 @@ document.addEventListener("DOMContentLoaded", function () {
       // Register custom clipboard matcher for soft line breaks
       const Delta = Quill.import('delta');
       if (quill.clipboard && typeof quill.clipboard.addMatcher === 'function') {
-        quill.clipboard.addMatcher('BR.ql-soft-break', function (node, delta) {
+        quill.clipboard.addMatcher('BR', function (node, delta) {
+          // If this is Quill's internal filler BR inside an empty block (<p><br></p>), leave it
+          if (node.parentNode && node.parentNode.childNodes.length === 1 && node.parentNode.firstChild === node) {
+            return delta;
+          }
           return new Delta().insert({ softbreak: true });
         });
       }
 
-      // Populate Quill with original textarea content (HTML/paragraphs)
-      quill.root.innerHTML = textarea.value;
+      // Populate Quill safely via clipboard parser to support existing content and container tags
+      if (textarea.value && textarea.value.trim().length > 0) {
+        if (quill.clipboard && typeof quill.clipboard.dangerouslyPasteHTML === 'function') {
+          quill.clipboard.dangerouslyPasteHTML(0, textarea.value, 'silent');
+        } else {
+          quill.root.innerHTML = textarea.value;
+        }
+      }
 
       // Sync Quill content back to the hidden textarea on text changes
       quill.on("text-change", function () {
