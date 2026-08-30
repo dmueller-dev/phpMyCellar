@@ -1,8 +1,13 @@
-# Ignore all files in this uploads folder...
+# Ignore all uploaded content in this folder...
 *
 
-# ...except for gitignore files themselves
+# ...except for security and git tracking files
 !.gitignore
+!.htaccess
+!index.html
 
 # ...and keep tracking the invoices subfolder
 !invoices/
+!invoices/.gitignore
+!invoices/.htaccess
+!invoices/index.html

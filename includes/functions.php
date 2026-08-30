@@ -1027,9 +1027,28 @@ function validateCSRFToken($token) {
   return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
-// Function to sanitize input
+// Function to sanitize input and allow safe HTML formatting while neutralizing XSS vectors
 function sanitizeInput($input) {
-  return strip_tags(trim($input),'<a><b><br><em><h1><h2><h3><h4><i><img><p><small><strong><u><ul><ol><li>');
+  if ($input === null) {
+    return '';
+  }
+  $trimmed = trim((string)$input);
+  if ($trimmed === '') {
+    return '';
+  }
+
+  // 1. Strip disallowed HTML tags
+  $allowed_tags = '<a><b><br><em><h1><h2><h3><h4><h5><h6><i><img><p><small><strong><u><ul><ol><li><table><thead><tbody><tr><th><td><blockquote><code><pre><hr><span><div><details><summary>';
+  $cleaned = strip_tags($trimmed, $allowed_tags);
+
+  // 2. Remove inline JavaScript event handlers (e.g. onclick, onerror, onload, onmouseover)
+  $cleaned = preg_replace('/\s+on[a-zA-Z]+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/i', '', $cleaned);
+
+  // 3. Remove dangerous URI schemes in href, src, formaction (e.g. javascript:, vbscript:, data:text/html)
+  $cleaned = preg_replace('/(href|src|formaction)\s*=\s*(["\'])\s*(?:javascript|vbscript|data\s*:\s*text\/html):.*?\2/i', '$1="#"', $cleaned);
+  $cleaned = preg_replace('/(href|src|formaction)\s*=\s*(?:javascript|vbscript|data\s*:\s*text\/html):[^\s>]+/i', '$1="#"', $cleaned);
+
+  return $cleaned;
 }
 
 // Function to validate and sanitize a redirect URL to prevent Open Redirect vulnerabilities
@@ -1491,7 +1510,10 @@ function renderComments($conn, $id, $type) {
   
   if ($result && mysqli_num_rows($result) != 0) {
     while ($comments = $result->fetch_assoc()) {
-      echo "<div class='card' id='comment-".$comments["comment_id"]."'><p style='font-size:small;'><b>".$comments["displayname"]."</b>, ".date_format(date_create($comments["pub_time"]),"l, j F Y H:i:s").":</p><hr><p style='font-size:small;'>".$comments["content"]."</p></div>";
+      $author = htmlspecialchars($comments["displayname"] ?? 'Anonymous', ENT_QUOTES, 'UTF-8');
+      $pubDate = date_format(date_create($comments["pub_time"]), "l, j F Y H:i:s");
+      $safeContent = nl2br(htmlspecialchars($comments["content"] ?? '', ENT_QUOTES, 'UTF-8'));
+      echo "<div class='card' id='comment-" . (int)$comments["comment_id"] . "'><p style='font-size:small;'><b>" . $author . "</b>, " . $pubDate . ":</p><hr><p style='font-size:small; line-height: 1.5;'>" . $safeContent . "</p></div>";
     }
   }
   $stmt->close();
