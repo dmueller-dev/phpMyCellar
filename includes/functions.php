@@ -3527,6 +3527,17 @@ function interpolateSiteSettings($content) {
 }
 
 /**
+ * Retrieve rendered static content or sidebar by key, with fallback HTML and site settings interpolation.
+ */
+function getStaticPageContent($page_key, $fallback_html = '') {
+  $page = getStaticPage($page_key);
+  if ($page && !empty(trim($page['page_content'] ?? ''))) {
+    return function_exists('interpolateSiteSettings') ? interpolateSiteSettings($page['page_content']) : $page['page_content'];
+  }
+  return function_exists('interpolateSiteSettings') ? interpolateSiteSettings($fallback_html) : $fallback_html;
+}
+
+/**
  * Get configured site URL (e.g. https://example.com or http://localhost:8000).
  */
 function getSiteUrl() {

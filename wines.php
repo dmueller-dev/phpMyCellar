@@ -473,7 +473,12 @@
   <div class="column side">
     <div class="card">
       <aside>
-        <p>This is not a list of my wine cellar. These are wines I've written about in a tasting note or in a story on my blog.</p>
+        <?php 
+          echo getStaticPageContent(
+            'wines_sidebar',
+            '<p>This is not a list of my wine cellar. These are wines I\'ve written about in a tasting note or in a story on my blog.</p>'
+          ); 
+        ?>
       </aside>
     </div>
   </div>

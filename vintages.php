@@ -435,11 +435,12 @@
 
       <div class="card">
         <aside>
-          <h3 style="margin-top:0;">About vintage reports</h3>
-          <p style="font-size:small; line-height:1.4;">
-            Vintage scores reflect my personal tasting notes on the wines reviewed. They are updated dynamically as new tasting notes are posted.
-          </p>
-          <p style="font-size:small;"><a href="/tnotes.php">Browse all tasting notes &rarr;</a></p>
+          <?php 
+            echo getStaticPageContent(
+              'vintages_sidebar',
+              '<h3 style="margin-top:0;">About vintage reports</h3><p style="font-size:small; line-height:1.4;">Vintage scores reflect my personal tasting notes on the wines reviewed. They are updated dynamically as new tasting notes are posted.</p><p style="font-size:small;"><a href="/tnotes.php">Browse all tasting notes &rarr;</a></p>'
+            ); 
+          ?>
         </aside>
       </div>
     </div>

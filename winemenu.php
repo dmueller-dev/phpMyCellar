@@ -179,7 +179,12 @@
   <div class="column side">
     <div class="card">
       <aside>
-        <p>While there are more bottles lying in my cellar, these are all the wines that are ready to be drunk today. <strong>Every wine</strong> can be opened, so please feel free to choose any wine you like! These wines were collected to be shared and enjoyed in the company of friends and family.</p>
+        <?php 
+          echo getStaticPageContent(
+            'winemenu_sidebar',
+            '<p>While there are more bottles lying in my cellar, these are all the wines that are ready to be drunk today. <strong>Every wine</strong> can be opened, so please feel free to choose any wine you like! These wines were collected to be shared and enjoyed in the company of friends and family.</p>'
+          ); 
+        ?>
       </aside>
     </div>
   </div>

@@ -267,14 +267,12 @@
   </div>
   <div class="column side">
     <div class="card">
-      <p>
-        In this section, I don't usually write about individual wines, but about larger tastings of several wines (e.g. horizontals,
-        verticals, etc.) or personal experiences on wine trips and at restaurants.
-      </p>
-      <p>
-        If a report refers to a specific wine, this is usually linked so that you can quickly find more information about the wine in
-        question on my site.
-      </p>
+      <?php 
+        echo getStaticPageContent(
+          'blog_sidebar',
+          '<p>In this section, I don\'t usually write about individual wines, but about larger tastings of several wines (e.g. horizontals, verticals, etc.) or personal experiences on wine trips and at restaurants.</p><p>If a report refers to a specific wine, this is usually linked so that you can quickly find more information about the wine in question on my site.</p>'
+        ); 
+      ?>
     </div>
   </div>
 </div>

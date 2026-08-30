@@ -533,53 +533,13 @@
   </div>
   <div class="column side">
     <div class="card">
-      <p>
-        This is a list of all the tasting notes I have published. Keep in mind that this is not my main job, but a hobby.
-        However, I usually manage to write at least one new note per week.
-      </p>
       <aside>
-        <h4>How I rate wines</h4>
-        <p>
-          I rate wines on my personal <strong>20-point DM scale</strong>. On this scale, I rate the <em>absolute</em> quality of wines.
-          My ratings may appear low relative to those of most popular wine reviewers at first glance, but I make use of the entire range
-          from 0 to 20 points:
-        </p>
-        <table>
-          <tr>
-            <td style="width:70px">20</td>
-            <td>one-of-a-kind</td>
-          </tr>
-          <tr>
-            <td>17-19</td>
-            <td>grand vin</td>
-          </tr>
-          <tr>
-            <td>13-16</td>
-            <td>excellent</td>
-          </tr>
-          <tr>
-            <td>9-12</td>
-            <td>very good</td>
-          </tr>
-          <tr>
-            <td>5-8</td>
-            <td>good</td>
-          </tr>
-          <tr>
-            <td>3-4</td>
-            <td>passable</td>
-          </tr>
-          <tr>
-            <td>1-2</td>
-            <td>subpar</td>
-          </tr>
-          <tr>
-            <td>0</td>
-            <td>poor</td>
-          </tr>
-        </table>
-        <p>As you can see, &quot;good&quot; wines start at 5 points already!</p>
-        <p><a href="/blog.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>
+        <?php 
+          echo getStaticPageContent(
+            'tnotes_sidebar',
+            '<p>This is a list of all the tasting notes I have published. Keep in mind that this is not my main job, but a hobby. However, I usually manage to write at least one new note per week.</p><h4>How I rate wines</h4><p>I rate wines on my personal <strong>20-point DM scale</strong>. On this scale, I rate the <em>absolute</em> quality of wines. My ratings may appear low relative to those of most popular wine reviewers at first glance, but I make use of the entire range from 0 to 20 points:</p><table><tr><td style="width:70px">20</td><td>one-of-a-kind</td></tr><tr><td>17-19</td><td>grand vin</td></tr><tr><td>13-16</td><td>excellent</td></tr><tr><td>9-12</td><td>very good</td></tr><tr><td>5-8</td><td>good</td></tr><tr><td>3-4</td><td>passable</td></tr><tr><td>1-2</td><td>subpar</td></tr><tr><td>0</td><td>poor</td></tr></table><p>As you can see, &quot;good&quot; wines start at 5 points already!</p><p><a href="/blog.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>'
+          ); 
+        ?>
       </aside>
     </div>
   </div>
