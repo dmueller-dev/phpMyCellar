@@ -95,6 +95,24 @@ document.addEventListener("DOMContentLoaded", function () {
     CaptionedImageBlot.className = 'captioned-image-container';
     Quill.register(CaptionedImageBlot);
 
+    // Create custom Embed blot for soft line breaks (<br>)
+    const Embed = Quill.import('blots/embed');
+    const Parchment = Quill.import('parchment') || window.Parchment;
+    class SoftBreakBlot extends Embed {
+      static create() {
+        const node = super.create();
+        return node;
+      }
+      static value() {
+        return true;
+      }
+    }
+    SoftBreakBlot.blotName = 'softbreak';
+    SoftBreakBlot.tagName = 'br';
+    SoftBreakBlot.className = 'ql-soft-break';
+    SoftBreakBlot.scope = (Parchment && Parchment.Scope) ? Parchment.Scope.INLINE_BLOT : 3;
+    Quill.register(SoftBreakBlot, true);
+
     // --- 2. Inject Dynamic CSS Styles for Overlay & Editor Previews ---
     const styleEl = document.createElement("style");
     styleEl.textContent = `
@@ -548,6 +566,19 @@ document.addEventListener("DOMContentLoaded", function () {
         theme: "snow",
         placeholder: textarea.placeholder || "Write something beautiful...",
         modules: {
+          keyboard: {
+            bindings: {
+              shiftEnter: {
+                key: 13,
+                shiftKey: true,
+                handler: function (range) {
+                  this.quill.insertEmbed(range.index, 'softbreak', true, 'user');
+                  this.quill.setSelection(range.index + 1, 'user');
+                  return false;
+                }
+              }
+            }
+          },
           toolbar: {
             container: [
               [{ 'header': [1, 2, 3, 4, false] }],
@@ -583,6 +614,14 @@ document.addEventListener("DOMContentLoaded", function () {
           customButton.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
           customButton.title = "Insert Site Image";
         }
+      }
+
+      // Register custom clipboard matcher for soft line breaks
+      const Delta = Quill.import('delta');
+      if (quill.clipboard && typeof quill.clipboard.addMatcher === 'function') {
+        quill.clipboard.addMatcher('BR.ql-soft-break', function (node, delta) {
+          return new Delta().insert({ softbreak: true });
+        });
       }
 
       // Populate Quill with original textarea content (HTML/paragraphs)

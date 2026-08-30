@@ -21,7 +21,7 @@
   $logo_path = function_exists('getSiteSetting') ? getSiteSetting('logo_url', '/img/logo_web.webp') : '/img/logo_web.webp';
 
   $resolved_title = isset($page_title) ? $page_title : ($site_title . ' - ' . $site_tagline);
-  $resolved_desc = isset($meta_desc) ? $meta_desc : $default_desc;
+  $resolved_desc = strip_tags(isset($meta_desc) ? $meta_desc : $default_desc);
   
   if (isset($meta_keywords)) {
     $resolved_keywords = is_array($meta_keywords) ? implode(', ', $meta_keywords) : $meta_keywords;

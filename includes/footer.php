@@ -19,7 +19,7 @@
       Contact details:<br>
       <?php echo htmlspecialchars($owner_name, ENT_QUOTES, 'UTF-8'); ?><br>
       <?php if (!empty($owner_address)): ?>
-        <?php echo nl2br(htmlspecialchars($owner_address, ENT_QUOTES, 'UTF-8')); ?><br><br>
+        <div class="footer-address"><?php echo $owner_address; ?></div>
       <?php endif; ?>
       E-Mail: <a href="mailto:<?php echo htmlspecialchars($owner_email, ENT_QUOTES, 'UTF-8'); ?>" title="Contact cellar owner by email"><?php echo htmlspecialchars($owner_email, ENT_QUOTES, 'UTF-8'); ?></a>
     </address>
