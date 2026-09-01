@@ -3,6 +3,7 @@
 > A lightweight, self-hosted fine wine cellar management notebook, tasting notes journal, and interactive cellar menu built with modern PHP and MariaDB.
 
 [![Licence: MIT](https://img.shields.io/badge/Licence-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/dmueller-dev/phpMyCellar/actions/workflows/ci.yml/badge.svg)](https://github.com/dmueller-dev/phpMyCellar/actions/workflows/ci.yml)
 [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%207.4%20%7C%208.x-8892BF.svg)](https://www.php.net/)
 [![Database](https://img.shields.io/badge/Database-MariaDB%20%7C%20MySQL-003545.svg)](https://mariadb.org/)
 
@@ -128,6 +129,12 @@ Full user guides and administrator manuals are available in the [manual/](manual
 - [06. User Accounts, Roles & Privileges](manual/06-users-and-privileges.md)
 - [07. Site Customisation & Static Pages](manual/07-site-customisation.md)
 - [08. Maintenance, Backups & Security](manual/08-backup-and-maintenance.md)
+
+---
+
+## Contributing
+
+We welcome contributions of all kinds! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting pull requests or opening issues.
 
 ---
 

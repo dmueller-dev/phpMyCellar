@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-php:
+    name: PHP Syntax Check (${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['7.4', '8.1', '8.2', '8.3', '8.4']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mysqli, mbstring, gd, curl, session
+          coverage: none
+
+      - name: Check PHP Syntax (lint)
+        run: |
+          echo "Linting all PHP files with PHP ${{ matrix.php-version }}..."
+          ERRORS=0
+          while IFS= read -r -d '' file; do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "::error file=$file::Syntax error in $file"
+              php -l "$file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done < <(find . -type f -name "*.php" -not -path "./.git/*" -print0)
+          
+          if [ $ERRORS -gt 0 ]; then
+            echo "Linting failed with $ERRORS error(s)."
+            exit 1
+          fi
+          echo "All PHP files passed syntax check!"
+
+  validate-schema:
+    name: Validate SQL Schema & Seed
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: rootpassword
+          MARIADB_DATABASE: phpmycellar_ci
+        ports:
+          - 3306:3306
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify MySQL Client & Schema Import
+        run: |
+          sudo apt-get update && sudo apt-get install -y default-mysql-client
+          echo "Testing schema.sql import..."
+          mysql -h 127.0.0.1 -P 3306 -u root -prootpassword phpmycellar_ci < install/schema.sql
+          echo "Testing seed.sql import..."
+          mysql -h 127.0.0.1 -P 3306 -u root -prootpassword phpmycellar_ci < install/seed.sql
+          echo "Verifying tables created..."
+          mysql -h 127.0.0.1 -P 3306 -u root -prootpassword phpmycellar_ci -e "SHOW TABLES;"

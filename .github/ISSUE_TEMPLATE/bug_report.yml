@@ -1,0 +1,91 @@
+name: 🐛 Bug Report
+description: Report a reproducible bug or defect in phpMyCellar
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please ensure you have searched existing issues before submitting.
+        If this is a security vulnerability, please refer to our [Security Policy](SECURITY.md) instead of creating a public issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug.
+      placeholder: Describe what happens and why it is unexpected...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to reproduce the issue.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behaviour
+      description: A concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs or Screenshots
+      description: Provide relevant web server / PHP error logs or screenshots (make sure to redact passwords/sensitive info).
+      render: shell
+
+  - type: dropdown
+    id: environment_type
+    attributes:
+      label: Deployment Environment
+      options:
+        - Docker (docker-compose)
+        - Apache (native LAMP/VPS)
+        - Nginx (native LEMP/VPS)
+        - Other (Shared Hosting / CPanel)
+    validations:
+      required: true
+
+  - type: input
+    id: php_version
+    attributes:
+      label: PHP Version
+      placeholder: "e.g. 8.2.14"
+    validations:
+      required: true
+
+  - type: input
+    id: db_version
+    attributes:
+      label: Database Engine & Version
+      placeholder: "e.g. MariaDB 10.11 or MySQL 8.0"
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser & OS (if UI-related)
+      placeholder: "e.g. Firefox 128 on Linux / Safari on iOS"
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I have verified that this report contains no private database passwords, secrets, or sensitive personal data.
+          required: true

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation & User Manual
+    url: https://github.com/dmueller-dev/phpMyCellar/tree/main/manual
+    about: Please check the comprehensive user & administrator manual before opening an issue.
+  - name: 🔒 Security Vulnerability Reporting
+    url: https://github.com/dmueller-dev/phpMyCellar/security/policy
+    about: Please report security vulnerabilities privately according to our security policy.
