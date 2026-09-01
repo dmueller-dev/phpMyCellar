@@ -408,7 +408,6 @@ CREATE TABLE `tnotes` (
   KEY `idx_tn_pts_20` (`pts_20`),
   KEY `idx_tn_pts_100` (`pts_100`),
   KEY `idx_tn_wsetpts` (`wsetpts`),
-  CONSTRAINT `chk_pts_20` CHECK (`pts_20` IS NULL OR (`pts_20` >= 0 AND `pts_20` <= 20)),
   CONSTRAINT `chk_pts_100` CHECK (`pts_100` IS NULL OR (`pts_100` >= 50 AND `pts_100` <= 100)),
   CONSTRAINT `fk_tn_wine` FOREIGN KEY (`wine_id`) REFERENCES `wines` (`wine_id`),
   CONSTRAINT `fk_tn_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
