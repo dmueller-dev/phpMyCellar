@@ -28,6 +28,9 @@
       website uses <strong>no</strong> cookies. Refer to the <a href="/privacy.php" title="Privacy policy">privacy policy</a>
       for details. Have fun!</small>
     </p>
+    <p class="footer-powered-by">
+      Powered by <a href="https://phpMyCellar.org" target="_blank" rel="noopener noreferrer" title="phpMyCellar open source wine management system">phpMyCellar</a>
+    </p>
   </footer>
 </div>
 

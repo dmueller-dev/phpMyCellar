@@ -1202,3 +1202,24 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   margin: 0;
   line-height: 1.0;
 }
+
+.footer-powered-by {
+  text-align: center;
+  margin-top: 15px;
+  margin-bottom: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.footer-powered-by a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease-in-out;
+}
+
+.footer-powered-by a:hover {
+  color: var(--secondary-accent, firebrick);
+}
