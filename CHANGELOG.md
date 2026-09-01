@@ -9,8 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-01
+
 ### Added
-- Configurable primary rating scale system (20-point vs. 100-point) in Site Settings.
+- Configurable primary rating scale system (20-point vs. 100-point) in Site Settings and Installation Wizard.
 - Optional WSET Systematic Approach to Tasting (SAT) qualitative assessment toggle.
 - Database CHECK constraint ensuring 100-point scores remain within 50–100.
 - Reference lookup tables `scale_20` and `scale_100` with score tier descriptions.
@@ -22,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated documentation and user manual for rating scale options.
 
 ### Fixed
-- Fixed SQL syntax and column mapping in database migration scripts.
+- Removed redundant `chk_pts_20` constraint from `install/schema.sql`.
 
 ## [1.0.0] - 2026-09-01
 
