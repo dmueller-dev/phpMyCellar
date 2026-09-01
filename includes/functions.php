@@ -504,7 +504,7 @@ function getTastingNotes($conn) {
     throw new Exception("Invalid database connection");
   }
 
-  $sql = "select tnotes.note_id, tnotes.user_id, tnotes.status, tnotes.tasting_date, tnotes.dmpts, tnotes.blind,
+  $sql = "select tnotes.note_id, tnotes.user_id, tnotes.status, tnotes.tasting_date, tnotes.pts_20, tnotes.pts_100, tnotes.pts_20 as dmpts, tnotes.wsetpts, tnotes.blind,
     wines.wine_id, wines.master_id, wines.vintage, wines_master.nameconvention, wines_master.name,
     wines_master.grape, producers.producer, regions.country, regions.region, vineyards.vineyard,
     users.initials
@@ -822,22 +822,23 @@ function markBottleAsConsumed($conn, $bottle_id, $consumption_date, $note_id = n
   return $stmt->execute();
 }
 
-function updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $drink_from = null, $drink_through = null, $blind, $status, $img = null, $img_class = null, $favourite = 'no') {
+function updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $pts_20 = null, $pts_100 = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $drink_from = null, $drink_through = null, $blind = 'not blind', $status = 'draft', $img = null, $img_class = null, $favourite = 'no') {
 
-  if (empty($dmpts) || $dmpts=="") { $dmpts=null; }
-  if (empty($wset_balance) || $wset_balance=="") { $wset_balance=null; }
-  if (empty($wset_length) || $wset_length=="") { $wset_length=null; }
-  if (empty($wset_intensity) || $wset_intensity=="") { $wset_intensity=null; }
-  if (empty($wset_complexity) || $wset_complexity=="") { $wset_complexity=null; }
-  if (empty($wsetpts) || $wsetpts=="") { $wsetpts=null; }
-  if (empty($drink_from) || $drink_from=="") { $drink_from=null; }
-  if (empty($drink_through) || $drink_through=="") { $drink_through=null; }
-  if (empty($img) || $img=="") { $img=null; }
-  if (empty($img_class) || $img_class=="") { $img_class=null; }
+  if ($pts_20 === "" || $pts_20 === null) { $pts_20 = null; }
+  if ($pts_100 === "" || $pts_100 === null) { $pts_100 = null; }
+  if ($wset_balance === "" || $wset_balance === null) { $wset_balance = null; }
+  if ($wset_length === "" || $wset_length === null) { $wset_length = null; }
+  if ($wset_intensity === "" || $wset_intensity === null) { $wset_intensity = null; }
+  if ($wset_complexity === "" || $wset_complexity === null) { $wset_complexity = null; }
+  if ($wsetpts === "" || $wsetpts === null) { $wsetpts = null; }
+  if (empty($drink_from) || $drink_from == "") { $drink_from = null; }
+  if (empty($drink_through) || $drink_through == "") { $drink_through = null; }
+  if (empty($img) || $img == "") { $img = null; }
+  if (empty($img_class) || $img_class == "") { $img_class = null; }
 
-  $sql = "update tnotes set wine_id = ?, tasting_date = ?, user_id = ?, tasting_note = ?, flawed_yn = ?, dmpts = ?, wset_balance = ?, wset_length = ?, wset_intensity = ?, wset_complexity = ?, wsetpts = ?, drinkwindow_min = ?, drinkwindow_max = ?, status = ?, blind = ?, img = ?, img_class = ?, favourite = ? where note_id = ?";
+  $sql = "UPDATE tnotes SET wine_id = ?, tasting_date = ?, user_id = ?, tasting_note = ?, flawed_yn = ?, pts_20 = ?, pts_100 = ?, wset_balance = ?, wset_length = ?, wset_intensity = ?, wset_complexity = ?, wsetpts = ?, drinkwindow_min = ?, drinkwindow_max = ?, status = ?, blind = ?, img = ?, img_class = ?, favourite = ? WHERE note_id = ?";
   $stmt = $conn->prepare($sql);
-  $stmt->bind_param("isissidddddiisssssi", $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite, $note_id);
+  $stmt->bind_param("isissiidddddiisssssi", $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $pts_20, $pts_100, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite, $note_id);
   return $stmt->execute();
 }
 
@@ -980,19 +981,26 @@ function insertBottle($conn, $wine_id, $format, $bin_id = null, $store_id, $purc
 }
 
 // Function to insert a new tasting note
-function insertTastingNote($conn, $bottle_id = null, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drinkwindow_min = null, $drinkwindow_max = null, $status, $blind, $img = null, $img_class = null, $favourite = 'no') {
+function insertTastingNote($conn, $bottle_id = null, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $pts_20 = null, $pts_100 = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $drinkwindow_min = null, $drinkwindow_max = null, $status = 'draft', $blind = 'not blind', $img = null, $img_class = null, $favourite = 'no') {
   // Check optional inputs
-  if ($drinkwindow_min=="") { $drinkwindow_min=null; }
-  if ($drinkwindow_max=="") { $drinkwindow_max=null; }
-  if ($img=="") { $img=null; $img_class=null; }
+  if ($pts_20 === "" || $pts_20 === null) { $pts_20 = null; }
+  if ($pts_100 === "" || $pts_100 === null) { $pts_100 = null; }
+  if ($wset_balance === "" || $wset_balance === null) { $wset_balance = null; }
+  if ($wset_length === "" || $wset_length === null) { $wset_length = null; }
+  if ($wset_intensity === "" || $wset_intensity === null) { $wset_intensity = null; }
+  if ($wset_complexity === "" || $wset_complexity === null) { $wset_complexity = null; }
+  if ($wsetpts === "" || $wsetpts === null) { $wsetpts = null; }
+  if ($drinkwindow_min == "") { $drinkwindow_min = null; }
+  if ($drinkwindow_max == "") { $drinkwindow_max = null; }
+  if ($img == "") { $img = null; $img_class = null; }
     
-  $sql = "INSERT INTO tnotes (wine_id, user_id, tasting_date, tasting_note, flawed_yn, dmpts, wset_balance, wset_length, wset_intensity, wset_complexity, wsetpts, drinkwindow_min, drinkwindow_max, status, blind, img, img_class, favourite) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  $sql = "INSERT INTO tnotes (wine_id, user_id, tasting_date, tasting_note, flawed_yn, pts_20, pts_100, wset_balance, wset_length, wset_intensity, wset_complexity, wsetpts, drinkwindow_min, drinkwindow_max, status, blind, img, img_class, favourite) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
   $stmt = $conn->prepare($sql);
     
   // Create an array of parameters
-  $params = [$wine_id, $user_id, $tasting_date, $tasting_note, $flawed_yn, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drinkwindow_min, $drinkwindow_max, $status, $blind, $img, $img_class, $favourite];
+  $params = [$wine_id, $user_id, $tasting_date, $tasting_note, $flawed_yn, $pts_20, $pts_100, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drinkwindow_min, $drinkwindow_max, $status, $blind, $img, $img_class, $favourite];
     
   // Create a types string
   $types = '';
@@ -1001,10 +1009,12 @@ function insertTastingNote($conn, $bottle_id = null, $wine_id, $tasting_date, $u
           $types .= 's'; // Treat null as string
       } elseif (is_int($param)) {
           $types .= 'i';
-      } elseif (is_string($param)) {
-          $types .= 's';
+      } elseif (is_numeric($param) && is_float($param + 0) && strpos((string)$param, '.') !== false) {
+          $types .= 'd';
       } elseif (is_double($param)) {
           $types .= 'd';
+      } else {
+          $types .= 's';
       }
   }
     
@@ -1428,19 +1438,28 @@ function validateDrinkDatesInput($drink_from, $drink_through) {
 }
 
 // Function to validate tasting note input
-function validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $dmpts = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $drink_from = null, $drink_through = null, $blind, $status, $img = null, $img_class = null, $favourite = 'no') {
+function validateNoteInput($note_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $pts_20 = null, $pts_100 = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $drink_from = null, $drink_through = null, $blind = 'not blind', $status = 'draft', $img = null, $img_class = null, $favourite = 'no') {
   $errors = [];
 
-  if ($dmpts=="") { $dmpts=null; }
-  if ($wset_balance=="") { $wset_balance=null; }
-  if ($wset_length=="") { $wset_length=null; }
-  if ($wset_intensity=="") { $wset_intensity=null; }
-  if ($wset_complexity=="") { $wset_complexity=null; }
-  if ($wsetpts=="") { $wsetpts=null; }
-  if ($drink_from=="") { $drink_from=null; }
-  if ($drink_through=="") { $drink_through=null; }
-  if ($img=="") { $img=null; }
-  if ($img_class=="") { $img_class=null; }
+  if ($pts_20 === "" || $pts_20 === null) { $pts_20 = null; }
+  if ($pts_100 === "" || $pts_100 === null) { $pts_100 = null; }
+  if ($wset_balance === "" || $wset_balance === null) { $wset_balance = null; }
+  if ($wset_length === "" || $wset_length === null) { $wset_length = null; }
+  if ($wset_intensity === "" || $wset_intensity === null) { $wset_intensity = null; }
+  if ($wset_complexity === "" || $wset_complexity === null) { $wset_complexity = null; }
+  if ($wsetpts === "" || $wsetpts === null) { $wsetpts = null; }
+  if ($drink_from == "") { $drink_from = null; }
+  if ($drink_through == "") { $drink_through = null; }
+  if ($img == "") { $img = null; }
+  if ($img_class == "") { $img_class = null; }
+
+  if ($pts_20 !== null && (!is_numeric($pts_20) || $pts_20 < 0 || $pts_20 > 20)) {
+    $errors[] = "20-point scale rating must be an integer between 0 and 20.";
+  }
+
+  if ($pts_100 !== null && (!is_numeric($pts_100) || $pts_100 < 50 || $pts_100 > 100)) {
+    $errors[] = "100-point scale rating must be an integer between 50 and 100.";
+  }
 
   if ($note_id != null && $note_id != "") {
     if (!is_numeric($note_id) || $note_id == "") {
@@ -2232,10 +2251,15 @@ function getVintageRegionStats($conn, $vintage) {
     throw new Exception("Invalid database connection");
   }
 
-  $sql = "SELECT country, region, region_id, colour, country_region_colour, note_count, avg_dmpts, vintage_desc
+  $scale = getRatingScale();
+  $col = ($scale === '100-point') ? 'pts_100' : 'pts_20';
+  $avgCol = ($scale === '100-point') ? 'avg_pts_100' : 'avg_pts_20';
+
+  $sql = "SELECT country, region, region_id, colour, country_region_colour, note_count, 
+                 {$avgCol} AS avg_score, avg_dmpts, vintage_desc
           FROM view_vintage_region_colour_stats
           WHERE vintage = ?
-          ORDER BY avg_dmpts DESC, country ASC, region ASC, colour ASC";
+          ORDER BY {$avgCol} DESC, country ASC, region ASC, colour ASC";
   
   $stmt = $conn->prepare($sql);
   if (!$stmt) {
@@ -2247,7 +2271,8 @@ function getVintageRegionStats($conn, $vintage) {
         wines_master.colour,
         CONCAT(regions.country, ': ', regions.region, ' (', wines_master.colour, ')') AS country_region_colour,
         COUNT(tnotes.note_id) AS note_count,
-        ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN tnotes.dmpts END), 1) AS avg_dmpts,
+        ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN tnotes.{$col} END), 1) AS avg_score,
+        ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.pts_20 IS NOT NULL THEN tnotes.pts_20 END), 1) AS avg_dmpts,
         xvr.vintage_desc
     FROM tnotes
     JOIN wines ON tnotes.wine_id = wines.wine_id
@@ -2262,7 +2287,7 @@ function getVintageRegionStats($conn, $vintage) {
         wines_master.region_id,
         wines_master.colour,
         xvr.vintage_desc
-    ORDER BY avg_dmpts DESC, regions.country ASC, regions.region ASC, wines_master.colour ASC";
+    ORDER BY avg_score DESC, regions.country ASC, regions.region ASC, wines_master.colour ASC";
     $stmt = $conn->prepare($sqlFallback);
     if (!$stmt) {
       return array();
@@ -2332,19 +2357,23 @@ function getVintageCountryStats($conn, $vintage) {
   return $rows;
 }
 
-// Function to get vintage top wines rated DM8 and higher (SQL View 3 with fallback)
+// Function to get vintage top wines rated >= threshold (SQL View 3 with fallback)
 function getVintageTopWines($conn, $vintage) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
   }
 
-  $sql = "SELECT note_id, wine_id, user_id, tasting_date, dmpts, flawed_yn, favourite,
+  $scale = getRatingScale();
+  $threshold = getTopWineScoreThreshold($scale);
+  $col = getActiveScoreColumn($scale);
+
+  $sql = "SELECT note_id, wine_id, user_id, tasting_date, pts_20, pts_100, dmpts, flawed_yn, favourite,
                  status, initials, vintage, master_id, name, nameconvention, grape, colour, style,
                  producer_id, producer, vineyard_id, vineyard, region_id, region, country,
                  appellation_id, appellation
           FROM view_vintage_top_wines
-          WHERE vintage = ?
-          ORDER BY dmpts DESC, producer ASC, name ASC, tasting_date DESC";
+          WHERE vintage = ? AND {$col} >= ?
+          ORDER BY {$col} DESC, producer ASC, name ASC, tasting_date DESC";
 
   $stmt = $conn->prepare($sql);
   if (!$stmt) {
@@ -2354,7 +2383,9 @@ function getVintageTopWines($conn, $vintage) {
         tnotes.wine_id,
         tnotes.user_id,
         tnotes.tasting_date,
-        tnotes.dmpts,
+        tnotes.pts_20,
+        tnotes.pts_20 AS dmpts,
+        tnotes.pts_100,
         tnotes.flawed_yn,
         tnotes.favourite,
         tnotes.status,
@@ -2385,16 +2416,18 @@ function getVintageTopWines($conn, $vintage) {
     LEFT JOIN appellations ON wines_master.appellation_id = appellations.appellation_id
     WHERE tnotes.status = 'published'
       AND tnotes.flawed_yn = 'no'
-      AND tnotes.dmpts >= 8
+      AND tnotes.{$col} >= ?
       AND wines.vintage = ?
-    ORDER BY tnotes.dmpts DESC, producers.producer ASC, wines_master.name ASC, tnotes.tasting_date DESC";
+    ORDER BY tnotes.{$col} DESC, producers.producer ASC, wines_master.name ASC, tnotes.tasting_date DESC";
     $stmt = $conn->prepare($sqlFallback);
     if (!$stmt) {
       return array();
     }
+    $stmt->bind_param("ii", $threshold, $vintage);
+  } else {
+    $stmt->bind_param("ii", $vintage, $threshold);
   }
 
-  $stmt->bind_param("i", $vintage);
   $stmt->execute();
   $result = $stmt->get_result();
   $rows = array();
@@ -2411,16 +2444,20 @@ function getVintageSummary($conn, $vintage) {
     throw new Exception("Invalid database connection");
   }
 
+  $scale = getRatingScale();
+  $col = getActiveScoreColumn($scale);
+
   $sql = "SELECT 
             COUNT(tnotes.note_id) AS total_notes,
-            COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN 1 END) AS rated_notes_count,
+            COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) AS rated_notes_count,
             CASE 
-              WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN 1 END) >= 5 
-              THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN tnotes.dmpts END), 1) 
+              WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) >= 5 
+              THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN tnotes.{$col} END), 1) 
               ELSE NULL 
-            END AS avg_dmpts,
-            MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.dmpts END) AS max_dmpts,
-            MIN(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.dmpts END) AS min_dmpts,
+            END AS avg_score,
+            ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.pts_20 IS NOT NULL THEN tnotes.pts_20 END), 1) AS avg_dmpts,
+            MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.{$col} END) AS max_score,
+            MIN(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.{$col} END) AS min_score,
             COUNT(DISTINCT regions.country) AS country_count,
             COUNT(DISTINCT regions.region_id) AS region_count,
             COUNT(DISTINCT producers.producer_id) AS producer_count
@@ -2448,16 +2485,20 @@ function getAllVintagesSummary($conn) {
     throw new Exception("Invalid database connection");
   }
 
+  $scale = getRatingScale();
+  $col = getActiveScoreColumn($scale);
+
   $sql = "SELECT 
             wines.vintage,
             COUNT(tnotes.note_id) AS note_count,
-            COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN 1 END) AS rated_count,
+            COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) AS rated_count,
             CASE 
-              WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN 1 END) >= 5 
-              THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.dmpts IS NOT NULL THEN tnotes.dmpts END), 1) 
+              WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) >= 5 
+              THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN tnotes.{$col} END), 1) 
               ELSE NULL 
-            END AS avg_dmpts,
-            MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.dmpts END) AS max_dmpts
+            END AS avg_score,
+            ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.pts_20 IS NOT NULL THEN tnotes.pts_20 END), 1) AS avg_dmpts,
+            MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.{$col} END) AS max_score
           FROM tnotes
           JOIN wines ON tnotes.wine_id = wines.wine_id
           WHERE tnotes.status = 'published' AND wines.vintage IS NOT NULL
@@ -3613,6 +3654,127 @@ function getCurrencySymbol() {
 }
 
 /**
+ * Get configured primary rating scale ('20-point' or '100-point').
+ */
+function getRatingScale() {
+  $scale = getSiteSetting('rating_scale', '20-point');
+  return in_array($scale, ['20-point', '100-point'], true) ? $scale : '20-point';
+}
+
+/**
+ * Check whether WSET SAT evaluation (0.0 to 4.0) is enabled.
+ */
+function isWsetSATEnabled() {
+  $setting = getSiteSetting('wset_enabled', '1');
+  return ($setting === '1' || $setting === 'yes' || $setting === 'true' || $setting === true || $setting === 1);
+}
+
+/**
+ * Get active score column name based on configured or specified scale ('pts_20' or 'pts_100').
+ */
+function getActiveScoreColumn($scale = null) {
+  $scale = $scale ?? getRatingScale();
+  return ($scale === '100-point') ? 'pts_100' : 'pts_20';
+}
+
+/**
+ * Get the maximum score for a given scale.
+ */
+function getRatingScaleMax($scale = null) {
+  $scale = $scale ?? getRatingScale();
+  return ($scale === '100-point') ? 100 : 20;
+}
+
+/**
+ * Get the minimum standard score for a given scale.
+ */
+function getRatingScaleMin($scale = null) {
+  $scale = $scale ?? getRatingScale();
+  return ($scale === '100-point') ? 50 : 0;
+}
+
+/**
+ * Format score badge for tasting note (e.g. "DM18", "DM94", "flawed", "NR").
+ */
+function formatNoteRatingBadge($note, $scale = null, $includeInitials = true) {
+  if (!is_array($note)) {
+    return ($note === null || $note === '') ? 'NR' : (string)$note;
+  }
+  if (($note['flawed_yn'] ?? '') === 'yes') {
+    return 'flawed';
+  }
+  $scale = $scale ?? getRatingScale();
+  $score = null;
+  if ($scale === '100-point') {
+    $score = $note['pts_100'] ?? null;
+  } else {
+    $score = $note['pts_20'] ?? $note['dmpts'] ?? null;
+  }
+  if ($score === null || $score === '') {
+    return 'NR';
+  }
+  $initials = '';
+  if ($includeInitials) {
+    $initials = !empty($note['initials']) ? $note['initials'] : (!empty($_SESSION['initials']) ? $_SESSION['initials'] : 'DM');
+  }
+  return $initials . $score;
+}
+
+/**
+ * Format score with appropriate denominator (e.g. "18 / 20" or "94 / 100") or format note rating badge.
+ */
+function formatRatingDisplay($scoreOrNote, $scale = null, $includeInitials = false) {
+  if (is_array($scoreOrNote)) {
+    return formatNoteRatingBadge($scoreOrNote, $scale, $includeInitials);
+  }
+  if ($scoreOrNote === null || $scoreOrNote === '') {
+    return 'not rated';
+  }
+  $max = getRatingScaleMax($scale);
+  return $scoreOrNote . ' / ' . $max;
+}
+
+/**
+ * Get qualifying score threshold for top wines list.
+ */
+function getTopWineScoreThreshold($scale = null) {
+  $scale = $scale ?? getRatingScale();
+  return ($scale === '100-point') ? 88 : 8;
+}
+
+/**
+ * Retrieve qualitative descriptor and class for a score from scale_20 or scale_100.
+ */
+function getScoreDescriptor($conn, $score, $scale = null) {
+  if ($score === null || $score === '' || !($conn instanceof mysqli)) {
+    return null;
+  }
+  $scale = $scale ?? getRatingScale();
+  if ($scale === '100-point') {
+    $stmt = $conn->prepare("SELECT pts_desc, pts_class FROM scale_100 WHERE ? >= min_pts AND ? <= max_pts LIMIT 1");
+    if ($stmt) {
+      $intScore = (int)$score;
+      $stmt->bind_param("ii", $intScore, $intScore);
+      $stmt->execute();
+      $res = $stmt->get_result()->fetch_assoc();
+      $stmt->close();
+      return $res;
+    }
+  } else {
+    $stmt = $conn->prepare("SELECT pts_desc, pts_class FROM scale_20 WHERE pts = ? LIMIT 1");
+    if ($stmt) {
+      $intScore = (int)$score;
+      $stmt->bind_param("i", $intScore);
+      $stmt->execute();
+      $res = $stmt->get_result()->fetch_assoc();
+      $stmt->close();
+      return $res;
+    }
+  }
+  return null;
+}
+
+/**
  * Helper to ensure a full absolute URL for canonical links, Open Graph, and JSON-LD.
  */
 function getAbsoluteUrl($pathOrUrl) {
@@ -3834,10 +3996,17 @@ function generateTastingNoteKeywords($tasting_note) {
       $terms[] = 'tasted ' . $year;
     }
   }
-  if (!empty($tasting_note['dmpts']) && ($tasting_note['flawed_yn'] ?? '') !== 'yes') {
-    $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM';
-    $terms[] = $initials . $tasting_note['dmpts'];
-    $terms[] = '20-point scale';
+  $scale = getRatingScale();
+  $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM';
+  if (($tasting_note['flawed_yn'] ?? '') !== 'yes') {
+    if ($scale === '100-point' && !empty($tasting_note['pts_100'])) {
+      $terms[] = $initials . $tasting_note['pts_100'];
+      $terms[] = '100-point scale';
+    } elseif (!empty($tasting_note['pts_20']) || !empty($tasting_note['dmpts'])) {
+      $score = $tasting_note['pts_20'] ?? $tasting_note['dmpts'];
+      $terms[] = $initials . $score;
+      $terms[] = '20-point scale';
+    }
   }
   
   return buildKeywordsList($terms);
@@ -3854,12 +4023,16 @@ function generateTastingNoteDescription($tasting_note, $wine_name) {
   
   $reviewer = $tasting_note['displayname'] ?? $owner;
   $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM';
+  $scale = getRatingScale();
   
   $ratingStr = '';
   if (($tasting_note['flawed_yn'] ?? '') === 'yes') {
     $ratingStr = ' (Flawed bottle)';
-  } elseif (!empty($tasting_note['dmpts'])) {
-    $ratingStr = ' (' . $initials . $tasting_note['dmpts'] . '/20)';
+  } elseif ($scale === '100-point' && !empty($tasting_note['pts_100'])) {
+    $ratingStr = ' (' . $initials . $tasting_note['pts_100'] . '/100)';
+  } elseif (!empty($tasting_note['pts_20']) || !empty($tasting_note['dmpts'])) {
+    $score = $tasting_note['pts_20'] ?? $tasting_note['dmpts'];
+    $ratingStr = ' (' . $initials . $score . '/20)';
   }
   
   $dateStr = '';
@@ -3918,13 +4091,24 @@ function generateTastingNoteJsonLd($tasting_note, $wine_name, $canonical_url) {
     $data['datePublished'] = date('Y-m-d', strtotime($tasting_note['tasting_date']));
   }
   
-  if (!empty($tasting_note['dmpts']) && ($tasting_note['flawed_yn'] ?? '') !== 'yes') {
-    $data['reviewRating'] = [
-      '@type' => 'Rating',
-      'ratingValue' => (string)$tasting_note['dmpts'],
-      'bestRating' => '20',
-      'worstRating' => '0'
-    ];
+  $scale = getRatingScale();
+  if (($tasting_note['flawed_yn'] ?? '') !== 'yes') {
+    if ($scale === '100-point' && !empty($tasting_note['pts_100'])) {
+      $data['reviewRating'] = [
+        '@type' => 'Rating',
+        'ratingValue' => (string)$tasting_note['pts_100'],
+        'bestRating' => '100',
+        'worstRating' => '50'
+      ];
+    } elseif (!empty($tasting_note['pts_20']) || !empty($tasting_note['dmpts'])) {
+      $score = $tasting_note['pts_20'] ?? $tasting_note['dmpts'];
+      $data['reviewRating'] = [
+        '@type' => 'Rating',
+        'ratingValue' => (string)$score,
+        'bestRating' => '20',
+        'worstRating' => '0'
+      ];
+    }
   }
   
   if (!empty($tasting_note['img'])) {

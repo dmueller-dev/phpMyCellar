@@ -231,6 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
       $owner_email      = trim($_POST['owner_email'] ?? $_SESSION['install_admin']['email']);
       $currency_symbol  = trim($_POST['currency_symbol'] ?? '€');
       $rating_scale     = trim($_POST['rating_scale'] ?? '20-point');
+      $wset_enabled     = trim($_POST['wset_enabled'] ?? '1');
       $accent_color     = trim($_POST['theme_accent_color'] ?? '#CD5C5C');
       $mail_from        = trim($_POST['mail_from'] ?? $owner_email);
 
@@ -253,6 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
             'owner_email' => [$owner_email, 'general'],
             'currency_symbol' => [$currency_symbol, 'general'],
             'rating_scale' => [$rating_scale, 'general'],
+            'wset_enabled' => [$wset_enabled, 'general'],
             'theme_accent_color' => [$accent_color, 'theme']
           ];
 
@@ -874,10 +876,15 @@ foreach ($checks as $c) {
             <div class="form-group">
               <label for="rating_scale">Default Rating Scale</label>
               <select id="rating_scale" name="rating_scale" class="form-control">
-                <option value="20-point" selected>20-point Scale (DM Scale)</option>
-                <option value="100-point">100-point Scale</option>
-                <option value="5-star">5-star Scale</option>
-                <option value="WSET-SAT">WSET Systematic Approach to Tasting (SAT)</option>
+                <option value="20-point" selected>20-Point Scale (0 to 20)</option>
+                <option value="100-point">100-Point Scale (50 to 100)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="wset_enabled">WSET SAT Evaluation (0.0 to 4.0)</label>
+              <select id="wset_enabled" name="wset_enabled" class="form-control">
+                <option value="1" selected>Enabled (Display WSET SAT criteria & scoring)</option>
+                <option value="0">Disabled (Hide WSET SAT fields)</option>
               </select>
             </div>
           </div>

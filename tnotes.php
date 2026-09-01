@@ -155,19 +155,49 @@
       <p>
         <table>
           <tr><td>Flawed?</td><td style="width:5px;"></td><td><?php echo $tasting_note["flawed_yn"];?></td></tr>
+          <?php 
+            $scale = getRatingScale();
+            $wset_enabled = isWsetSATEnabled();
+            $score_initials = htmlspecialchars($tasting_note["initials"] ?? 'DM', ENT_QUOTES, 'UTF-8');
+            $active_score = ($scale === '100-point') ? ($tasting_note['pts_100'] ?? null) : ($tasting_note['pts_20'] ?? $tasting_note['dmpts'] ?? null);
+            $max_score = getRatingScaleMax($scale);
+            $desc_field = ($scale === '100-point') ? 'scale_100_desc' : 'scale_20_desc';
+            $class_field = ($scale === '100-point') ? 'scale_100_class' : 'scale_20_class';
+            $score_desc = $tasting_note[$desc_field] ?? $tasting_note['pts_desc'] ?? $tasting_note['dmpts_desc'] ?? '';
+            $score_class = $tasting_note[$class_field] ?? $tasting_note['pts_class'] ?? $tasting_note['dmpts_class'] ?? '';
+          ?>
           <tr>
-            <td><?php echo htmlspecialchars($tasting_note["initials"] ?? 'DM', ENT_QUOTES, 'UTF-8'); ?>:</td>
+            <td><?php echo $score_initials; ?>:</td>
             <td style="width:5px;"></td>
             <td>
               <?php
-                if($tasting_note["dmpts"]==null) {
+                if ($active_score === null || $active_score === '') {
                   echo "not rated";
+                } elseif (!empty($score_desc)) {
+                  echo "<div class='tooltip'>" . htmlspecialchars($active_score, ENT_QUOTES, 'UTF-8') . "<span class='tooltiptext'>" . htmlspecialchars($score_desc, ENT_QUOTES, 'UTF-8') . "</span></div> / " . $max_score . (!empty($score_class) ? " (&quot;" . htmlspecialchars($score_class, ENT_QUOTES, 'UTF-8') . "&quot;)" : "");
                 } else {
-                  echo "<div class='tooltip'>".$tasting_note["dmpts"]."<span class='tooltiptext'>".$tasting_note["dmpts_desc"]."</span></div> / 20 (&quot;".$tasting_note["dmpts_class"]."&quot;)";
+                  echo htmlspecialchars($active_score, ENT_QUOTES, 'UTF-8') . " / " . $max_score . (!empty($score_class) ? " (&quot;" . htmlspecialchars($score_class, ENT_QUOTES, 'UTF-8') . "&quot;)" : "");
                 }
               ?>
             </td>
           </tr>
+          <?php if ($wset_enabled && !empty($tasting_note['wsetpts'])): ?>
+            <tr>
+              <td>WSET SAT:</td>
+              <td style="width:5px;"></td>
+              <td>
+                <?php
+                  $wset_pts = $tasting_note['wsetpts'];
+                  $wset_desc = $tasting_note['wset_desc'] ?? '';
+                  if (!empty($wset_desc)) {
+                    echo "<div class='tooltip'>" . htmlspecialchars($wset_pts, ENT_QUOTES, 'UTF-8') . "<span class='tooltiptext'>" . htmlspecialchars($wset_desc, ENT_QUOTES, 'UTF-8') . "</span></div> / 4.0";
+                  } else {
+                    echo htmlspecialchars($wset_pts, ENT_QUOTES, 'UTF-8') . " / 4.0";
+                  }
+                ?>
+              </td>
+            </tr>
+          <?php endif; ?>
           <tr>
             <td>Favourite:</td>
             <td style="width:5px;"></td>
@@ -385,7 +415,12 @@
     if ($sort=="date" || $sort=="tenyears" || $sort=="twentyplus") {
       $sqlOrderBy="order by tnotes.tasting_date desc, wines.wine_id asc, tnotes.note_id desc";
     } elseif ($sort=="rating") {
-      $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.dmpts desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
+      $active_scale = getRatingScale();
+      if ($active_scale === '100-point') {
+        $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.pts_100 desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
+      } else {
+        $sqlOrderBy="order by tnotes.flawed_yn asc, COALESCE(tnotes.pts_20, tnotes.dmpts) desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
+      }
     } elseif ($sort=="region") {
       $sqlOrderBy="order by regions.country asc, regions.region asc, producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
     } elseif ($sort=="producer") {
@@ -535,10 +570,14 @@
     <div class="card">
       <aside>
         <?php 
-          echo getStaticPageContent(
-            'tnotes_sidebar',
-            '<p>This is a list of all the tasting notes I have published. Keep in mind that this is not my main job, but a hobby. However, I usually manage to write at least one new note per week.</p><h4>How I rate wines</h4><p>I rate wines on my personal <strong>20-point DM scale</strong>. On this scale, I rate the <em>absolute</em> quality of wines. My ratings may appear low relative to those of most popular wine reviewers at first glance, but I make use of the entire range from 0 to 20 points:</p><table><tr><td style="width:70px">20</td><td>one-of-a-kind</td></tr><tr><td>17-19</td><td>grand vin</td></tr><tr><td>13-16</td><td>excellent</td></tr><tr><td>9-12</td><td>very good</td></tr><tr><td>5-8</td><td>good</td></tr><tr><td>3-4</td><td>passable</td></tr><tr><td>1-2</td><td>subpar</td></tr><tr><td>0</td><td>poor</td></tr></table><p>As you can see, &quot;good&quot; wines start at 5 points already!</p><p><a href="/blog.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>'
-          ); 
+          $active_scale = getRatingScale();
+          $default_sidebar_html = '<p>This is a list of all the tasting notes I have published. Keep in mind that this is not my main job, but a hobby. However, I usually manage to write at least one new note per week.</p>';
+          if ($active_scale === '100-point') {
+            $default_sidebar_html .= '<h4>How I rate wines</h4><p>I rate wines on a <strong>100-point scale</strong>. On this scale, I rate the <em>absolute</em> quality of wines:</p><table><tr><td style="width:70px">98-100</td><td>extraordinary / classic</td></tr><tr><td>95-97</td><td>extraordinary</td></tr><tr><td>90-94</td><td>outstanding</td></tr><tr><td>85-89</td><td>very good</td></tr><tr><td>80-84</td><td>good</td></tr><tr><td>75-79</td><td>acceptable / mediocre</td></tr><tr><td>70-74</td><td>below average</td></tr><tr><td>&lt; 70</td><td>poor / faulty</td></tr></table><p><a href="/blog.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>';
+          } else {
+            $default_sidebar_html .= '<h4>How I rate wines</h4><p>I rate wines on my personal <strong>20-point DM scale</strong>. On this scale, I rate the <em>absolute</em> quality of wines. My ratings may appear low relative to those of most popular wine reviewers at first glance, but I make use of the entire range from 0 to 20 points:</p><table><tr><td style="width:70px">20</td><td>one-of-a-kind</td></tr><tr><td>17-19</td><td>grand vin</td></tr><tr><td>13-16</td><td>excellent</td></tr><tr><td>9-12</td><td>very good</td></tr><tr><td>5-8</td><td>good</td></tr><tr><td>3-4</td><td>passable</td></tr><tr><td>1-2</td><td>subpar</td></tr><tr><td>0</td><td>poor</td></tr></table><p>As you can see, &quot;good&quot; wines start at 5 points already!</p><p><a href="/blog.php?id=26" title="How I rate wines">Find out more about how I rate wines.</a></p>';
+          }
+          echo getStaticPageContent('tnotes_sidebar', $default_sidebar_html);
         ?>
       </aside>
     </div>
@@ -555,21 +594,35 @@
   global $mysqli, $conn;
 
   // Perform query
-  $stmt = $mysqli->prepare("select * from tnotes
-                                   left join users on tnotes.user_id=users.user_id
-                                   left join wines on tnotes.wine_id=wines.wine_id
-                                   left join wines_master on wines.master_id=wines_master.master_id
-                                   left join producers on wines_master.producer_id=producers.producer_id
-                                   left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-                                   left join regions on wines_master.region_id=regions.region_id
-                                   left join countries on regions.country=countries.country
-                                   left join subregions on wines_master.subregion_id=subregions.subregion_id
-                                   left join appellations on wines_master.appellation_id=appellations.appellation_id
-                                   left join variety on wines_master.grape=variety.grape
-				   left join dmpts on tnotes.dmpts=dmpts.pts
-				   left join wsetpts on tnotes.wsetpts=wsetpts.pts
-				   left join (select vintage as vint, region_id as rvid, vintage_desc from x_vintage_region) xvr on wines.vintage=xvr.vint and wines_master.region_id=xvr.rvid
-                                 where note_id=?");
+  $stmt = $mysqli->prepare("select tnotes.*, users.initials, users.displayname,
+                                   wines.vintage, wines.master_id,
+                                   wines_master.*,
+                                   producers.producer, producers.producer_desc,
+                                   vineyards.vineyard,
+                                   regions.region, regions.country,
+                                   subregions.subregion,
+                                   appellations.appellation,
+                                   variety.grape_desc,
+                                   scale_20.pts_desc as scale_20_desc, scale_20.pts_class as scale_20_class,
+                                   scale_100.pts_desc as scale_100_desc, scale_100.pts_class as scale_100_class,
+                                   wsetpts.wset_desc,
+                                   xvr.vintage_desc
+                            from tnotes
+                            left join users on tnotes.user_id=users.user_id
+                            left join wines on tnotes.wine_id=wines.wine_id
+                            left join wines_master on wines.master_id=wines_master.master_id
+                            left join producers on wines_master.producer_id=producers.producer_id
+                            left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
+                            left join regions on wines_master.region_id=regions.region_id
+                            left join countries on regions.country=countries.country
+                            left join subregions on wines_master.subregion_id=subregions.subregion_id
+                            left join appellations on wines_master.appellation_id=appellations.appellation_id
+                            left join variety on wines_master.grape=variety.grape
+                            left join scale_20 on (tnotes.pts_20=scale_20.pts or (tnotes.pts_20 is null and tnotes.dmpts=scale_20.pts))
+                            left join scale_100 on (tnotes.pts_100 >= scale_100.min_pts and tnotes.pts_100 <= scale_100.max_pts)
+                            left join wsetpts on tnotes.wsetpts=wsetpts.pts
+                            left join (select vintage as vint, region_id as rvid, vintage_desc from x_vintage_region) xvr on wines.vintage=xvr.vint and wines_master.region_id=xvr.rvid
+                            where note_id=?");
   $stmt->bind_param("i", $noteID);
   $stmt->execute();
   $result = $stmt->get_result();
@@ -586,7 +639,8 @@
 <?php function moreNotes($id, $wine_id, $wine_name)
 {
   global $mysqli, $conn;
-    // Perform query
+  $scale = getRatingScale();
+  // Perform query
   $stmt = $mysqli->prepare("select tnotes.*, users.initials from tnotes
                               left join users on tnotes.user_id=users.user_id
                               where tnotes.status='published' and tnotes.note_id<>? and tnotes.wine_id=?
@@ -598,15 +652,8 @@
   if (mysqli_num_rows($result)!=0) {
     echo "<div class='card'><h3>More tasting notes on this wine:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
     while ($moreNotes = $result->fetch_assoc()) {
-      if ($moreNotes['flawed_yn']=="yes") {
-        $dmpts="flawed";
-      } elseif ($moreNotes['dmpts']!=null) {
-        $initials = !empty($moreNotes['initials']) ? $moreNotes['initials'] : 'DM';
-        $dmpts=$initials.$moreNotes["dmpts"];
-      } else {
-        $dmpts="NR";
-      }
-      echo "<li>".date_format(date_create($moreNotes["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$moreNotes["note_id"]."'>".$wine_name."</a> (".$dmpts.")</li>";
+      $rating_badge = formatNoteRatingBadge($moreNotes, $scale, true);
+      echo "<li>".date_format(date_create($moreNotes["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$moreNotes["note_id"]."'>".$wine_name."</a> (".$rating_badge.")</li>";
     }
     echo "</ul></p></div>";
   }
@@ -617,7 +664,8 @@
 <?php function otherVintages($wine_id, $master_id)
 {
   global $mysqli, $conn;
-    // Perform query
+  $scale = getRatingScale();
+  // Perform query
   $stmt = $mysqli->prepare("select wines.*, wines_master.*, tnotes.*, producers.*, vineyards.*, users.initials from wines
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join tnotes on wines.wine_id=tnotes.wine_id
@@ -633,31 +681,10 @@
   if (mysqli_num_rows($result)!=0) {
     echo "<div class='card'><h3>Tasting notes on other vintages of this wine:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
     while ($otherVintages = $result->fetch_assoc()) {
-      // Get wine name
-      if ($otherVintages["nameconvention"]=="vintage_name") {
-        $otherWine=$otherVintages["vintage"]." ".$otherVintages["name"];
-      } elseif ($otherVintages["nameconvention"]=="vintage_producer") {
-        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"];
-      } elseif ($otherVintages["nameconvention"]=="vintage_producer_grape_name") {
-        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"]." ".$otherVintages["grape"]." ".$otherVintages["name"];
-      } elseif ($otherVintages["nameconvention"]=="vintage_producer_vineyard_grape_name") {
-        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"]." ".$otherVintages["vineyard"]." ".$otherVintages["grape"]." ".$otherVintages["name"];
-      } elseif ($otherVintages["nameconvention"]=="vintage_producer_vineyard_name") {
-        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"]." ".$otherVintages["vineyard"]." ".$otherVintages["name"];
-      // ...else vintage_producer_name as default:
-      } else {
-        $otherWine=$otherVintages["vintage"]." ".$otherVintages["producer"]." ".$otherVintages["name"];
-      }
-      if ($otherVintages['flawed_yn']=="yes") {
-        $dmpts="flawed";
-      } elseif ($otherVintages['dmpts']!=null) {
-        $initials = !empty($otherVintages['initials']) ? $otherVintages['initials'] : 'DM';
-        $dmpts=$initials.$otherVintages["dmpts"];
-      } else {
-        $dmpts="NR";
-      }
+      $otherWine = getWineName($otherVintages["nameconvention"], $otherVintages["vintage"], $otherVintages["name"], $otherVintages["producer"], $otherVintages["grape"], $otherVintages["vineyard"]);
+      $rating_badge = formatNoteRatingBadge($otherVintages, $scale, true);
       if ($otherVintages["tasting_date"]!=null) {
-        echo "<li>".date_format(date_create($otherVintages["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$otherVintages["note_id"]."'>".$otherWine."</a> (".$dmpts.")</li>";
+        echo "<li>".date_format(date_create($otherVintages["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$otherVintages["note_id"]."'>".$otherWine."</a> (".$rating_badge.")</li>";
       }
     }
     echo "</ul></p></div>";
@@ -715,19 +742,32 @@
   }
 
   // Perform query
-  $result = $mysqli -> query("select * from tnotes
-                                left join users on tnotes.user_id=users.user_id
-                                left join wines on tnotes.wine_id=wines.wine_id
-                                left join wines_master on wines.master_id=wines_master.master_id
-                                left join producers on wines_master.producer_id=producers.producer_id
-                                left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-                                left join regions on wines_master.region_id=regions.region_id
-                                left join subregions on wines_master.subregion_id=subregions.subregion_id
-                                left join appellations on wines_master.appellation_id=appellations.appellation_id
-                                left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
-                                left join (select pts as dpts, dmpts_desc from dmpts) d on tnotes.dmpts=d.dpts
-                                left join (select note_id as c_note_id, count(comment_id) as comment_count from x_comments_tnotes group by note_id) c on tnotes.note_id=c.c_note_id
-                                " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
+  $result = $mysqli -> query("select tnotes.*, users.initials, users.displayname,
+                                     wines.vintage, wines.master_id,
+                                     wines_master.*,
+                                     producers.producer, producers.producer_desc,
+                                     vineyards.vineyard,
+                                     regions.region, regions.country,
+                                     subregions.subregion,
+                                     appellations.appellation,
+                                     v.grape_desc,
+                                     s20.pts_desc as scale_20_desc, s20.pts_class as scale_20_class,
+                                     s100.pts_desc as scale_100_desc, s100.pts_class as scale_100_class,
+                                     c.comment_count
+                              from tnotes
+                              left join users on tnotes.user_id=users.user_id
+                              left join wines on tnotes.wine_id=wines.wine_id
+                              left join wines_master on wines.master_id=wines_master.master_id
+                              left join producers on wines_master.producer_id=producers.producer_id
+                              left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
+                              left join regions on wines_master.region_id=regions.region_id
+                              left join subregions on wines_master.subregion_id=subregions.subregion_id
+                              left join appellations on wines_master.appellation_id=appellations.appellation_id
+                              left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
+                              left join scale_20 s20 on (tnotes.pts_20=s20.pts or (tnotes.pts_20 is null and tnotes.dmpts=s20.pts))
+                              left join scale_100 s100 on (tnotes.pts_100 >= s100.min_pts and tnotes.pts_100 <= s100.max_pts)
+                              left join (select note_id as c_note_id, count(comment_id) as comment_count from x_comments_tnotes group by note_id) c on tnotes.note_id=c.c_note_id
+                              " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
 
   // Display message if no results found
   if ($result->num_rows == 0) {
@@ -743,10 +783,16 @@
     return; // Exit the function early
   }
 
+  $active_scale = getRatingScale();
+
   if ($sort=="date") {
     echo "<p><small><i>Tasting notes arranged chronologically by tasting date, grouped by year.</i></small></p>";
   } elseif ($sort=="rating") {
-    echo "<p><small><i>Tasting notes arranged by DM score (20-point scale), then by producer and vintage.</i></small></p>";
+    if ($active_scale === '100-point') {
+      echo "<p><small><i>Tasting notes arranged by score (100-point scale), then by producer and vintage.</i></small></p>";
+    } else {
+      echo "<p><small><i>Tasting notes arranged by DM score (20-point scale), then by producer and vintage.</i></small></p>";
+    }
   } elseif ($sort=="region") {
     echo "<p><small><i>Tasting notes arranged by country and region, then by producer, cuvée, and vintage.</i></small></p>";
   } elseif ($sort=="producer") {
@@ -767,12 +813,20 @@
     }
 
     if ($r['flawed_yn'] == "yes") {
-      $r['dmpts_label'] = "flawed";
-    } elseif ($r['dmpts'] !== null) {
+      $r['rating_label'] = "flawed";
+      $r['rating_desc'] = "I mark bottles as flawed when there is a fault outside of the control of the winemaker. This might happen if a wine is corked or it is spoilt because of bad storage conditions. I don't rate these wines.";
+    } elseif ($active_scale === '100-point' && $r['pts_100'] !== null) {
       $initials = !empty($r["initials"]) ? $r["initials"] : 'DM';
-      $r['dmpts_label'] = $initials . $r["dmpts"];
+      $r['rating_label'] = $initials . $r["pts_100"];
+      $r['rating_desc'] = $r['scale_100_desc'] ?? '';
+    } elseif ($active_scale !== '100-point' && ($r['pts_20'] !== null || $r['dmpts'] !== null)) {
+      $initials = !empty($r["initials"]) ? $r["initials"] : 'DM';
+      $pts = $r['pts_20'] ?? $r['dmpts'];
+      $r['rating_label'] = $initials . $pts;
+      $r['rating_desc'] = $r['scale_20_desc'] ?? '';
     } else {
-      $r['dmpts_label'] = "NR";
+      $r['rating_label'] = "NR";
+      $r['rating_desc'] = "Sometimes I don't give a rating to a wine. In that case you'll read &quot;not rated&quot; or the abbreviation &quot;NR&quot; in the tasting note. I might not give a rating if I tasted a wine only quickly without taking notes - at a winery, for example. Sometimes I might still want to note down an indication for a possible rating. In that case, I'll write a provisional score in the tasting note, but I'll always make that clear in the written note.";
     }
 
     $rows[] = $r;
@@ -790,7 +844,7 @@
     } elseif ($sort == "tenyears") {
       $section_key = $row["vintage"] . "-" . date_format(date_create($row["tasting_date"]), "y");
     } elseif ($sort == "rating") {
-      $section_key = $row["dmpts_label"];
+      $section_key = $row["rating_label"];
     } elseif ($sort == "region") {
       $section_key = ($row['country'] ?? '') . '|||' . ($row['region'] ?? '');
     } elseif ($sort == "producer") {
@@ -854,14 +908,14 @@
         echo "<details open><summary><b>" . htmlspecialchars($curTenYears, ENT_QUOTES, 'UTF-8') . "</b></summary><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
       }
     } elseif ($sort == "rating") {
-      if ($wine["dmpts_label"] != $prevRating) {
+      if ($wine["rating_label"] != $prevRating) {
         echo ($prevRating != "") ? "</ul></details><br>" : "";
-        if ($wine["dmpts_label"] != "flawed" && $wine["dmpts_label"] != "NR") {
-          echo "<details open><summary><b>" . htmlspecialchars($wine["dmpts_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>" . $wine["dmpts_desc"] . "</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
-        } elseif ($wine["dmpts_label"] == "NR") {
-          echo "<details open><summary><b>" . htmlspecialchars($wine["dmpts_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>Sometimes I don't give a rating to a wine. In that case you'll read &quot;not rated&quot; or the abbreviation &quot;NR&quot; in the tasting note. I might not give a rating if I tasted a wine only quickly without taking notes - at a winery, for example. Sometimes I might still want to note down an indication for a possible rating. In that case, I'll write a provisional score in the tasting note, but I'll always make that clear in the written note.</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
-        } elseif ($wine["dmpts_label"] == "flawed") {
-          echo "<details open><summary><b>" . htmlspecialchars($wine["dmpts_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>I mark bottles as flawed when there is a fault outside of the control of the winemaker. This might happen if a wine is corked or it is spoilt because of bad storage conditions. I don't rate these wines.</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
+        if ($wine["rating_label"] != "flawed" && $wine["rating_label"] != "NR") {
+          echo "<details open><summary><b>" . htmlspecialchars($wine["rating_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>" . $wine["rating_desc"] . "</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
+        } elseif ($wine["rating_label"] == "NR") {
+          echo "<details open><summary><b>" . htmlspecialchars($wine["rating_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>Sometimes I don't give a rating to a wine. In that case you'll read &quot;not rated&quot; or the abbreviation &quot;NR&quot; in the tasting note. I might not give a rating if I tasted a wine only quickly without taking notes - at a winery, for example. Sometimes I might still want to note down an indication for a possible rating. In that case, I'll write a provisional score in the tasting note, but I'll always make that clear in the written note.</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
+        } elseif ($wine["rating_label"] == "flawed") {
+          echo "<details open><summary><b>" . htmlspecialchars($wine["rating_label"], ENT_QUOTES, 'UTF-8') . "</b></summary><hr><small>I mark bottles as flawed when there is a fault outside of the control of the winemaker. This might happen if a wine is corked or it is spoilt because of bad storage conditions. I don't rate these wines.</small><ul style='list-style-type:none;padding:0;margin:10px 0 0 0;'>";
         }
       }
     } elseif ($sort == "region") {
@@ -918,7 +972,7 @@
 
     foreach ($group['notes'] as $n) {
       $t_date = date_format(date_create($n["tasting_date"]), "d M Y");
-      $rating_label = $n['dmpts_label'];
+      $rating_label = $n['rating_label'];
       $comment_count = (int)($n['comment_count'] ?? 0);
       $is_fav = (isset($n['favourite']) && $n['favourite'] == 'yes');
 
@@ -949,7 +1003,7 @@
     // Set previous values
     $prevYear = date_format(date_create($wine["tasting_date"]), "Y");
     $prevTenYears = $wine["vintage"] . "-" . date_format(date_create($wine["tasting_date"]), "y");
-    $prevRating = $wine["dmpts_label"];
+    $prevRating = $wine["rating_label"];
     $prevCountry = $wine["country"];
     $prevRegion = $wine["region"];
     $prevProducer = $wine["producer"];

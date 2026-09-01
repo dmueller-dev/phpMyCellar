@@ -26,6 +26,7 @@
     $owner_address = trim($_POST['owner_address'] ?? '');
     $currency_symbol = trim($_POST['currency_symbol'] ?? '€');
     $rating_scale = trim($_POST['rating_scale'] ?? '20-point');
+    $wset_enabled = trim($_POST['wset_enabled'] ?? '1');
     $meta_description = sanitizeInput($_POST['meta_description'] ?? '');
     $theme_accent_color = trim($_POST['theme_accent_color'] ?? '#CD5C5C');
     $theme_accent_secondary = trim($_POST['theme_accent_secondary'] ?? '#B22222');
@@ -48,6 +49,7 @@
       updateSiteSetting('owner_address', $owner_address, 'general');
       updateSiteSetting('currency_symbol', $currency_symbol, 'general');
       updateSiteSetting('rating_scale', $rating_scale, 'general');
+      updateSiteSetting('wset_enabled', $wset_enabled, 'general');
       updateSiteSetting('meta_description', $meta_description, 'general');
       updateSiteSetting('theme_accent_color', $theme_accent_color, 'theme');
       updateSiteSetting('theme_accent_secondary', $theme_accent_secondary, 'theme');
@@ -66,6 +68,7 @@
   $owner_address = getSiteSetting('owner_address', '');
   $currency_symbol = getCurrencySymbol();
   $rating_scale = getSiteSetting('rating_scale', '20-point');
+  $wset_enabled = getSiteSetting('wset_enabled', '1');
   $meta_description = getSiteSetting('meta_description', '');
   $theme_accent_color = getSiteSetting('theme_accent_color', '#CD5C5C');
   $theme_accent_secondary = getSiteSetting('theme_accent_secondary', '#B22222');
@@ -162,9 +165,18 @@
             <label for="rating_scale"><strong>Primary Rating Scale:</strong></label><br>
             <select id="rating_scale" name="rating_scale" style="padding:8px;">
               <option value="20-point" <?php echo ($rating_scale === '20-point') ? 'selected' : ''; ?>>20-Point Scale (0 to 20)</option>
-              <option value="wset" <?php echo ($rating_scale === 'wset') ? 'selected' : ''; ?>>WSET SAT (0.0 to 4.0)</option>
               <option value="100-point" <?php echo ($rating_scale === '100-point') ? 'selected' : ''; ?>>100-Point Scale (50 to 100)</option>
             </select>
+            <br><small style="color:#666;">Choose between traditional 20-point scoring or international 100-point scoring. Scores are stored separately in the database.</small>
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label for="wset_enabled"><strong>WSET SAT Evaluation (0.0 to 4.0):</strong></label><br>
+            <select id="wset_enabled" name="wset_enabled" style="padding:8px;">
+              <option value="1" <?php echo ($wset_enabled === '1' || $wset_enabled === 'yes') ? 'selected' : ''; ?>>Enabled (Show WSET criteria &amp; score in tasting notes)</option>
+              <option value="0" <?php echo ($wset_enabled === '0' || $wset_enabled === 'no') ? 'selected' : ''; ?>>Disabled (Hide WSET SAT fields)</option>
+            </select>
+            <br><small style="color:#666;">When enabled, tasting notes include the 4-part WSET Systematic Approach to Tasting (Balance, Length, Intensity, Complexity).</small>
           </div>
 
           <hr style="margin:25px 0;">

@@ -18,6 +18,7 @@ INSERT INTO `site_settings` (`setting_key`, `setting_value`, `setting_group`) VA
 ('owner_email', 'cellar@example.com', 'general'),
 ('currency_symbol', '€', 'general'),
 ('rating_scale', '20-point', 'general'),
+('wset_enabled', '1', 'general'),
 ('meta_description', 'Personal wine cellar management, tasting notes, and ratings notebook.', 'general'),
 ('theme_accent_color', '#CD5C5C', 'theme'),
 ('theme_accent_secondary', '#B22222', 'theme'),
@@ -183,28 +184,36 @@ INSERT INTO `bottle_formats` (`format`, `format_desc`) VALUES
 -- Rating Scale Descriptions
 -- --------------------------------------------------------
 
-INSERT INTO `dmpts` (`pts`, `dmpts_desc`, `dmpts_class`) VALUES
-(0, 'Wines with a DM0 rating have serious faults or impurities that stand in the way of any enjoyment. An undrinkable wine.', 'poor'),
-(1, 'Wines with a DM1 to DM2 rating are subpar on a fine wine level. They have no technical flaws, but are one-dimensional or lack balance.', 'subpar'),
-(2, 'Wines with a DM1 to DM2 rating are subpar on a fine wine level. They have no technical flaws, but are one-dimensional or lack balance.', 'subpar'),
-(3, 'Wines with a DM3 to DM4 rating are average on a fine wine level. Well-made without apparent flaws, but lacking distinct intensity or depth.', 'passable'),
-(4, 'Wines with a DM3 to DM4 rating are average on a fine wine level. Well-made without apparent flaws, but lacking distinct intensity or depth.', 'passable'),
-(5, 'Wines with a DM5 to DM8 rating are good wines. Pure, balanced, and expressive of grape variety or regional typicity.', 'good'),
-(6, 'Wines with a DM5 to DM8 rating are good wines. Pure, balanced, and expressive of grape variety or regional typicity.', 'good'),
-(7, 'Wines with a DM5 to DM8 rating are good wines. Pure, balanced, and expressive of grape variety or regional typicity.', 'good'),
-(8, 'Wines with a DM5 to DM8 rating are good wines. Pure, balanced, and expressive of grape variety or regional typicity.', 'good'),
-(9, 'Wines with a DM9 to DM12 rating are very good wines, showing complexity, distinctive terroir character, and great balance.', 'very good'),
-(10, 'Wines with a DM9 to DM12 rating are very good wines, showing complexity, distinctive terroir character, and great balance.', 'very good'),
-(11, 'Wines with a DM9 to DM12 rating are very good wines, showing complexity, distinctive terroir character, and great balance.', 'very good'),
-(12, 'Wines with a DM9 to DM12 rating are very good wines, showing complexity, distinctive terroir character, and great balance.', 'very good'),
-(13, 'Wines with a DM13 to DM16 rating are excellent wines. Impressive harmony, remarkable depth, and high aging potential.', 'excellent'),
-(14, 'Wines with a DM13 to DM16 rating are excellent wines. Impressive harmony, remarkable depth, and high aging potential.', 'excellent'),
-(15, 'Wines with a DM13 to DM16 rating are excellent wines. Impressive harmony, remarkable depth, and high aging potential.', 'excellent'),
-(16, 'Wines with a DM13 to DM16 rating are excellent wines. Impressive harmony, remarkable depth, and high aging potential.', 'excellent'),
-(17, 'Wines with a DM17 to DM19 rating are grand wines amongst the finest in the world, showing breathtaking complexity and longevity.', 'grand vin'),
-(18, 'Wines with a DM17 to DM19 rating are grand wines amongst the finest in the world, showing breathtaking complexity and longevity.', 'grand vin'),
-(19, 'Wines with a DM17 to DM19 rating are grand wines amongst the finest in the world, showing breathtaking complexity and longevity.', 'grand vin'),
+INSERT INTO `scale_20` (`pts`, `pts_desc`, `pts_class`) VALUES
+(0, 'Wines with a 0-point rating have serious faults or impurities that stand in the way of any enjoyment. An undrinkable wine.', 'poor'),
+(1, 'Wines with a 1 to 2-point rating are subpar on a fine wine level. They have no technical flaws, but are one-dimensional or lack balance.', 'subpar'),
+(2, 'Wines with a 1 to 2-point rating are subpar on a fine wine level. They have no technical flaws, but are one-dimensional or lack balance.', 'subpar'),
+(3, 'Wines with a 3 to 4-point rating are average on a fine wine level. Well-made without apparent flaws, but lacking distinct intensity or depth.', 'passable'),
+(4, 'Wines with a 3 to 4-point rating are average on a fine wine level. Well-made without apparent flaws, but lacking distinct intensity or depth.', 'passable'),
+(5, 'Wines with a 5 to 8-point rating are good wines. Pure, balanced, and expressive of grape variety or regional typicity.', 'good'),
+(6, 'Wines with a 5 to 8-point rating are good wines. Pure, balanced, and expressive of grape variety or regional typicity.', 'good'),
+(7, 'Wines with a 5 to 8-point rating are good wines. Pure, balanced, and expressive of grape variety or regional typicity.', 'good'),
+(8, 'Wines with a 5 to 8-point rating are good wines. Pure, balanced, and expressive of grape variety or regional typicity.', 'good'),
+(9, 'Wines with a 9 to 12-point rating are very good wines, showing complexity, distinctive terroir character, and great balance.', 'very good'),
+(10, 'Wines with a 9 to 12-point rating are very good wines, showing complexity, distinctive terroir character, and great balance.', 'very good'),
+(11, 'Wines with a 9 to 12-point rating are very good wines, showing complexity, distinctive terroir character, and great balance.', 'very good'),
+(12, 'Wines with a 9 to 12-point rating are very good wines, showing complexity, distinctive terroir character, and great balance.', 'very good'),
+(13, 'Wines with a 13 to 16-point rating are excellent wines. Impressive harmony, remarkable depth, and high aging potential.', 'excellent'),
+(14, 'Wines with a 13 to 16-point rating are excellent wines. Impressive harmony, remarkable depth, and high aging potential.', 'excellent'),
+(15, 'Wines with a 13 to 16-point rating are excellent wines. Impressive harmony, remarkable depth, and high aging potential.', 'excellent'),
+(16, 'Wines with a 13 to 16-point rating are excellent wines. Impressive harmony, remarkable depth, and high aging potential.', 'excellent'),
+(17, 'Wines with a 17 to 19-point rating are grand wines amongst the finest in the world, showing breathtaking complexity and longevity.', 'grand vin'),
+(18, 'Wines with a 17 to 19-point rating are grand wines amongst the finest in the world, showing breathtaking complexity and longevity.', 'grand vin'),
+(19, 'Wines with a 17 to 19-point rating are grand wines amongst the finest in the world, showing breathtaking complexity and longevity.', 'grand vin'),
 (20, 'A monumental, flawless masterpiece of wine history.', 'grand vin');
+
+INSERT INTO `scale_100` (`min_pts`, `max_pts`, `pts_desc`, `pts_class`) VALUES
+(95, 100, 'Classic: A great, world-class wine displaying extraordinary complexity, character, and depth.', 'classic'),
+(90, 94, 'Outstanding: A wine of superior character and style with remarkable balance and distinction.', 'outstanding'),
+(85, 89, 'Very Good: A wine with special qualities, showing fine regional and varietal typicity.', 'very good'),
+(80, 84, 'Good: A solid, well-made wine offering enjoyable drinking without notable flaws.', 'good'),
+(75, 79, 'Passable: A straightforward, drinkable wine with minor deficiencies or simple structure.', 'passable'),
+(50, 74, 'Subpar / Poor: Wine with noticeable flaws or lacking balance; not recommended on fine wine level.', 'subpar');
 
 INSERT INTO `wsetpts` (`pts`, `wset_desc`) VALUES
 (0.0, 'Wines with a 0.0 WSET rating are not enjoyable on any level (poor).'),

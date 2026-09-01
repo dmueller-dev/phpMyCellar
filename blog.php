@@ -311,38 +311,23 @@
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join producers on wines_master.producer_id=producers.producer_id
                                 left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-                                left join (select note_id,wine_id as w_id,tasting_date,flawed_yn,dmpts,status,users.initials from tnotes left join users on tnotes.user_id=users.user_id) tnotes on x_blog_wines.wine_id=tnotes.w_id
+                                left join (select note_id, wine_id as w_id, tasting_date, flawed_yn, pts_20, pts_100, dmpts, wsetpts, status, users.initials from tnotes left join users on tnotes.user_id=users.user_id) tnotes on x_blog_wines.wine_id=tnotes.w_id
                               where x_blog_wines.blog_id=?
                               order by producers.producer asc, wines_master.name asc, wines.vintage asc, tnotes.tasting_date desc");
   $stmt->bind_param("i", $id);
   $stmt->execute();
   $result = $stmt->get_result();
+  $scale = getRatingScale();
   
   while ($wine = $result->fetch_assoc()) {
-    // Vintage NV?
-    if ($wine["vintage"]==null) { $wine["vintage"]="NV"; }
-    // Get wine name
-    if ($wine["nameconvention"]=="vintage_name") {
-      $wine_name=$wine["vintage"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_grape_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["grape"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_grape_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["grape"]." ".$wine["name"];
-    } elseif ($wine["nameconvention"]=="vintage_producer_vineyard_name") {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["vineyard"]." ".$wine["name"];
-    // ...else vintage_producer_name as default:
-    } else {
-      $wine_name=$wine["vintage"]." ".$wine["producer"]." ".$wine["name"];
-    }
+    $wine_name = getWineName($wine["nameconvention"], $wine["vintage"], $wine["name"], $wine["producer"], $wine["grape"], $wine["vineyard"]);
     // Output
     if ($wine_name!=$prevWine) {
       echo "<li><a href='/wines.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
       $prevWine=$wine_name;
     }
-    if ($wine['flawed_yn']=="yes") { $dmpts="flawed"; } elseif ($wine['dmpts']!=null) { $initials = !empty($wine['initials']) ? $wine['initials'] : 'DM'; $dmpts=$initials.$wine["dmpts"]; } else { $dmpts="NR"; }
-    if ($wine["note_id"]!=null and $wine["status"]=="published") { echo "<ul><li>Tasted on ".date_format(date_create($wine["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$wine["note_id"]."'>".$dmpts."</a></li></ul>"; }
+    $rating_badge = formatNoteRatingBadge($wine, $scale, true);
+    if ($wine["note_id"]!=null and $wine["status"]=="published") { echo "<ul><li>Tasted on ".date_format(date_create($wine["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$wine["note_id"]."'>".$rating_badge."</a></li></ul>"; }
   }
   if (mysqli_num_rows($result)==0) { echo "<li>No wines were featured in this story.</li>"; }
   $stmt->close();

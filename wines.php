@@ -537,11 +537,11 @@
   $stmt->execute();
   $result = $stmt->get_result();
 
+  $scale = getRatingScale();
   while ($tasting_note = $result->fetch_assoc()) {
-    // DM points?
-    if ($tasting_note['flawed_yn']=="yes") { $dmpts="flawed"; } elseif ($tasting_note['dmpts']!=null) { $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM'; $dmpts = $initials . $tasting_note["dmpts"]; } else { $dmpts="NR"; }
+    $rating_badge = formatNoteRatingBadge($tasting_note, $scale, true);
     // Output
-    echo "<li>Tasted by ".$tasting_note["displayname"]." on ".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$tasting_note['note_id']."'>".$dmpts."</a></li>";
+    echo "<li>Tasted by ".$tasting_note["displayname"]." on ".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$tasting_note['note_id']."'>".$rating_badge."</a></li>";
   }
   if (mysqli_num_rows($result)==0) { echo "<li>No tasting notes for this wine, yet.</li>"; }
   $stmt->close();

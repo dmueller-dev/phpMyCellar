@@ -26,12 +26,36 @@
       $tasting_date = sanitizeInput($_POST['tasting_date']);
       $tasting_note = sanitizeInput($_POST['tasting_note']);
       $flawed = sanitizeInput($_POST['flawed']);
-      $dmpts = filter_input(INPUT_POST, 'dmpts', FILTER_VALIDATE_INT);
-      $wset_balance = number_format(filter_input(INPUT_POST, 'wset_balance', FILTER_VALIDATE_FLOAT),1,'.','');
-      $wset_length = number_format(filter_input(INPUT_POST, 'wset_length', FILTER_VALIDATE_FLOAT),1,'.','');
-      $wset_intensity = number_format(filter_input(INPUT_POST, 'wset_intensity', FILTER_VALIDATE_FLOAT),1,'.','');
-      $wset_complexity = number_format(filter_input(INPUT_POST, 'wset_complexity', FILTER_VALIDATE_FLOAT),1,'.','');
-      $wsetpts=number_format($wset_balance+$wset_length+$wset_intensity+$wset_complexity, 1, '.', '');
+      
+      $scale = getRatingScale();
+      $wset_enabled = isWsetSATEnabled();
+      
+      $pts_20 = filter_input(INPUT_POST, 'pts_20', FILTER_VALIDATE_INT);
+      if ($pts_20 === null && isset($_POST['dmpts']) && $_POST['dmpts'] !== '') {
+        $pts_20 = filter_input(INPUT_POST, 'dmpts', FILTER_VALIDATE_INT);
+      }
+      $pts_100 = filter_input(INPUT_POST, 'pts_100', FILTER_VALIDATE_INT);
+
+      $wset_balance = null;
+      $wset_length = null;
+      $wset_intensity = null;
+      $wset_complexity = null;
+      $wsetpts = null;
+
+      if ($wset_enabled && isset($_POST['wset_balance']) && $_POST['wset_balance'] !== '') {
+        $raw_b = filter_input(INPUT_POST, 'wset_balance', FILTER_VALIDATE_FLOAT);
+        $raw_l = filter_input(INPUT_POST, 'wset_length', FILTER_VALIDATE_FLOAT);
+        $raw_i = filter_input(INPUT_POST, 'wset_intensity', FILTER_VALIDATE_FLOAT);
+        $raw_c = filter_input(INPUT_POST, 'wset_complexity', FILTER_VALIDATE_FLOAT);
+        if ($raw_b !== false && $raw_b !== null) { $wset_balance = number_format($raw_b, 1, '.', ''); }
+        if ($raw_l !== false && $raw_l !== null) { $wset_length = number_format($raw_l, 1, '.', ''); }
+        if ($raw_i !== false && $raw_i !== null) { $wset_intensity = number_format($raw_i, 1, '.', ''); }
+        if ($raw_c !== false && $raw_c !== null) { $wset_complexity = number_format($raw_c, 1, '.', ''); }
+        if ($wset_balance !== null || $wset_length !== null || $wset_intensity !== null || $wset_complexity !== null) {
+          $wsetpts = number_format((float)$wset_balance + (float)$wset_length + (float)$wset_intensity + (float)$wset_complexity, 1, '.', '');
+        }
+      }
+
       $favourite = sanitizeInput($_POST['favourite'] ?? 'no');
       $drink_from = filter_input(INPUT_POST, 'drink_from', FILTER_VALIDATE_INT);
       $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT);
@@ -43,11 +67,13 @@
       $img_class = sanitizeInput($_POST['img_class']);
       if ($img_class == "null") { $img_class = null; }
       $errorsImg = validateImageInput($img, $img_class);
-      if (empty($errorsImg) && empty($errorsDrinkDates)) {
+      $errorsValidation = validateNoteInput(null, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $pts_20, $pts_100, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $blind, $status, $img, $img_class, $favourite);
+
+      if (empty($errorsImg) && empty($errorsDrinkDates) && empty($errorsValidation)) {
         // Start transaction
         $conn->begin_transaction();
         try {
-          if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $dmpts, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite)) {
+          if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $pts_20, $pts_100, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite)) {
             $conn->commit();
             $success_message = "Note added successfully.";
           } else {
@@ -60,9 +86,11 @@
         }
       } else {
         if (!empty($errorsImg)) {
-          $errors[]=$errorsImg[0];
+          $errors[] = $errorsImg[0];
         } elseif (!empty($errorsDrinkDates)) {
-          $errors[]=$errorsDrinkDates[0];
+          $errors[] = $errorsDrinkDates[0];
+        } elseif (!empty($errorsValidation)) {
+          $errors = array_merge($errors, $errorsValidation);
         }
       }
     }
@@ -222,74 +250,71 @@
 
             <h3>Ratings</h3>
 
-            WSET<br>
-	    <label for="wset_balance">Balance:</label>
-            <select name="wset_balance" id="wset_balance">
-              <option value="0" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
-              <option value="0.5" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
-              <option value="1" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '1') ? 'selected' : ''; ?>>1.0</option>
-            </select>
-            <br>
-	    <label for="wset_length">Length:</label>
-            <select name="wset_length" id="wset_length">
-              <option value="0" <?php echo (isset($_POST['wset_length']) && $_POST['wset_length'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
-              <option value="0.5" <?php echo (isset($_POST['wset_length']) && $_POST['wset_length'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
-              <option value="1" <?php echo (isset($_POST['wset_length']) && $_POST['wset_length'] == '1') ? 'selected' : ''; ?>>1.0</option>
-            </select>
-            <br>
-	    <label for="wset_intensity">Intensity:</label>
-            <select name="wset_intensity" id="wset_intensity">
-              <option value="0" <?php echo (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
-              <option value="0.5" <?php echo (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
-              <option value="1" <?php echo (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] == '1') ? 'selected' : ''; ?>>1.0</option>
-            </select>
-            <br>
-	    <label for="wset_intensity">Complexity:</label>
-            <select name="wset_complexity" id="wset_complexity">
-              <option value="0" <?php echo (isset($_POST['wset_complexity']) && $_POST['wset_complexity'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
-              <option value="0.5" <?php echo (isset($_POST['wset_complexity']) && $_POST['wset_complexity'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
-              <option value="1" <?php echo (isset($_POST['wset_complexity']) && $_POST['wset_complexity'] == '1') ? 'selected' : ''; ?>>1.0</option>
-            </select>
-            <hr>
-            <label for="wsetpts">WSET points:</label>
-            <select name="wsetpts" id="wsetpts" disabled>
-              <option value="0" <?php echo (isset($_POST['wsetpts']) && $_POST['wsetpts'] == '0') ? 'selected' : ''; ?>>0.0</option>
-              <option value="0.5" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
-              <option value="1" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '1') ? 'selected' : ''; ?>>1.0</option>
-              <option value="1.5" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '1.5') ? 'selected' : ''; ?>>1.5</option>
-              <option value="2" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '2') ? 'selected' : ''; ?>>2.0</option>
-              <option value="2.5" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '2.5') ? 'selected' : ''; ?>>2.5</option>
-              <option value="3" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '3') ? 'selected' : ''; ?>>3.0</option>
-              <option value="3.5" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '3.5') ? 'selected' : ''; ?>>3.5</option>
-              <option value="4" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '4') ? 'selected' : ''; ?>>4.0</option>
-            </select>
+            <?php 
+              $rating_scale = getRatingScale();
+              $wset_enabled = isWsetSATEnabled();
+            ?>
 
-	    <br><br>
-            <label for="dmpts"><?php echo htmlspecialchars(!empty($_SESSION['initials']) ? $_SESSION['initials'] : 'DM', ENT_QUOTES, 'UTF-8'); ?> points:</label>
-            <select name="dmpts" id="dmpts">
-              <option value="0" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '0') ? 'selected' : 'selected'; ?>>0</option>
-              <option value="1" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '1') ? 'selected' : ''; ?>>1</option>
-              <option value="2" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '2') ? 'selected' : ''; ?>>2</option>
-              <option value="3" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '3') ? 'selected' : ''; ?>>3</option>
-              <option value="4" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '4') ? 'selected' : ''; ?>>4</option>
-              <option value="5" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '5') ? 'selected' : ''; ?>>5</option>
-              <option value="6" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '6') ? 'selected' : ''; ?>>6</option>
-              <option value="7" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '7') ? 'selected' : ''; ?>>7</option>
-              <option value="8" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '8') ? 'selected' : ''; ?>>8</option>
-              <option value="9" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '9') ? 'selected' : ''; ?>>9</option>
-              <option value="10" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '10') ? 'selected' : ''; ?>>10</option>
-              <option value="11" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '11') ? 'selected' : ''; ?>>11</option>
-              <option value="12" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '12') ? 'selected' : ''; ?>>12</option>
-              <option value="13" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '13') ? 'selected' : ''; ?>>13</option>
-              <option value="14" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '14') ? 'selected' : ''; ?>>14</option>
-              <option value="15" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '15') ? 'selected' : ''; ?>>15</option>
-              <option value="16" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '16') ? 'selected' : ''; ?>>16</option>
-              <option value="17" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '17') ? 'selected' : ''; ?>>17</option>
-              <option value="18" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '18') ? 'selected' : ''; ?>>18</option>
-              <option value="19" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '19') ? 'selected' : ''; ?>>19</option>
-              <option value="20" <?php echo (isset($_POST['dmpts']) && $_POST['dmpts'] == '20') ? 'selected' : ''; ?>>20</option>
-            </select>
-            <p id="suggestedDMpts" style="margin-top:5px;"></p>
+            <?php if ($wset_enabled): ?>
+              <strong>WSET Systematic Approach to Tasting</strong><br>
+              <label for="wset_balance">Balance:</label>
+              <select name="wset_balance" id="wset_balance">
+                <option value="0" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
+                <option value="0.5" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
+                <option value="1" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '1') ? 'selected' : ''; ?>>1.0</option>
+              </select>
+              <br>
+              <label for="wset_length">Length:</label>
+              <select name="wset_length" id="wset_length">
+                <option value="0" <?php echo (isset($_POST['wset_length']) && $_POST['wset_length'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
+                <option value="0.5" <?php echo (isset($_POST['wset_length']) && $_POST['wset_length'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
+                <option value="1" <?php echo (isset($_POST['wset_length']) && $_POST['wset_length'] == '1') ? 'selected' : ''; ?>>1.0</option>
+              </select>
+              <br>
+              <label for="wset_intensity">Intensity:</label>
+              <select name="wset_intensity" id="wset_intensity">
+                <option value="0" <?php echo (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
+                <option value="0.5" <?php echo (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
+                <option value="1" <?php echo (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] == '1') ? 'selected' : ''; ?>>1.0</option>
+              </select>
+              <br>
+              <label for="wset_complexity">Complexity:</label>
+              <select name="wset_complexity" id="wset_complexity">
+                <option value="0" <?php echo (isset($_POST['wset_complexity']) && $_POST['wset_complexity'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>
+                <option value="0.5" <?php echo (isset($_POST['wset_complexity']) && $_POST['wset_complexity'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
+                <option value="1" <?php echo (isset($_POST['wset_complexity']) && $_POST['wset_complexity'] == '1') ? 'selected' : ''; ?>>1.0</option>
+              </select>
+              <hr>
+              <label for="wsetpts">WSET SAT points (0.0–4.0):</label>
+              <select name="wsetpts" id="wsetpts" disabled>
+                <option value="0" <?php echo (isset($_POST['wsetpts']) && $_POST['wsetpts'] == '0') ? 'selected' : ''; ?>>0.0</option>
+                <option value="0.5" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '0.5') ? 'selected' : ''; ?>>0.5</option>
+                <option value="1" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '1') ? 'selected' : ''; ?>>1.0</option>
+                <option value="1.5" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '1.5') ? 'selected' : ''; ?>>1.5</option>
+                <option value="2" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '2') ? 'selected' : ''; ?>>2.0</option>
+                <option value="2.5" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '2.5') ? 'selected' : ''; ?>>2.5</option>
+                <option value="3" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '3') ? 'selected' : ''; ?>>3.0</option>
+                <option value="3.5" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '3.5') ? 'selected' : ''; ?>>3.5</option>
+                <option value="4" <?php echo (isset($_POST['wsetpts']) && $_POST['wset_balance']+$_POST['wset_length']+$_POST['wset_intensity']+$_POST['wset_complexity'] == '4') ? 'selected' : ''; ?>>4.0</option>
+              </select>
+              <br><br>
+            <?php endif; ?>
+
+            <?php if ($rating_scale === '100-point'): ?>
+              <label for="pts_100">Score (100-point scale):</label>
+              <br>
+              <input type="number" id="pts_100" name="pts_100" min="50" max="100" step="1" value="<?php echo isset($_POST['pts_100']) ? htmlspecialchars($_POST['pts_100'], ENT_QUOTES, 'UTF-8') : ''; ?>" placeholder="50-100">
+            <?php else: ?>
+              <label for="pts_20"><?php echo htmlspecialchars(!empty($_SESSION['initials']) ? $_SESSION['initials'] : 'DM', ENT_QUOTES, 'UTF-8'); ?> points (20-point scale):</label>
+              <br>
+              <select name="pts_20" id="pts_20">
+                <option value="" <?php echo (!isset($_POST['pts_20']) || $_POST['pts_20'] === '') ? 'selected' : ''; ?>></option>
+                <?php for ($i = 0; $i <= 20; $i++): ?>
+                  <option value="<?php echo $i; ?>" <?php echo (isset($_POST['pts_20']) && $_POST['pts_20'] !== '' && (int)$_POST['pts_20'] === $i) ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                <?php endfor; ?>
+              </select>
+            <?php endif; ?>
+            <p id="suggestedScore" style="margin-top:5px;"></p>
 
             <label for="favourite">Favourite?</label><br>
             <select name="favourite" id="favourite" required>
@@ -363,37 +388,65 @@
   const wset_i = document.getElementById('wset_intensity');
   const wset_c = document.getElementById('wset_complexity');
   const wsetpts = document.getElementById('wsetpts');
-  const suggestedDMpts = document.getElementById('suggestedDMpts');
+  const suggestedScore = document.getElementById('suggestedScore');
+  const ratingScale = "<?php echo $rating_scale; ?>";
 
   function updateTotal() {
-    wsetpts.value = Number(wset_b.value) + Number(wset_l.value) + Number(wset_i.value) + Number(wset_c.value);
-    if (Number(wsetpts.value)==0) {
-      suggestedDMpts.innerHTML = "<small><em>Suggest points: 0 (\"poor\")</em></small>";
-    } else if (Number(wsetpts.value)==0.5) {
-      suggestedDMpts.innerHTML = "<small><em>Suggest points: 1 or 2 (\"subpar\")</em></small>";
-    } else if (Number(wsetpts.value)==1) {
-      suggestedDMpts.innerHTML = "<small><em>Suggest points: 3 or 4 (\"passable\")</em></small>";
-    } else if (Number(wsetpts.value)==1.5) {
-      suggestedDMpts.innerHTML = "<small><em>Suggest points: 5 or 6 (\"good\")</em></small>";
-    } else if (Number(wsetpts.value)==2) {
-      suggestedDMpts.innerHTML = "<small><em>Suggest points: 7 or 8 (\"good\")</em></small>";
-    } else if (Number(wsetpts.value)==2.5) {
-      suggestedDMpts.innerHTML = "<small><em>Suggest points: 9 or 10 (\"very good\")</em></small>";
-    } else if (Number(wsetpts.value)==3) {
-      suggestedDMpts.innerHTML = "<small><em>Suggest points: 11 or 12 (\"very good\")</em></small>";
-    } else if (Number(wsetpts.value)==3.5) {
-      suggestedDMpts.innerHTML = "<small><em>Suggest points: 13 or 14 (\"excellent\")</em></small>";
-    } else if (Number(wsetpts.value)==4) {
-      suggestedDMpts.innerHTML = "<small><em>Suggest points: 15 to 20 (\"excellent\", \"grand vin\", or \"one-of-a-kind\")</em></small>";
+    if (!wset_b || !wset_l || !wset_i || !wset_c || !wsetpts) return;
+    const total = Number(wset_b.value) + Number(wset_l.value) + Number(wset_i.value) + Number(wset_c.value);
+    wsetpts.value = total;
+    if (!suggestedScore) return;
+
+    if (ratingScale === '100-point') {
+      if (total === 0) {
+        suggestedScore.innerHTML = "<small><em>Suggested score: < 70 (\"Poor / Faulty\")</em></small>";
+      } else if (total === 0.5) {
+        suggestedScore.innerHTML = "<small><em>Suggested score: 70–74 (\"Below Average\")</em></small>";
+      } else if (total === 1.0) {
+        suggestedScore.innerHTML = "<small><em>Suggested score: 75–79 (\"Acceptable / Mediocre\")</em></small>";
+      } else if (total === 1.5) {
+        suggestedScore.innerHTML = "<small><em>Suggested score: 80–84 (\"Good\")</em></small>";
+      } else if (total === 2.0) {
+        suggestedScore.innerHTML = "<small><em>Suggested score: 85–89 (\"Very Good\")</em></small>";
+      } else if (total === 2.5) {
+        suggestedScore.innerHTML = "<small><em>Suggested score: 90–92 (\"Outstanding\")</em></small>";
+      } else if (total === 3.0) {
+        suggestedScore.innerHTML = "<small><em>Suggested score: 93–94 (\"Outstanding\")</em></small>";
+      } else if (total === 3.5) {
+        suggestedScore.innerHTML = "<small><em>Suggested score: 95–97 (\"Extraordinary\")</em></small>";
+      } else if (total === 4.0) {
+        suggestedScore.innerHTML = "<small><em>Suggested score: 98–100 (\"Extraordinary / Perfection\")</em></small>";
+      }
+    } else {
+      if (total === 0) {
+        suggestedScore.innerHTML = "<small><em>Suggested points: 0 (\"poor\")</em></small>";
+      } else if (total === 0.5) {
+        suggestedScore.innerHTML = "<small><em>Suggested points: 1 or 2 (\"subpar\")</em></small>";
+      } else if (total === 1) {
+        suggestedScore.innerHTML = "<small><em>Suggested points: 3 or 4 (\"passable\")</em></small>";
+      } else if (total === 1.5) {
+        suggestedScore.innerHTML = "<small><em>Suggested points: 5 or 6 (\"good\")</em></small>";
+      } else if (total === 2) {
+        suggestedScore.innerHTML = "<small><em>Suggested points: 7 or 8 (\"good\")</em></small>";
+      } else if (total === 2.5) {
+        suggestedScore.innerHTML = "<small><em>Suggested points: 9 or 10 (\"very good\")</em></small>";
+      } else if (total === 3) {
+        suggestedScore.innerHTML = "<small><em>Suggested points: 11 or 12 (\"very good\")</em></small>";
+      } else if (total === 3.5) {
+        suggestedScore.innerHTML = "<small><em>Suggested points: 13 or 14 (\"excellent\")</em></small>";
+      } else if (total === 4) {
+        suggestedScore.innerHTML = "<small><em>Suggested points: 15 to 20 (\"excellent\", \"grand vin\", or \"one-of-a-kind\")</em></small>";
+      }
     }
   }
 
-  wset_b.addEventListener('change', updateTotal);
-  wset_l.addEventListener('change', updateTotal);
-  wset_i.addEventListener('change', updateTotal);
-  wset_c.addEventListener('change', updateTotal);
-
-  window.onload = updateTotal;
+  if (wset_b && wset_l && wset_i && wset_c) {
+    wset_b.addEventListener('change', updateTotal);
+    wset_l.addEventListener('change', updateTotal);
+    wset_i.addEventListener('change', updateTotal);
+    wset_c.addEventListener('change', updateTotal);
+    window.onload = updateTotal;
+  }
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

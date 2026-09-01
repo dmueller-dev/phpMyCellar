@@ -136,12 +136,21 @@ CREATE TABLE `variety` (
   PRIMARY KEY (`grape`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `dmpts`;
-CREATE TABLE `dmpts` (
-  `pts` smallint(3) UNSIGNED NOT NULL,
-  `dmpts_desc` text NOT NULL,
-  `dmpts_class` tinytext NOT NULL,
+DROP TABLE IF EXISTS `scale_20`;
+CREATE TABLE `scale_20` (
+  `pts` tinyint(2) UNSIGNED NOT NULL,
+  `pts_desc` text NOT NULL,
+  `pts_class` varchar(50) NOT NULL,
   PRIMARY KEY (`pts`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `scale_100`;
+CREATE TABLE `scale_100` (
+  `min_pts` tinyint(3) UNSIGNED NOT NULL,
+  `max_pts` tinyint(3) UNSIGNED NOT NULL,
+  `pts_desc` text NOT NULL,
+  `pts_class` varchar(50) NOT NULL,
+  PRIMARY KEY (`min_pts`, `max_pts`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `wsetpts`;
@@ -371,13 +380,21 @@ CREATE TABLE `tnotes` (
   `wine_id` smallint(5) UNSIGNED NOT NULL,
   `user_id` smallint(5) UNSIGNED NOT NULL,
   `tasting_date` date NOT NULL,
+  `pts_20` tinyint(2) UNSIGNED DEFAULT NULL,
+  `pts_100` tinyint(3) UNSIGNED DEFAULT NULL,
+  `wset_balance` decimal(2,1) UNSIGNED DEFAULT NULL,
+  `wset_length` decimal(2,1) UNSIGNED DEFAULT NULL,
+  `wset_intensity` decimal(2,1) UNSIGNED DEFAULT NULL,
+  `wset_complexity` decimal(2,1) UNSIGNED DEFAULT NULL,
   `wsetpts` decimal(2,1) UNSIGNED DEFAULT NULL,
-  `dmpts` smallint(3) UNSIGNED DEFAULT NULL,
   `flawed_yn` varchar(3) NOT NULL DEFAULT 'no',
-  `note` text NOT NULL,
+  `tasting_note` text NOT NULL,
+  `drinkwindow_min` smallint(4) UNSIGNED DEFAULT NULL,
+  `drinkwindow_max` smallint(4) UNSIGNED DEFAULT NULL,
   `favourite` varchar(3) NOT NULL DEFAULT 'no',
   `img` varchar(255) DEFAULT NULL,
-  `blind_tasting` tinyint(1) NOT NULL DEFAULT 0,
+  `img_class` varchar(50) DEFAULT NULL,
+  `blind` varchar(15) NOT NULL DEFAULT 'not blind',
   `blind_grape` varchar(255) DEFAULT NULL,
   `blind_country` varchar(255) DEFAULT NULL,
   `blind_region` varchar(255) DEFAULT NULL,
@@ -388,12 +405,15 @@ CREATE TABLE `tnotes` (
   UNIQUE KEY `idx_tnotes` (`wine_id`,`tasting_date`,`user_id`),
   KEY `idx_tn_wine` (`wine_id`),
   KEY `idx_tn_user` (`user_id`),
+  KEY `idx_tn_pts_20` (`pts_20`),
+  KEY `idx_tn_pts_100` (`pts_100`),
   KEY `idx_tn_wsetpts` (`wsetpts`),
-  KEY `idx_tn_dmpts` (`dmpts`),
+  CONSTRAINT `chk_pts_20` CHECK (`pts_20` IS NULL OR (`pts_20` >= 0 AND `pts_20` <= 20)),
+  CONSTRAINT `chk_pts_100` CHECK (`pts_100` IS NULL OR (`pts_100` >= 50 AND `pts_100` <= 100)),
   CONSTRAINT `fk_tn_wine` FOREIGN KEY (`wine_id`) REFERENCES `wines` (`wine_id`),
   CONSTRAINT `fk_tn_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `fk_tn_wsetpts` FOREIGN KEY (`wsetpts`) REFERENCES `wsetpts` (`pts`),
-  CONSTRAINT `fk_tn_dmpts` FOREIGN KEY (`dmpts`) REFERENCES `dmpts` (`pts`)
+  CONSTRAINT `fk_tn_pts_20` FOREIGN KEY (`pts_20`) REFERENCES `scale_20` (`pts`) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT `fk_tn_wsetpts` FOREIGN KEY (`wsetpts`) REFERENCES `wsetpts` (`pts`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `order_items`;
@@ -596,7 +616,9 @@ SELECT
   `wines_master`.`colour` AS `colour`,
   CONCAT(`regions`.`country`, ': ', `regions`.`region`, ' (', `wines_master`.`colour`, ')') AS `country_region_colour`,
   COUNT(`tnotes`.`note_id`) AS `note_count`,
-  ROUND(AVG(CASE WHEN `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`dmpts` IS NOT NULL THEN `tnotes`.`dmpts` END), 1) AS `avg_dmpts`,
+  ROUND(AVG(CASE WHEN `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`pts_20` IS NOT NULL THEN `tnotes`.`pts_20` END), 1) AS `avg_pts_20`,
+  ROUND(AVG(CASE WHEN `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`pts_20` IS NOT NULL THEN `tnotes`.`pts_20` END), 1) AS `avg_dmpts`,
+  ROUND(AVG(CASE WHEN `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`pts_100` IS NOT NULL THEN `tnotes`.`pts_100` END), 1) AS `avg_pts_100`,
   `xvr`.`vintage_desc` AS `vintage_desc`
 FROM `tnotes`
 JOIN `wines` ON `tnotes`.`wine_id` = `wines`.`wine_id`
@@ -613,7 +635,9 @@ SELECT
   `tnotes`.`wine_id` AS `wine_id`,
   `tnotes`.`user_id` AS `user_id`,
   `tnotes`.`tasting_date` AS `tasting_date`,
-  `tnotes`.`dmpts` AS `dmpts`,
+  `tnotes`.`pts_20` AS `pts_20`,
+  `tnotes`.`pts_20` AS `dmpts`,
+  `tnotes`.`pts_100` AS `pts_100`,
   `tnotes`.`flawed_yn` AS `flawed_yn`,
   `tnotes`.`favourite` AS `favourite`,
   `tnotes`.`status` AS `status`,
@@ -642,6 +666,6 @@ JOIN `producers` ON `wines_master`.`producer_id` = `producers`.`producer_id`
 JOIN `regions` ON `wines_master`.`region_id` = `regions`.`region_id`
 LEFT JOIN `vineyards` ON `wines_master`.`vineyard_id` = `vineyards`.`vineyard_id`
 LEFT JOIN `appellations` ON `wines_master`.`appellation_id` = `appellations`.`appellation_id`
-WHERE `tnotes`.`status` = 'published' AND `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`dmpts` >= 8;
+WHERE `tnotes`.`status` = 'published' AND `tnotes`.`flawed_yn` = 'no' AND (`tnotes`.`pts_20` >= 8 OR `tnotes`.`pts_100` >= 88);
 
 SET foreign_key_checks = 1;

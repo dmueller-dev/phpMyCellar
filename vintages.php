@@ -46,11 +46,16 @@
   <?php if ($selected_vintage && !$vintage_error): ?>
     <?php
       // Single Vintage Report
+      $active_scale = getRatingScale();
+      $max_score = getRatingScaleMax($active_scale);
+      $threshold = getTopWineScoreThreshold($active_scale);
       $region_stats = getVintageRegionStats($conn, $selected_vintage);
       $country_stats = getVintageCountryStats($conn, $selected_vintage);
       $top_wines = getVintageTopWines($conn, $selected_vintage);
       $adjacent = getAdjacentVintages($conn, $selected_vintage);
       $all_vintages_list = getAllVintagesSummary($conn);
+      $avg_display = $vintage_summary['avg_score'] ?? $vintage_summary['avg_dmpts'] ?? null;
+      $max_display = $vintage_summary['max_score'] ?? $vintage_summary['max_dmpts'] ?? null;
     ?>
 
     <!-- Top Centre Back Button -->
@@ -71,11 +76,11 @@
             <div class="stat-lbl">Tasting Notes</div>
           </div>
           <div class="vintage-stat-box">
-            <div class="stat-val"><?php echo ($vintage_summary['avg_dmpts'] !== null) ? $vintage_summary['avg_dmpts'] : '<span title="Not enough tasting notes to calculate an average">n/a</span>'; ?></div>
-            <div class="stat-lbl">Avg DM Rating</div>
+            <div class="stat-val"><?php echo ($avg_display !== null) ? $avg_display : '<span title="Not enough tasting notes to calculate an average">n/a</span>'; ?></div>
+            <div class="stat-lbl">Avg Rating</div>
           </div>
           <div class="vintage-stat-box">
-            <div class="stat-val"><?php echo ($vintage_summary['max_dmpts'] !== null) ? $vintage_summary['max_dmpts'] : 'n/a'; ?></div>
+            <div class="stat-val"><?php echo ($max_display !== null) ? $max_display : 'n/a'; ?></div>
             <div class="stat-lbl">Top Rating</div>
           </div>
           <div class="vintage-stat-box">
@@ -88,7 +93,7 @@
           </div>
         </div>
 
-        <?php if ($vintage_summary['avg_dmpts'] === null): ?>
+        <?php if ($avg_display === null): ?>
           <p style="margin-top: 15px; margin-bottom: 0; color: #64748b; font-size: 13px;">
             <em>Not enough tasting notes to calculate an average rating (at least 5 <b>rated</b> tasting notes required<?php echo ((int)$vintage_summary['rated_notes_count'] > 0) ? ', currently ' . (int)$vintage_summary['rated_notes_count'] : ''; ?>).</em>
           </p>
@@ -98,7 +103,7 @@
       <!-- Regional Averages & Expandable Descriptions -->
       <div class="card">
         <h3 style="margin-top:0;">Average ratings by country &amp; region</h3>
-        <p style="margin-top:0; margin-bottom:15px;"><small>Average DM points (out of 20, to one decimal place). Click on an entry to reveal vintage descriptions where available.</small></p>
+        <p style="margin-top:0; margin-bottom:15px;"><small>Average points (out of <?php echo $max_score; ?>, to one decimal place). Click on an entry to reveal vintage descriptions where available.</small></p>
 
         <?php if (empty($region_stats)): ?>
           <p><i>No regional statistics available for this vintage.</i></p>
@@ -106,7 +111,8 @@
           <?php foreach ($region_stats as $r): ?>
             <?php
               $label = htmlspecialchars($r['country_region_colour'], ENT_QUOTES, 'UTF-8');
-              $avg = ($r['avg_dmpts'] !== null) ? number_format((float)$r['avg_dmpts'], 1) : 'NR';
+              $score_val = $r['avg_score'] ?? $r['avg_dmpts'] ?? null;
+              $avg = ($score_val !== null) ? number_format((float)$score_val, 1) : 'NR';
               $count_label = $r['note_count'] . ' note' . ($r['note_count'] > 1 ? 's' : '');
               $has_desc = !empty($r['vintage_desc']);
             ?>
@@ -119,7 +125,7 @@
                       <small style="color: #64748b; margin-left: 6px;">(<?php echo $count_label; ?>)</small>
                       <span style="font-size: 11px; color: indianred; margin-left: 6px;">📖 details</span>
                     </div>
-                    <div class="vintage-score-badge"><?php echo $avg; ?> / 20</div>
+                    <div class="vintage-score-badge"><?php echo $avg; ?> / <?php echo $max_score; ?></div>
                   </summary>
                   <div class="vintage-desc-box">
                     <?php echo $r['vintage_desc']; ?>
@@ -131,7 +137,7 @@
                     <strong><?php echo $label; ?></strong>
                     <small style="color: #64748b; margin-left: 6px;">(<?php echo $count_label; ?>)</small>
                   </div>
-                  <div class="vintage-score-badge"><?php echo $avg; ?> / 20</div>
+                  <div class="vintage-score-badge"><?php echo $avg; ?> / <?php echo $max_score; ?></div>
                 </div>
               <?php endif; ?>
             </div>
@@ -139,36 +145,20 @@
         <?php endif; ?>
       </div>
 
-      <!-- Top Wines of Vintage DM8+ -->
+      <!-- Top Wines of Vintage -->
       <div class="card">
         <h3 style="margin-top:0;">Top wines of the <?php echo $selected_vintage; ?> vintage</h3>
-        <p style="margin-top:0; margin-bottom:15px;"><small>Ranked from best to worst. Showing wines rated DM8 and higher.</small></p>
+        <p style="margin-top:0; margin-bottom:15px;"><small>Ranked from best to worst. Showing wines rated <?php echo $threshold; ?> and higher.</small></p>
 
         <?php if (empty($top_wines)): ?>
-          <p><i>No wines rated DM8 or higher for this vintage.</i></p>
+          <p><i>No wines rated <?php echo $threshold; ?> or higher for this vintage.</i></p>
         <?php else: ?>
           <ul style="list-style-type:none; padding:0; margin:0;">
             <?php foreach ($top_wines as $wine): ?>
               <?php
                 // Format wine name
-                $w_vintage = $wine['vintage'] ?? 'NV';
-                $nameconvention = $wine['nameconvention'] ?? 'vintage_producer_name';
-                if ($nameconvention == "vintage_name") {
-                  $wine_name = $w_vintage . " " . $wine["name"];
-                } elseif ($nameconvention == "vintage_producer") {
-                  $wine_name = $w_vintage . " " . $wine["producer"];
-                } elseif ($nameconvention == "vintage_producer_grape_name") {
-                  $wine_name = $w_vintage . " " . $wine["producer"] . " " . $wine["grape"] . " " . $wine["name"];
-                } elseif ($nameconvention == "vintage_producer_vineyard_grape_name") {
-                  $wine_name = $w_vintage . " " . $wine["producer"] . " " . $wine["vineyard"] . " " . $wine["grape"] . " " . $wine["name"];
-                } elseif ($nameconvention == "vintage_producer_vineyard_name") {
-                  $wine_name = $w_vintage . " " . $wine["producer"] . " " . $wine["vineyard"] . " " . $wine["name"];
-                } else {
-                  $wine_name = $w_vintage . " " . $wine["producer"] . " " . $wine["name"];
-                }
-
-                $initials = !empty($wine['initials']) ? $wine['initials'] : 'DM';
-                $score_text = $initials . $wine['dmpts'];
+                $wine_name = getWineName($wine['nameconvention'] ?? 'vintage_producer_name', $wine['vintage'] ?? 'NV', $wine['name'] ?? '', $wine['producer'] ?? '', $wine['grape'] ?? '', $wine['vineyard'] ?? '');
+                $score_text = formatNoteRatingBadge($wine, $active_scale, true);
                 $fav_icon = ($wine['favourite'] === 'yes') ? "<span style='color:#e25555; margin-left:4px;'>❤️</span>" : "";
                 $tasted_date = !empty($wine['tasting_date']) ? date_format(date_create($wine['tasting_date']), "d M Y") : '';
               ?>
@@ -249,8 +239,9 @@
           <select id="vintageSelect" onchange="if(this.value) window.location.href='/vintages.php?vintage=' + this.value;" style="width: 100%; padding: 5px; font-family: Georgia, serif;">
             <option value="">-- Select a vintage --</option>
             <?php foreach ($all_vintages_list as $v_item): ?>
+              <?php $v_item_avg = $v_item['avg_score'] ?? $v_item['avg_dmpts'] ?? null; ?>
               <option value="<?php echo (int)$v_item['vintage']; ?>" <?php echo ((int)$v_item['vintage'] === $selected_vintage) ? 'selected' : ''; ?>>
-                <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> note<?php echo (int)$v_item['note_count'] === 1 ? '' : 's'; ?><?php echo ($v_item['avg_dmpts'] !== null) ? ', avg ' . $v_item['avg_dmpts'] : ', avg n/a'; ?>)
+                <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> note<?php echo (int)$v_item['note_count'] === 1 ? '' : 's'; ?><?php echo ($v_item_avg !== null) ? ', avg ' . $v_item_avg : ', avg n/a'; ?>)
               </option>
             <?php endforeach; ?>
           </select>
@@ -260,19 +251,35 @@
       <!-- Rating Scale Info -->
       <div class="card">
         <h3 style="margin-top:0;">My rating scale</h3>
-        <p style="font-size: small; line-height: 1.4;">
-          Wines are evaluated using the 20-point scale:
-        </p>
-        <ul style="font-size: small; padding-left: 18px; margin: 0;">
-          <li><b>20</b>: one-of-a-kind</li>
-          <li><b>17-19</b>: grand vin</li>
-          <li><b>13-16</b>: excellent</li>
-          <li><b>9-12</b>: very good</li>
-          <li><b>5-8</b>: good</li>
-          <li><b>3-4</b>: passable</li>
-          <li><b>1-2</b>: subpar</li>
-          <li><b>0</b>: poor</li>
-        </ul>
+        <?php if ($active_scale === '100-point'): ?>
+          <p style="font-size: small; line-height: 1.4;">
+            Wines are evaluated using the 100-point scale:
+          </p>
+          <ul style="font-size: small; padding-left: 18px; margin: 0;">
+            <li><b>98-100</b>: extraordinary / classic</li>
+            <li><b>95-97</b>: extraordinary</li>
+            <li><b>90-94</b>: outstanding</li>
+            <li><b>85-89</b>: very good</li>
+            <li><b>80-84</b>: good</li>
+            <li><b>75-79</b>: acceptable / mediocre</li>
+            <li><b>70-74</b>: below average</li>
+            <li><b>&lt; 70</b>: poor / faulty</li>
+          </ul>
+        <?php else: ?>
+          <p style="font-size: small; line-height: 1.4;">
+            Wines are evaluated using the 20-point scale:
+          </p>
+          <ul style="font-size: small; padding-left: 18px; margin: 0;">
+            <li><b>20</b>: one-of-a-kind</li>
+            <li><b>17-19</b>: grand vin</li>
+            <li><b>13-16</b>: excellent</li>
+            <li><b>9-12</b>: very good</li>
+            <li><b>5-8</b>: good</li>
+            <li><b>3-4</b>: passable</li>
+            <li><b>1-2</b>: subpar</li>
+            <li><b>0</b>: poor</li>
+          </ul>
+        <?php endif; ?>
         <p style="margin-top:10px;"><small><a href="/blog.php">Explore tasting notes &amp; stories &rarr;</a></small></p>
       </div>
     </div>
@@ -306,6 +313,8 @@
   <?php else: ?>
     <?php
       // All Vintages Chart Overview
+      $active_scale = getRatingScale();
+      $max_score = getRatingScaleMax($active_scale);
       $all_vintages = getAllVintagesSummary($conn);
 
       // Group vintages by decade
@@ -321,8 +330,9 @@
         $n_count = (int)$v_data['note_count'];
         $total_all_notes += $n_count;
 
-        if ($v_data['avg_dmpts'] !== null) {
-          $avg_val = (float)$v_data['avg_dmpts'];
+        $v_score_val = $v_data['avg_score'] ?? $v_data['avg_dmpts'] ?? null;
+        if ($v_score_val !== null) {
+          $avg_val = (float)$v_score_val;
           $weighted_score_sum += ($avg_val * $n_count);
           $weighted_notes_count += $n_count;
 
@@ -370,7 +380,8 @@
                   <?php
                     $v_year = (int)$v['vintage'];
                     $v_count = (int)$v['note_count'];
-                    $v_avg = ($v['avg_dmpts'] !== null) ? number_format((float)$v['avg_dmpts'], 1) : null;
+                    $v_score_val = $v['avg_score'] ?? $v['avg_dmpts'] ?? null;
+                    $v_avg = ($v_score_val !== null) ? number_format((float)$v_score_val, 1) : null;
                   ?>
                   <!-- Link to vintages.php?vintage=NNNN -->
                   <a href="/vintages.php?vintage=<?php echo $v_year; ?>" class="vintage-tile" title="<?php echo ($v_avg !== null) ? 'View ' . $v_year . ' vintage report (avg ' . $v_avg . ')' : 'View ' . $v_year . ' vintage report (not enough tasting notes to calculate an average)'; ?>">
@@ -415,7 +426,7 @@
 
         <?php if ($highest_vintage): ?>
           <p style="font-size:small; margin-top:15px;">
-            Top performing vintage (min. 5 notes): <a href="/vintages.php?vintage=<?php echo $highest_vintage; ?>"><b><?php echo $highest_vintage; ?></b></a> (avg <?php echo number_format($highest_vintage_score, 1); ?> / 20).
+            Top performing vintage (min. 5 notes): <a href="/vintages.php?vintage=<?php echo $highest_vintage; ?>"><b><?php echo $highest_vintage; ?></b></a> (avg <?php echo number_format($highest_vintage_score, 1); ?> / <?php echo $max_score; ?>).
           </p>
         <?php endif; ?>
       </div>
@@ -426,8 +437,9 @@
         <select onchange="if(this.value) window.location.href='/vintages.php?vintage=' + this.value;" style="width: 100%; padding: 6px; font-family: Georgia, serif;">
           <option value="">-- Choose a vintage --</option>
           <?php foreach ($all_vintages as $v_item): ?>
+            <?php $v_item_avg = $v_item['avg_score'] ?? $v_item['avg_dmpts'] ?? null; ?>
             <option value="<?php echo (int)$v_item['vintage']; ?>">
-              <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> note<?php echo (int)$v_item['note_count'] === 1 ? '' : 's'; ?><?php echo ($v_item['avg_dmpts'] !== null) ? ', avg ' . $v_item['avg_dmpts'] : ', avg n/a'; ?>)
+              <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> note<?php echo (int)$v_item['note_count'] === 1 ? '' : 's'; ?><?php echo ($v_item_avg !== null) ? ', avg ' . $v_item_avg : ', avg n/a'; ?>)
             </option>
           <?php endforeach; ?>
         </select>

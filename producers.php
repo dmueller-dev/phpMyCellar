@@ -127,35 +127,12 @@
   $stmt->execute();
   $result = $stmt->get_result();
   
+  $scale = getRatingScale();
   while ($tasting_note = $result->fetch_assoc()) {
-    // Vintage NV?
-    if ($tasting_note["vintage"]==null) { $tasting_note["vintage"]="NV"; }
-    // Get wine name
-    if ($tasting_note["nameconvention"]=="vintage_name") {
-      $wine_name=$tasting_note["vintage"]." ".$tasting_note["name"];
-    } elseif ($tasting_note["nameconvention"]=="vintage_producer") {
-      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"];
-    } elseif ($tasting_note["nameconvention"]=="vintage_producer_grape_name") {
-      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["grape"]." ".$tasting_note["name"];
-    } elseif ($tasting_note["nameconvention"]=="vintage_producer_vineyard_grape_name") {
-      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["vineyard"]." ".$tasting_note["grape"]." ".$tasting_note["name"];
-    } elseif ($tasting_note["nameconvention"]=="vintage_producer_vineyard_name") {
-      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["vineyard"]." ".$tasting_note["name"];
-    // ...else vintage_producer_name as default:
-    } else {
-      $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["name"];
-    }
-    // DM points?
-    if ($tasting_note['flawed_yn']=="yes") {
-      $dmpts="flawed";
-    } elseif ($tasting_note['dmpts']!=null) {
-      $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM';
-      $dmpts=$initials.$tasting_note["dmpts"];
-    } else {
-      $dmpts="NR";
-    }
+    $wine_name = getWineName($tasting_note["nameconvention"], $tasting_note["vintage"], $tasting_note["name"], $tasting_note["producer"], $tasting_note["grape"], $tasting_note["vineyard"]);
+    $rating_badge = formatNoteRatingBadge($tasting_note, $scale, true);
     // Output
-    echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$tasting_note['note_id']."'>".$wine_name."</a> (".$dmpts.")</li>";
+    echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$tasting_note['note_id']."'>".$wine_name."</a> (".$rating_badge.")</li>";
   }
   if (mysqli_num_rows($result)==0) { echo "<li>I haven't tasted any of this producer's wines, yet.</li>"; }
   $stmt->close();

@@ -268,8 +268,12 @@
               <div style="border: 1px solid #ccc; border-radius: 4px; padding: 10px; background: white; margin-top: 5px; margin-bottom: 15px;">
                 <input type="text" id="searchTnotes" onkeyup="filterTnotes()" placeholder="🔍 Search tasting notes..." style="width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: Georgia, serif; font-size: small;">
                 <div id="tnotesList" style="max-height: 200px; overflow-y: auto; padding: 5px; border: 1px solid #eee; border-radius: 4px;">
-                  <?php foreach ($tasting_notes as $tnote): ?>
+                  <?php 
+                    $scale = getRatingScale();
+                    foreach ($tasting_notes as $tnote): 
+                  ?>
                     <?php 
+                      $rating_badge = formatNoteRatingBadge($tnote, $scale, true);
                       $search_text = implode(' ', array_filter([
                         $tnote['tasting_date'],
                         $tnote['country'],
@@ -279,10 +283,10 @@
                         $tnote['name'],
                         $tnote['grape'],
                         $tnote['vineyard'],
-                        $tnote['dmpts'] ? 'DM'.$tnote['dmpts'] : ''
+                        $rating_badge
                       ]));
                       $wine_name = getWineName($tnote['nameconvention'], $tnote['vintage'], $tnote['name'], $tnote['producer'], $tnote['grape'], $tnote['vineyard']);
-                      $score = $tnote['dmpts'] ? ' (DM' . $tnote['dmpts'] . ')' : '';
+                      $score = ($rating_badge !== 'NR') ? ' (' . $rating_badge . ')' : '';
                       $tnote_label = htmlspecialchars($tnote['tasting_date'] . " - " . $tnote['producer'] . " " . $wine_name . $score, ENT_QUOTES, 'UTF-8');
                       $checked = in_array($tnote['note_id'], $linked_tnotes) ? 'checked' : '';
                     ?>
