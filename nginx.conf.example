@@ -1,0 +1,74 @@
+# ==============================================================================
+# phpMyCellar - Sample Nginx Server Block Configuration
+# ==============================================================================
+# Place this configuration inside your Nginx 'http' or 'conf.d/' configuration.
+# Adjust 'server_name', 'root', and 'fastcgi_pass' for your environment.
+# ==============================================================================
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name your-cellar-domain.com;
+    root /var/www/html/phpMyCellar;
+    index index.php index.html;
+
+    charset utf-8;
+
+    # Maximum file upload size for invoice PDFs and wine bottle photos
+    client_max_body_size 16M;
+
+    # Security HTTP Headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Deny direct access to hidden files (e.g. .env, .git)
+    location ~ /\.(?!well-known).* {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    # Deny direct access to internal application directories
+    location ^~ /includes/ {
+        deny all;
+        return 403;
+    }
+
+    # Deny direct access to SQL schemas, markdown, and lock files
+    location ~* \.(sql|md|lock|log|env|yml|yaml)$ {
+        deny all;
+        return 403;
+    }
+
+    # Disable PHP script execution inside the uploads directory
+    location ~* ^/uploads/.*\.php$ {
+        deny all;
+        return 403;
+    }
+
+    # Cache static images, fonts, styles, and scripts
+    location ~* \.(webp|jpg|jpeg|png|gif|ico|svg|css|js|woff|woff2|ttf|eot)$ {
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+        access_log off;
+    }
+
+    # Main routing
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # PHP-FPM fastcgi handling
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock; # Adjust for your PHP-FPM socket or TCP host:port
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param HTTP_PROXY ""; # Mitigate HTTPOXY vulnerability
+        fastcgi_intercept_errors on;
+        fastcgi_buffer_size 16k;
+        fastcgi_buffers 4 16k;
+    }
+}

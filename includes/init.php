@@ -7,7 +7,16 @@
     session_start();
   }
 
-  $env = @parse_ini_file(__DIR__.'/../.env');
+  $envPath = __DIR__ . '/../.env';
+  $lockPath = __DIR__ . '/../install/installed.lock';
+  $installWizard = __DIR__ . '/../install/index.php';
+
+  if (!file_exists($envPath) && !file_exists($lockPath) && file_exists($installWizard)) {
+    header("Location: /install/index.php");
+    exit();
+  }
+
+  $env = @parse_ini_file($envPath);
   if ($env) {
     $_ENV = array_merge($_ENV, $env);
   }
@@ -17,10 +26,15 @@
   $dbUser = $_ENV['DB_USER'] ?? '';
   $dbPass = $_ENV['DB_PASS'] ?? '';
 
-  $mysqli = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+  mysqli_report(MYSQLI_REPORT_OFF);
+  $mysqli = @new mysqli($dbHost, $dbUser, $dbPass, $dbName);
 
   if ($mysqli->connect_error) {
-    die("Connection failed: " . $mysqli->connect_error);
+    if (!file_exists($lockPath) && file_exists($installWizard)) {
+      header("Location: /install/index.php");
+      exit();
+    }
+    die("Database connection failed: " . $mysqli->connect_error);
   }
 
   $mysqli->set_charset("utf8mb4");

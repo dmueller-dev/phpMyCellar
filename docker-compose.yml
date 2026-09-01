@@ -1,0 +1,56 @@
+# ==============================================================================
+# phpMyCellar - Local Development & Production Docker Compose
+# ==============================================================================
+# Quickstart:
+#   1. Run: docker compose up -d --build
+#   2. Open: http://localhost:8080/install/ in your browser
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # Web & Application Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phpmycellar_app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./uploads:/var/www/html/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cellar_network
+
+  # Database Service (MariaDB 10.11 LTS)
+  db:
+    image: mariadb:10.11
+    container_name: phpmycellar_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secure_password
+      MYSQL_DATABASE: phpmycellar
+      MYSQL_USER: cellar_user
+      MYSQL_PASSWORD: cellar_user_password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - cellar_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  cellar_network:
+    driver: bridge

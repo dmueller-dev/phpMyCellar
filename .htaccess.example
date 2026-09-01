@@ -1,0 +1,62 @@
+# ==============================================================================
+# phpMyCellar - Sample Apache Web Server Configuration (.htaccess)
+# ==============================================================================
+# Copy this file to '.htaccess' in the root directory of your installation.
+# ==============================================================================
+
+# Disable directory browsing
+Options -Indexes -MultiViews
+
+# Default character encoding
+AddDefaultCharset UTF-8
+
+# Enable URL rewriting if mod_rewrite is available
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Prevent direct access to hidden files and directories (e.g. .git, .env)
+    RewriteRule (^\.|/\.) - [F]
+
+    # Block direct web access to sensitive directories
+    RewriteRule ^includes/ - [F,L]
+    RewriteRule ^install/installed\.lock$ - [F,L]
+    RewriteRule ^install/(schema|seed)\.sql$ - [F,L]
+</IfModule>
+
+# Block direct access to configuration files, dotfiles, and private files
+<FilesMatch "(^\.env|\.sql|\.md|\.lock|\.json|\.log|Dockerfile|docker-compose\.yml|LICENSE)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Security HTTP Headers
+<IfModule mod_headers.c>
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Clickjacking protection
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # Control Referrer information
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # XSS Protection filter for older browsers
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Caching for static assets in uploads/img
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
