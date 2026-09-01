@@ -11,3 +11,10 @@
 !invoices/.gitignore
 !invoices/.htaccess
 !invoices/index.html
+
+# ...and keep tracking the img subfolder
+!img/
+!img/.gitignore
+!img/.htaccess
+!img/index.html
+

@@ -1,0 +1,7 @@
+# Ignore all uploaded files in the img folder
+*
+
+# ...except for security and git tracking files
+!.gitignore
+!.htaccess
+!index.html

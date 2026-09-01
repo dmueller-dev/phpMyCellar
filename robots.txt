@@ -6,6 +6,7 @@ Disallow: /accountSettings.php
 Disallow: /notifications.php
 Disallow: /winemenu.php
 Disallow: /toggle_subscription.php
+Allow: /uploads/img/
 Disallow: /uploads/
 Disallow: /includes/
 Disallow: /install/

@@ -510,7 +510,7 @@
 
     $base_name = getMasterWineName($wine["nameconvention"], $wine["name"], $wine["producer"], $wine["grape"], $wine["vineyard"]);
     $item_padding = ($sort == "producer") ? "padding-left:35px;text-indent:-18px;" : "padding-left:43px;text-indent:-18px;";
-    $colour_icon = !empty($wine["colour"]) ? "/img/" . htmlspecialchars($wine["colour"], ENT_QUOTES, 'UTF-8') . "_16px.gif" : "";
+    $colour_icon = !empty($wine["colour"]) ? "/uploads/img/" . htmlspecialchars($wine["colour"], ENT_QUOTES, 'UTF-8') . "_16px.gif" : "";
 
     echo "<li class='wine-item' style='{$item_padding}margin-bottom:8px;'>";
     echo "<span class='wine-title'>";

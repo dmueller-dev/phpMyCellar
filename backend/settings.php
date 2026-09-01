@@ -30,7 +30,7 @@
     $theme_accent_color = trim($_POST['theme_accent_color'] ?? '#CD5C5C');
     $theme_accent_secondary = trim($_POST['theme_accent_secondary'] ?? '#B22222');
     $theme_accent_hover = trim($_POST['theme_accent_hover'] ?? '#8B0000');
-    $logo_url = trim($_POST['logo_url'] ?? '/img/logo_web.webp');
+    $logo_url = trim($_POST['logo_url'] ?? '/uploads/img/logo_web.webp');
 
     if (empty($site_name)) {
       $errors[] = 'Site Name cannot be empty.';
@@ -70,7 +70,7 @@
   $theme_accent_color = getSiteSetting('theme_accent_color', '#CD5C5C');
   $theme_accent_secondary = getSiteSetting('theme_accent_secondary', '#B22222');
   $theme_accent_hover = getSiteSetting('theme_accent_hover', '#8B0000');
-  $logo_url = getSiteSetting('logo_url', '/img/logo_web.webp');
+  $logo_url = getSiteSetting('logo_url', '/uploads/img/logo_web.webp');
 
   $page_title = 'Site Settings - Administration';
   require_once __DIR__ . '/../includes/header.php';
@@ -194,7 +194,7 @@
           <div style="margin-bottom:15px;">
             <label for="logo_url"><strong>Logo Path / URL:</strong></label><br>
             <input type="text" id="logo_url" name="logo_url" value="<?php echo htmlspecialchars($logo_url, ENT_QUOTES, 'UTF-8'); ?>" style="width:100%;max-width:500px;padding:8px;">
-            <br><small style="color:#666;">Relative path (e.g. <code>/img/logo_web.webp</code>) or full URL.</small>
+            <br><small style="color:#666;">Relative path (e.g. <code>/uploads/img/logo_web.webp</code>) or full URL.</small>
           </div>
 
           <div style="margin-top:30px;">

@@ -430,7 +430,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="image-overlay-form-group">
               <label class="image-overlay-label" for="image-file-name">Image File Name</label>
               <div class="image-file-input-wrapper">
-                <span class="image-file-prefix">/img/</span>
+                <span class="image-file-prefix">/uploads/img/</span>
                 <input type="text" id="image-file-name" class="image-overlay-input" placeholder="example.jpg" required />
               </div>
             </div>
@@ -512,10 +512,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
           // Format image path correctly in the background
           let filePath = fileName;
-          if (filePath.startsWith("img/")) {
+          if (filePath.startsWith("uploads/img/")) {
             filePath = "/" + filePath;
-          } else if (!filePath.startsWith("/img/")) {
-            filePath = "/img/" + filePath.replace(/^\/+/, "");
+          } else if (filePath.startsWith("img/")) {
+            filePath = "/uploads/" + filePath;
+          } else if (filePath.startsWith("/img/")) {
+            filePath = "/uploads" + filePath;
+          } else if (!filePath.startsWith("/uploads/img/")) {
+            filePath = "/uploads/img/" + filePath.replace(/^\/+/, "");
           }
 
           const altText = altInput.value.trim();

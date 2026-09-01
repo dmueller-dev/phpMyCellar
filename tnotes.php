@@ -114,7 +114,7 @@
     $meta_desc = generateTastingNoteDescription($tasting_note, $wine_name);
     $canonical_url = getAbsoluteUrl('/tnotes.php?id=' . $noteID);
     $og_type = 'article';
-    $og_image = !empty($tasting_note['img']) ? getAbsoluteUrl('/img/' . $tasting_note['img']) : null;
+    $og_image = !empty($tasting_note['img']) ? getAbsoluteUrl('/uploads/img/' . $tasting_note['img']) : null;
     $article_meta = [
       'published_time' => !empty($tasting_note['tasting_date']) ? $tasting_note['tasting_date'] : null,
       'author' => !empty($tasting_note['displayname']) ? $tasting_note['displayname'] : $owner_name
@@ -134,7 +134,7 @@
 	<h3>Tasting note</h3>
         <?php
           if($tasting_note["img"]!=null) {
-            echo "<img class='".$tasting_note["img_class"]."' src='/img/".$tasting_note["img"]."' alt='".$wine_name."'>";
+            echo "<img class='".$tasting_note["img_class"]."' src='/uploads/img/".$tasting_note["img"]."' alt='".$wine_name."'>";
           }
           echo $tasting_note["tasting_note"];
           if($tasting_note["drinkwindow_min"]!=null && $tasting_note["drinkwindow_max"]!=null) {

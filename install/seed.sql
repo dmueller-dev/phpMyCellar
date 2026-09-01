@@ -22,7 +22,7 @@ INSERT INTO `site_settings` (`setting_key`, `setting_value`, `setting_group`) VA
 ('theme_accent_color', '#CD5C5C', 'theme'),
 ('theme_accent_secondary', '#B22222', 'theme'),
 ('theme_accent_hover', '#8B0000', 'theme'),
-('logo_url', '/img/logo_web.webp', 'theme');
+('logo_url', '/uploads/img/logo_web.webp', 'theme');
 
 -- --------------------------------------------------------
 -- Default Static Pages

@@ -3928,7 +3928,7 @@ function generateTastingNoteJsonLd($tasting_note, $wine_name, $canonical_url) {
   }
   
   if (!empty($tasting_note['img'])) {
-    $data['image'] = getAbsoluteUrl('/img/' . $tasting_note['img']);
+    $data['image'] = getAbsoluteUrl('/uploads/img/' . $tasting_note['img']);
   }
   
   return $data;
@@ -4171,7 +4171,7 @@ function generateBlogJsonLd($blogpost, $canonical_url, $image_url = null) {
   $editDate = !empty($blogpost['edit_date']) ? date('c', strtotime($blogpost['edit_date'])) : $pubDate;
   $owner_name = getOwnerName();
   $site_url = getSiteUrl();
-  $logo_url = getAbsoluteUrl(getSiteSetting('logo_url', '/img/logo_web.webp'));
+  $logo_url = getAbsoluteUrl(getSiteSetting('logo_url', '/uploads/img/logo_web.webp'));
   
   $data = [
     '@context' => 'https://schema.org',

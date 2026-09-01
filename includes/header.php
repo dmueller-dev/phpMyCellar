@@ -18,7 +18,7 @@
   $site_tagline = function_exists('getSiteTagline') ? getSiteTagline() : 'Fine Wine Cellar & Tasting Notes';
   $owner_name = function_exists('getOwnerName') ? getOwnerName() : 'Cellar Master';
   $default_desc = function_exists('getSiteSetting') ? getSiteSetting('meta_description', 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.') : 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
-  $logo_path = function_exists('getSiteSetting') ? getSiteSetting('logo_url', '/img/logo_web.webp') : '/img/logo_web.webp';
+  $logo_path = function_exists('getSiteSetting') ? getSiteSetting('logo_url', '/uploads/img/logo_web.webp') : '/uploads/img/logo_web.webp';
 
   $resolved_title = isset($page_title) ? $page_title : ($site_title . ' - ' . $site_tagline);
   $resolved_desc = strip_tags(isset($meta_desc) ? $meta_desc : $default_desc);
@@ -114,9 +114,9 @@
     }
   </style>
   <?php endif; ?>
-  <link rel="icon" href="/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
-  <link rel="icon" href="/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
-  <link rel="apple-touch-icon" href="/img/cropped-wineglassicon-180x180.webp">
+  <link rel="icon" href="/uploads/img/cropped-wineglassicon-32x32.webp" sizes="32x32">
+  <link rel="icon" href="/uploads/img/cropped-wineglassicon-192x192.webp" sizes="192x192">
+  <link rel="apple-touch-icon" href="/uploads/img/cropped-wineglassicon-180x180.webp">
 
   <?php
     // Dynamically load the WYSIWYG integration script for logged-in backend pages
