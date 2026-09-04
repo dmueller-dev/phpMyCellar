@@ -3878,36 +3878,62 @@ function extractFirstImageUrl($htmlContent) {
 
 /**
  * Clean and build a comma-separated list of keywords from a list of strings/terms.
- * Filters out empty values, "n/a", "none", and removes case-insensitive duplicates while preserving case.
+ * Supports string, array, or nested arrays of terms.
+ * Filters out empty values, "n/a", "none", normalizes whitespace, strips HTML tags,
+ * and removes case-insensitive duplicates while preserving the original case of the first occurrence.
  */
-function buildKeywordsList(array $terms) {
+function buildKeywordsList($terms) {
   $seen = [];
   $keywords = [];
-  
-  foreach ($terms as $term) {
+
+  if (!is_array($terms)) {
+    $terms = [$terms];
+  }
+
+  $flatten = function ($items) use (&$flatten) {
+    $flat = [];
+    foreach ($items as $item) {
+      if (is_array($item)) {
+        $flat = array_merge($flat, $flatten($item));
+      } elseif ($item !== null) {
+        $flat[] = $item;
+      }
+    }
+    return $flat;
+  };
+
+  $flatTerms = $flatten($terms);
+  $ignored = ['n/a', 'na', 'none', 'null', 'unknown', 'undefined', 'empty', 'false', 'true', '0', '-'];
+
+  foreach ($flatTerms as $term) {
     if ($term === null) {
       continue;
     }
     $trimmed = trim((string)$term);
-    if ($trimmed === '' || in_array(strtolower($trimmed), ['n/a', 'na', 'none', 'null', 'unknown', '-'], true)) {
+    if ($trimmed === '') {
       continue;
     }
-    
+
     // Split if term already contains commas
     $parts = explode(',', $trimmed);
     foreach ($parts as $part) {
-      $p = trim($part);
-      if ($p === '' || in_array(strtolower($p), ['n/a', 'na', 'none', 'null', 'unknown', '-'], true)) {
+      // Strip HTML tags and normalize whitespace
+      $clean = trim(strip_tags($part));
+      $clean = preg_replace('/\s+/', ' ', $clean);
+      $clean = trim($clean, " \t\n\r\0\x0B\"'");
+
+      if ($clean === '' || mb_strlen($clean, 'UTF-8') > 100 || in_array(strtolower($clean), $ignored, true)) {
         continue;
       }
-      $lower = mb_strtolower($p, 'UTF-8');
+
+      $lower = mb_strtolower($clean, 'UTF-8');
       if (!isset($seen[$lower])) {
         $seen[$lower] = true;
-        $keywords[] = $p;
+        $keywords[] = $clean;
       }
     }
   }
-  
+
   return implode(', ', $keywords);
 }
 
@@ -3918,7 +3944,7 @@ function buildKeywordsList(array $terms) {
 function generateWineKeywords($wine) {
   $owner = getOwnerName();
   if (empty($wine) || !is_array($wine)) {
-    return $owner . ', fine wine, wine database, wine tasting';
+    return buildKeywordsList([$owner, 'fine wine', 'wine database', 'wine tasting']);
   }
   
   $producer = trim($wine['producer'] ?? '');
@@ -4052,7 +4078,7 @@ function generateWineJsonLd($wine, $wine_name, $canonical_url) {
 function generateTastingNoteKeywords($tasting_note) {
   $owner = getOwnerName();
   if (empty($tasting_note) || !is_array($tasting_note)) {
-    return $owner . ', tasting note, wine review, fine wine';
+    return buildKeywordsList([$owner, 'tasting note', 'wine review', 'fine wine']);
   }
   
   $wineKeywords = generateWineKeywords($tasting_note);
@@ -4235,7 +4261,7 @@ function getProducerAssociatedData($conn, $producerID) {
  */
 function generateProducerKeywords($producer, $associated_data = []) {
   if (empty($producer) || !is_array($producer)) {
-    return getOwnerName() . ', wine producer, winery, fine wine';
+    return buildKeywordsList([getOwnerName(), 'wine producer', 'winery', 'fine wine']);
   }
   
   $terms = [];
@@ -4373,7 +4399,7 @@ function getBlogFeaturedData($conn, $blogID) {
 function generateBlogKeywords($blogpost, $featured_data = []) {
   $owner = getOwnerName();
   if (empty($blogpost) || !is_array($blogpost)) {
-    return $owner . ', wine blog, wine stories, fine wine';
+    return buildKeywordsList([$owner, 'wine blog', 'wine stories', 'fine wine']);
   }
   
   $terms = [];

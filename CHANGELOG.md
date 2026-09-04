@@ -18,9 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Retired legacy `wset_enabled` setting from active codebase and seed database schema; deprecated `isWsetSATEnabled()` helper in favor of `isWsetSATEntryEnabled()` and `isWsetSATVisibleToViewer()`.
+- Enhanced `buildKeywordsList()` with flexible arguments (supporting strings, arrays, or nested lists), HTML tag stripping, whitespace normalization, surrounding quote trimming, and robust case-insensitive deduplication.
 
 ### Fixed
 - Fixed data preservation issue in `editTastingNote.php` where editing a note while WSET was disabled globally would overwrite previously recorded WSET criteria with `NULL`.
+- Fixed duplicate meta keywords across all site pages by universally routing keyword resolution in `header.php` through `buildKeywordsList()`, eliminating double occurrences when site title and owner name are identical (e.g. on `index.php`, `impressum.php`, `privacy.php`).
+- Added dedicated, deduplicated meta keywords for legal notice and policy pages (`impressum.php` and `privacy.php`).
 
 ## [1.0.1] - 2026-09-01
 

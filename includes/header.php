@@ -23,11 +23,20 @@
   $resolved_title = isset($page_title) ? $page_title : ($site_title . ' - ' . $site_tagline);
   $resolved_desc = strip_tags(isset($meta_desc) ? $meta_desc : $default_desc);
   
-  if (isset($meta_keywords)) {
-    $resolved_keywords = is_array($meta_keywords) ? implode(', ', $meta_keywords) : $meta_keywords;
-  } else {
-    $resolved_keywords = $owner_name . ', ' . $site_title . ', wine database, wine tastings, tasting notes, fine wine, wine collection, wine cellar';
-  }
+  $default_keywords = [
+    $owner_name,
+    $site_title,
+    'wine database',
+    'wine tastings',
+    'tasting notes',
+    'fine wine',
+    'wine collection',
+    'wine cellar'
+  ];
+  $raw_keywords = !empty($meta_keywords) ? $meta_keywords : $default_keywords;
+  $resolved_keywords = function_exists('buildKeywordsList')
+    ? buildKeywordsList($raw_keywords)
+    : implode(', ', array_unique((array)$raw_keywords));
 
   if ($is_private_page) {
     $resolved_robots = 'noindex, nofollow, noarchive, nosnippet, noimageindex';

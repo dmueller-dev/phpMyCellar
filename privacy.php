@@ -7,6 +7,10 @@
   $page = getStaticPage('privacy');
   $page_title = ($page['page_title'] ?? 'Privacy Policy') . ' - ' . getSiteTitle();
   $meta_desc = $page['meta_description'] ?? ('Privacy policy for ' . getSiteTitle());
+  $meta_keywords = buildKeywordsList([
+    'privacy policy', 'data protection', 'GDPR', 'privacy', 'cookies',
+    getOwnerName(), getSiteTitle()
+  ]);
 
   require_once 'includes/header.php';
 ?>

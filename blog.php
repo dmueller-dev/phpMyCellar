@@ -236,7 +236,11 @@
     $owner_name = getOwnerName();
     $page_title = $site_title . ' - Browse all stories';
     $meta_desc = 'Read wine stories, themed tasting reports, winery visits, and vintage horizontals by ' . $owner_name . '.';
-    $meta_keywords = 'wine blog, wine stories, fine wine tastings, tasting reports, vintage reports, wine travel, ' . $owner_name;
+    $meta_keywords = buildKeywordsList([
+      'wine blog', 'wine stories', 'fine wine tastings',
+      'tasting reports', 'vintage reports', 'wine travel',
+      $owner_name
+    ]);
     $canonical_url = getAbsoluteUrl('/blog.php');
     $og_type = 'website';
     $json_ld = [

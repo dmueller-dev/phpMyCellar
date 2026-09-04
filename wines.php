@@ -383,7 +383,11 @@
       $sortSuffix = isset($sortLabels[$sort]) ? ' (' . $sortLabels[$sort] . ')' : '';
       $page_title = $site_title . ' - Browse all wines' . $sortSuffix;
       $meta_desc = 'Explore ' . $site_title . ' fine wine database. Browse wines by region, producer, vintage, and grape variety with tasting notes and vintage details.';
-      $meta_keywords = $owner_name . ', ' . $site_title . ', wine database, fine wine, browse wines, wine collection, wine tastings, wine producers, wine vintages, wine regions';
+      $meta_keywords = buildKeywordsList([
+        $owner_name, $site_title, 'wine database', 'fine wine',
+        'browse wines', 'wine collection', 'wine tastings',
+        'wine producers', 'wine vintages', 'wine regions'
+      ]);
     }
     $canonical_url = getAbsoluteUrl('/wines.php');
     $og_type = 'website';

@@ -459,7 +459,7 @@
     } elseif ($is_fav) {
       $page_title = $site_title . ' - Favourite Tasting Notes';
       $meta_desc = 'Explore ' . $site_title . ' favourite fine wine tasting notes and top-rated cellar highlights.';
-      $meta_keywords = $owner_name . ', favourite wines, top rated wines, fine wine reviews, wine cellar highlights';
+      $meta_keywords = buildKeywordsList([$owner_name, 'favourite wines', 'top rated wines', 'fine wine reviews', 'wine cellar highlights']);
     } else {
       $sortLabels = [
         'date' => 'by Tasting Date',
@@ -474,7 +474,7 @@
       $sortSuffix = isset($sortLabels[$sort]) ? ' (' . $sortLabels[$sort] . ')' : '';
       $page_title = $site_title . ' - Browse all tasting notes' . $sortSuffix;
       $meta_desc = 'Browse fine wine tasting notes and independent wine ratings by ' . $owner_name . ' across wine regions worldwide.';
-      $meta_keywords = 'wine tasting notes, wine reviews, wine ratings, fine wine reviews, wine tasting notebook, ' . $owner_name;
+      $meta_keywords = buildKeywordsList(['wine tasting notes', 'wine reviews', 'wine ratings', 'fine wine reviews', 'wine tasting notebook', $owner_name]);
     }
     $canonical_url = getAbsoluteUrl('/tnotes.php');
     $og_type = 'website';

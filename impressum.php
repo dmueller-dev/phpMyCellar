@@ -10,6 +10,11 @@
   $owner_name = getOwnerName();
   $owner_email = getOwnerEmail();
   $owner_address = getSiteSetting('owner_address', '');
+  $site_title = getSiteTitle();
+  $meta_keywords = buildKeywordsList([
+    'impressum', 'imprint', 'legal notice', 'contact',
+    $owner_name, $site_title
+  ]);
 
   require_once 'includes/header.php';
 ?>
