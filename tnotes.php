@@ -161,6 +161,7 @@
             $wset_format = getWsetSATDisplayFormat();
             $wset_mode = getWsetSATMode();
             $score_initials = htmlspecialchars($tasting_note["initials"] ?? 'DM', ENT_QUOTES, 'UTF-8');
+            // Fallbacks to deprecated 'dmpts', 'dmpts_desc', and 'dmpts_class' preserved for pre-1.0.1 compatibility; scheduled for removal in v2.0.0
             $active_score = ($scale === '100-point') ? ($tasting_note['pts_100'] ?? null) : ($tasting_note['pts_20'] ?? $tasting_note['dmpts'] ?? null);
             $max_score = getRatingScaleMax($scale);
             $desc_field = ($scale === '100-point') ? 'scale_100_desc' : 'scale_20_desc';

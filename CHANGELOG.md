@@ -15,10 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable WSET display format (`standard` vs. `detailed` BLIC criteria breakdown) on tasting notes.
 - Private indicator badge on tasting notes for ratings displayed under `logged_in` mode.
 - Transparent auto-migration converting legacy `wset_enabled` setting to `wset_mode` on upgrade.
+- Comprehensive `UPGRADE.md` migration guide detailing deprecations, database migrations, and upcoming breaking changes in v2.0.0.
 
 ### Changed
-- Retired legacy `wset_enabled` setting from active codebase and seed database schema; deprecated `isWsetSATEnabled()` helper in favor of `isWsetSATEntryEnabled()` and `isWsetSATVisibleToViewer()`.
+- Retired legacy `wset_enabled` setting from active codebase and seed database schema.
 - Enhanced `buildKeywordsList()` with flexible arguments (supporting strings, arrays, or nested lists), HTML tag stripping, whitespace normalization, surrounding quote trimming, and robust case-insensitive deduplication.
+- Modernized tasting note rating display in `backend/addBlogpost.php` to use scale-aware `formatNoteRatingBadge()`.
+
+### Deprecated
+- Helper `isWsetSATEnabled()` is deprecated in favor of `isWsetSATEntryEnabled()` and `isWsetSATVisibleToViewer()`. Scheduled for removal in v2.0.0.
+- Legacy `site_settings.wset_enabled` setting key is deprecated in favor of `wset_mode`. It is automatically migrated on read and will be removed in v2.0.0.
+- Standalone redirect stubs `tnote.php`, `wine.php`, and `blogpost.php` are deprecated in favor of direct requests to `tnotes.php`, `wines.php`, and `blog.php`. Scheduled for removal in v2.0.0.
+- Legacy rating column alias `dmpts` and aggregate column `avg_dmpts` in SQL views (`view_vintage_region_colour_stats`, `view_vintage_top_wines`) and PHP helper query results are deprecated in favor of `pts_20` and `avg_pts_20`. Scheduled for removal in v2.0.0.
+- Legacy backend form parameter `$_POST['dmpts']` is deprecated in favor of `pts_20` across tasting note editors. Scheduled for removal in v2.0.0.
 
 ### Fixed
 - Fixed data preservation issue in `editTastingNote.php` where editing a note while WSET was disabled globally would overwrite previously recorded WSET criteria with `NULL`.

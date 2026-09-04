@@ -55,6 +55,17 @@ server {
         access_log off;
     }
 
+    # Legacy URL redirects (deprecated since v1.0.0, stubs scheduled for removal in v2.0.0)
+    location = /tnote.php {
+        return 301 /tnotes.php$is_args$args;
+    }
+    location = /wine.php {
+        return 301 /wines.php$is_args$args;
+    }
+    location = /blogpost.php {
+        return 301 /blog.php$is_args$args;
+    }
+
     # Main routing
     location / {
         try_files $uri $uri/ =404;

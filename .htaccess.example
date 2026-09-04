@@ -21,6 +21,11 @@ AddDefaultCharset UTF-8
     RewriteRule ^includes/ - [F,L]
     RewriteRule ^install/installed\.lock$ - [F,L]
     RewriteRule ^install/(schema|seed)\.sql$ - [F,L]
+
+    # Legacy URL redirects (deprecated since v1.0.0, stubs scheduled for removal in v2.0.0)
+    RewriteRule ^tnote\.php$ /tnotes.php [R=301,L,QSA]
+    RewriteRule ^wine\.php$ /wines.php [R=301,L,QSA]
+    RewriteRule ^blogpost\.php$ /blog.php [R=301,L,QSA]
 </IfModule>
 
 # Block direct access to configuration files, dotfiles, and private files

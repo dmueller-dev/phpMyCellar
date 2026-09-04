@@ -33,6 +33,10 @@
       
       $pts_20 = filter_input(INPUT_POST, 'pts_20', FILTER_VALIDATE_INT);
       if ($pts_20 === null && isset($_POST['dmpts']) && $_POST['dmpts'] !== '') {
+        @trigger_error(
+          'POST parameter "dmpts" is deprecated since version 1.0.1 and will be removed in version 2.0.0. Use "pts_20" instead.',
+          E_USER_DEPRECATED
+        );
         $pts_20 = filter_input(INPUT_POST, 'dmpts', FILTER_VALIDATE_INT);
       }
       $pts_100 = filter_input(INPUT_POST, 'pts_100', FILTER_VALIDATE_INT);

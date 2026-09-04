@@ -498,7 +498,13 @@ function getStorageLocations($conn) {
   }
 }
 
-// Function to get all tasting notes
+/**
+ * Function to get all tasting notes.
+ *
+ * @param mysqli $conn
+ * @return mysqli_result
+ * @note The 'dmpts' key in returned rows is deprecated since v1.0.1 and scheduled for removal in v2.0.0; use 'pts_20'.
+ */
 function getTastingNotes($conn) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -2245,7 +2251,14 @@ function insertOrderBottle($conn, $wine_id, $format, $store_id, $purchase_date, 
   return $res;
 }
 
-// Function to get vintage regional stats (SQL View 1 with fallback)
+/**
+ * Function to get vintage regional stats (SQL View 1 with fallback).
+ *
+ * @param mysqli $conn
+ * @param int $vintage
+ * @return array
+ * @note The 'avg_dmpts' key in returned rows is deprecated since v1.0.1 and scheduled for removal in v2.0.0; use 'avg_pts_20' or 'avg_score'.
+ */
 function getVintageRegionStats($conn, $vintage) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -2357,7 +2370,14 @@ function getVintageCountryStats($conn, $vintage) {
   return $rows;
 }
 
-// Function to get vintage top wines rated >= threshold (SQL View 3 with fallback)
+/**
+ * Function to get vintage top wines rated >= threshold (SQL View 3 with fallback).
+ *
+ * @param mysqli $conn
+ * @param int $vintage
+ * @return array
+ * @note The 'dmpts' key in returned rows is deprecated since v1.0.1 and scheduled for removal in v2.0.0; use 'pts_20'.
+ */
 function getVintageTopWines($conn, $vintage) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -2438,7 +2458,14 @@ function getVintageTopWines($conn, $vintage) {
   return $rows;
 }
 
-// Function to get summary statistics for a single vintage
+/**
+ * Function to get summary statistics for a single vintage.
+ *
+ * @param mysqli $conn
+ * @param int $vintage
+ * @return array|false
+ * @note The 'avg_dmpts' key in returned rows is deprecated since v1.0.1 and scheduled for removal in v2.0.0; use 'avg_score' or 'avg_pts_20'.
+ */
 function getVintageSummary($conn, $vintage) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -2479,7 +2506,13 @@ function getVintageSummary($conn, $vintage) {
   return $res;
 }
 
-// Function to get all vintages summary for vintage chart overview
+/**
+ * Function to get all vintages summary for vintage chart overview.
+ *
+ * @param mysqli $conn
+ * @return array
+ * @note The 'avg_dmpts' key in returned rows is deprecated since v1.0.1 and scheduled for removal in v2.0.0; use 'avg_score'.
+ */
 function getAllVintagesSummary($conn) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
@@ -3696,6 +3729,10 @@ function getWsetSATMode() {
   if ($setting === null) {
     $legacy = getSiteSetting('wset_enabled', null);
     if ($legacy !== null) {
+      @trigger_error(
+        'Site setting "wset_enabled" is deprecated since version 1.1.0 and has been automatically migrated to "wset_mode". Support for "wset_enabled" will be removed in version 2.0.0.',
+        E_USER_DEPRECATED
+      );
       $mode = ($legacy === '0' || $legacy === 'no' || $legacy === 'false' || $legacy === false) ? 'disabled' : 'public';
       updateSiteSetting('wset_mode', $mode, 'general');
       deleteSiteSetting('wset_enabled');
@@ -3730,9 +3767,17 @@ function isWsetSATVisibleToViewer() {
 
 /**
  * Check whether WSET SAT evaluation (0.0 to 4.0) is enabled.
- * @deprecated Use isWsetSATEntryEnabled() or isWsetSATVisibleToViewer() instead. Scheduled for removal in v2.0.0.
+ *
+ * @deprecated 1.1.0 Scheduled for removal in version 2.0.0. Use isWsetSATEntryEnabled() or isWsetSATVisibleToViewer() instead.
+ * @see isWsetSATEntryEnabled()
+ * @see isWsetSATVisibleToViewer()
+ * @return bool
  */
 function isWsetSATEnabled() {
+  @trigger_error(
+    'isWsetSATEnabled() is deprecated since version 1.1.0 and will be removed in version 2.0.0. Use isWsetSATEntryEnabled() or isWsetSATVisibleToViewer() instead.',
+    E_USER_DEPRECATED
+  );
   return isWsetSATEntryEnabled();
 }
 

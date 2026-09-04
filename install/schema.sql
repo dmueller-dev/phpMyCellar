@@ -380,7 +380,7 @@ CREATE TABLE `tnotes` (
   `wine_id` smallint(5) UNSIGNED NOT NULL,
   `user_id` smallint(5) UNSIGNED NOT NULL,
   `tasting_date` date NOT NULL,
-  `pts_20` tinyint(2) UNSIGNED DEFAULT NULL,
+  `pts_20` tinyint(2) UNSIGNED DEFAULT NULL, -- Standardized 20-point rating; renamed from legacy `dmpts` in v1.0.1
   `pts_100` tinyint(3) UNSIGNED DEFAULT NULL,
   `wset_balance` decimal(2,1) UNSIGNED DEFAULT NULL,
   `wset_length` decimal(2,1) UNSIGNED DEFAULT NULL,
@@ -616,6 +616,7 @@ SELECT
   CONCAT(`regions`.`country`, ': ', `regions`.`region`, ' (', `wines_master`.`colour`, ')') AS `country_region_colour`,
   COUNT(`tnotes`.`note_id`) AS `note_count`,
   ROUND(AVG(CASE WHEN `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`pts_20` IS NOT NULL THEN `tnotes`.`pts_20` END), 1) AS `avg_pts_20`,
+  -- Deprecated in v1.0.1; scheduled for removal in v2.0.0. Use `avg_pts_20`:
   ROUND(AVG(CASE WHEN `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`pts_20` IS NOT NULL THEN `tnotes`.`pts_20` END), 1) AS `avg_dmpts`,
   ROUND(AVG(CASE WHEN `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`pts_100` IS NOT NULL THEN `tnotes`.`pts_100` END), 1) AS `avg_pts_100`,
   `xvr`.`vintage_desc` AS `vintage_desc`
@@ -635,6 +636,7 @@ SELECT
   `tnotes`.`user_id` AS `user_id`,
   `tnotes`.`tasting_date` AS `tasting_date`,
   `tnotes`.`pts_20` AS `pts_20`,
+  -- Deprecated in v1.0.1; scheduled for removal in v2.0.0. Use `pts_20`:
   `tnotes`.`pts_20` AS `dmpts`,
   `tnotes`.`pts_100` AS `pts_100`,
   `tnotes`.`flawed_yn` AS `flawed_yn`,
