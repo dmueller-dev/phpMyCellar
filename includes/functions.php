@@ -3423,9 +3423,14 @@ function sanitizeMetaDescription($text, $maxLength = 160) {
  * Retrieve a site setting from database, environment variable, or default fallback.
  * Uses a static cache array to avoid redundant queries during the same request.
  */
-function getSiteSetting($key, $default = '') {
+function getSiteSetting($key, $default = '', $reset = false) {
   global $conn;
   static $settings_cache = null;
+  
+  if ($reset) {
+    $settings_cache = null;
+    return $default;
+  }
   
   if ($settings_cache === null) {
     $settings_cache = [];
@@ -3497,6 +3502,26 @@ function updateSiteSetting($key, $value, $group = 'general') {
   $stmt->bind_param("sss", $key, $value, $group);
   $success = $stmt->execute();
   $stmt->close();
+  getSiteSetting('', '', true); // Reset settings cache
+  return $success;
+}
+
+/**
+ * Delete a site setting by key.
+ */
+function deleteSiteSetting($key) {
+  global $conn;
+  if (!isset($conn) || !($conn instanceof mysqli)) {
+    return false;
+  }
+  $stmt = $conn->prepare("DELETE FROM site_settings WHERE setting_key = ?");
+  if (!$stmt) {
+    return false;
+  }
+  $stmt->bind_param("s", $key);
+  $success = $stmt->execute();
+  $stmt->close();
+  getSiteSetting('', '', true); // Reset settings cache
   return $success;
 }
 
@@ -3662,11 +3687,61 @@ function getRatingScale() {
 }
 
 /**
+ * Get configured WSET SAT operational mode.
+ * Returns: 'public', 'logged_in', 'backend_only', or 'disabled'.
+ * Handles transparent auto-migration from legacy 'wset_enabled' setting if present.
+ */
+function getWsetSATMode() {
+  $setting = getSiteSetting('wset_mode', null);
+  if ($setting === null) {
+    $legacy = getSiteSetting('wset_enabled', null);
+    if ($legacy !== null) {
+      $mode = ($legacy === '0' || $legacy === 'no' || $legacy === 'false' || $legacy === false) ? 'disabled' : 'public';
+      updateSiteSetting('wset_mode', $mode, 'general');
+      deleteSiteSetting('wset_enabled');
+      return $mode;
+    }
+    return 'public';
+  }
+  return in_array($setting, ['public', 'logged_in', 'backend_only', 'disabled'], true) ? $setting : 'public';
+}
+
+/**
+ * Check whether WSET SAT evaluation (0.0 to 4.0) data entry is enabled in the backend.
+ */
+function isWsetSATEntryEnabled() {
+  return in_array(getWsetSATMode(), ['public', 'logged_in', 'backend_only'], true);
+}
+
+/**
+ * Check whether WSET SAT rating should be displayed to the current viewer.
+ * In 'logged_in' mode, visible to all authenticated users.
+ */
+function isWsetSATVisibleToViewer() {
+  $mode = getWsetSATMode();
+  if ($mode === 'public') {
+    return true;
+  }
+  if ($mode === 'logged_in') {
+    return !empty($_SESSION['user_id']);
+  }
+  return false;
+}
+
+/**
  * Check whether WSET SAT evaluation (0.0 to 4.0) is enabled.
+ * @deprecated Use isWsetSATEntryEnabled() or isWsetSATVisibleToViewer() instead. Scheduled for removal in v2.0.0.
  */
 function isWsetSATEnabled() {
-  $setting = getSiteSetting('wset_enabled', '1');
-  return ($setting === '1' || $setting === 'yes' || $setting === 'true' || $setting === true || $setting === 1);
+  return isWsetSATEntryEnabled();
+}
+
+/**
+ * Get configured WSET SAT display format: 'standard' or 'detailed'.
+ */
+function getWsetSATDisplayFormat() {
+  $format = getSiteSetting('wset_display_format', 'standard');
+  return in_array($format, ['standard', 'detailed'], true) ? $format : 'standard';
 }
 
 /**

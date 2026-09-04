@@ -231,7 +231,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
       $owner_email      = trim($_POST['owner_email'] ?? $_SESSION['install_admin']['email']);
       $currency_symbol  = trim($_POST['currency_symbol'] ?? '€');
       $rating_scale     = trim($_POST['rating_scale'] ?? '20-point');
-      $wset_enabled     = trim($_POST['wset_enabled'] ?? '1');
+      $wset_mode        = trim($_POST['wset_mode'] ?? 'public');
+      if (!in_array($wset_mode, ['public', 'logged_in', 'backend_only', 'disabled'], true)) {
+        $wset_mode = 'public';
+      }
       $accent_color     = trim($_POST['theme_accent_color'] ?? '#CD5C5C');
       $mail_from        = trim($_POST['mail_from'] ?? $owner_email);
 
@@ -254,7 +257,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
             'owner_email' => [$owner_email, 'general'],
             'currency_symbol' => [$currency_symbol, 'general'],
             'rating_scale' => [$rating_scale, 'general'],
-            'wset_enabled' => [$wset_enabled, 'general'],
+            'wset_mode' => [$wset_mode, 'general'],
+            'wset_display_format' => ['standard', 'general'],
             'theme_accent_color' => [$accent_color, 'theme']
           ];
 
@@ -881,10 +885,12 @@ foreach ($checks as $c) {
               </select>
             </div>
             <div class="form-group">
-              <label for="wset_enabled">WSET SAT Evaluation (0.0 to 4.0)</label>
-              <select id="wset_enabled" name="wset_enabled" class="form-control">
-                <option value="1" selected>Enabled (Display WSET SAT criteria & scoring)</option>
-                <option value="0">Disabled (Hide WSET SAT fields)</option>
+              <label for="wset_mode">WSET SAT Evaluation (0.0 to 4.0)</label>
+              <select id="wset_mode" name="wset_mode" class="form-control">
+                <option value="public" selected>Public (Display WSET SAT criteria &amp; scoring)</option>
+                <option value="logged_in">Members Only (Visible only to logged-in users)</option>
+                <option value="backend_only">Backend Only (Enter in backend, hide on public site)</option>
+                <option value="disabled">Disabled (Hide WSET SAT fields)</option>
               </select>
             </div>
           </div>

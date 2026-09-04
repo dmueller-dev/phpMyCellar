@@ -26,7 +26,14 @@
     $owner_address = trim($_POST['owner_address'] ?? '');
     $currency_symbol = trim($_POST['currency_symbol'] ?? '€');
     $rating_scale = trim($_POST['rating_scale'] ?? '20-point');
-    $wset_enabled = trim($_POST['wset_enabled'] ?? '1');
+    $wset_mode = trim($_POST['wset_mode'] ?? 'public');
+    if (!in_array($wset_mode, ['public', 'logged_in', 'backend_only', 'disabled'], true)) {
+      $wset_mode = 'public';
+    }
+    $wset_display_format = trim($_POST['wset_display_format'] ?? 'standard');
+    if (!in_array($wset_display_format, ['standard', 'detailed'], true)) {
+      $wset_display_format = 'standard';
+    }
     $meta_description = sanitizeInput($_POST['meta_description'] ?? '');
     $theme_accent_color = trim($_POST['theme_accent_color'] ?? '#CD5C5C');
     $theme_accent_secondary = trim($_POST['theme_accent_secondary'] ?? '#B22222');
@@ -49,7 +56,9 @@
       updateSiteSetting('owner_address', $owner_address, 'general');
       updateSiteSetting('currency_symbol', $currency_symbol, 'general');
       updateSiteSetting('rating_scale', $rating_scale, 'general');
-      updateSiteSetting('wset_enabled', $wset_enabled, 'general');
+      updateSiteSetting('wset_mode', $wset_mode, 'general');
+      updateSiteSetting('wset_display_format', $wset_display_format, 'general');
+      deleteSiteSetting('wset_enabled');
       updateSiteSetting('meta_description', $meta_description, 'general');
       updateSiteSetting('theme_accent_color', $theme_accent_color, 'theme');
       updateSiteSetting('theme_accent_secondary', $theme_accent_secondary, 'theme');
@@ -68,7 +77,8 @@
   $owner_address = getSiteSetting('owner_address', '');
   $currency_symbol = getCurrencySymbol();
   $rating_scale = getSiteSetting('rating_scale', '20-point');
-  $wset_enabled = getSiteSetting('wset_enabled', '1');
+  $wset_mode = getWsetSATMode();
+  $wset_display_format = getWsetSATDisplayFormat();
   $meta_description = getSiteSetting('meta_description', '');
   $theme_accent_color = getSiteSetting('theme_accent_color', '#CD5C5C');
   $theme_accent_secondary = getSiteSetting('theme_accent_secondary', '#B22222');
@@ -171,12 +181,23 @@
           </div>
 
           <div style="margin-bottom:15px;">
-            <label for="wset_enabled"><strong>WSET SAT Evaluation (0.0 to 4.0):</strong></label><br>
-            <select id="wset_enabled" name="wset_enabled" style="padding:8px;">
-              <option value="1" <?php echo ($wset_enabled === '1' || $wset_enabled === 'yes') ? 'selected' : ''; ?>>Enabled (Show WSET criteria &amp; score in tasting notes)</option>
-              <option value="0" <?php echo ($wset_enabled === '0' || $wset_enabled === 'no') ? 'selected' : ''; ?>>Disabled (Hide WSET SAT fields)</option>
+            <label for="wset_mode"><strong>WSET SAT Evaluation (0.0 to 4.0):</strong></label><br>
+            <select id="wset_mode" name="wset_mode" style="padding:8px;" onchange="toggleWsetDisplayFormat(this.value)">
+              <option value="public" <?php echo ($wset_mode === 'public') ? 'selected' : ''; ?>>Public &mdash; Enter in backend, show publicly on tasting notes</option>
+              <option value="logged_in" <?php echo ($wset_mode === 'logged_in') ? 'selected' : ''; ?>>Members Only &mdash; Enter in backend, visible only to logged-in users</option>
+              <option value="backend_only" <?php echo ($wset_mode === 'backend_only') ? 'selected' : ''; ?>>Backend Only &mdash; Enter in backend for cellar tracking, hide from public site</option>
+              <option value="disabled" <?php echo ($wset_mode === 'disabled') ? 'selected' : ''; ?>>Disabled &mdash; Completely turned off across the site</option>
             </select>
-            <br><small style="color:#666;">When enabled, tasting notes include the 4-part WSET Systematic Approach to Tasting (Balance, Length, Intensity, Complexity).</small>
+            <br><small style="color:#666;">Controls whether WSET Systematic Approach to Tasting (Balance, Length, Intensity, Complexity) is enabled and who can view the ratings.</small>
+          </div>
+
+          <div id="wset_format_container" style="margin-bottom:15px; <?php echo ($wset_mode === 'backend_only' || $wset_mode === 'disabled') ? 'display:none;' : ''; ?>">
+            <label for="wset_display_format"><strong>WSET Display Format:</strong></label><br>
+            <select id="wset_display_format" name="wset_display_format" style="padding:8px;">
+              <option value="standard" <?php echo ($wset_display_format === 'standard') ? 'selected' : ''; ?>>Standard &mdash; Total score &amp; qualitative assessment (e.g. 3.5 / 4.0 &quot;Very Good&quot;)</option>
+              <option value="detailed" <?php echo ($wset_display_format === 'detailed') ? 'selected' : ''; ?>>Detailed &mdash; Total score plus BLIC breakdown (Balance, Length, Intensity, Complexity)</option>
+            </select>
+            <br><small style="color:#666;">Choose whether to show the overall score or additionally show the 4 individual BLIC criteria values on public tasting notes.</small>
           </div>
 
           <hr style="margin:25px 0;">
@@ -228,5 +249,14 @@
     </div>
   </div>
 </div>
+
+<script>
+function toggleWsetDisplayFormat(mode) {
+  var container = document.getElementById('wset_format_container');
+  if (container) {
+    container.style.display = (mode === 'backend_only' || mode === 'disabled') ? 'none' : 'block';
+  }
+}
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -29,7 +29,7 @@
       $flawed_yn = sanitizeInput($_POST['flawed_yn']);
 
       $scale = getRatingScale();
-      $wset_enabled = isWsetSATEnabled();
+      $wset_enabled = isWsetSATEntryEnabled();
       
       $pts_20 = filter_input(INPUT_POST, 'pts_20', FILTER_VALIDATE_INT);
       if ($pts_20 === null && isset($_POST['dmpts']) && $_POST['dmpts'] !== '') {
@@ -54,6 +54,15 @@
         if ($raw_c !== false && $raw_c !== null) { $wset_complexity = number_format($raw_c, 1, '.', ''); }
         if ($wset_balance !== null || $wset_length !== null || $wset_intensity !== null || $wset_complexity !== null) {
           $wsetpts = number_format((float)$wset_balance + (float)$wset_length + (float)$wset_intensity + (float)$wset_complexity, 1, '.', '');
+        }
+      } elseif (!$wset_enabled && $note_id) {
+        $existing = getNoteDetails($conn, $note_id);
+        if ($existing) {
+          $wset_balance = $existing['wset_balance'] ?? null;
+          $wset_length = $existing['wset_length'] ?? null;
+          $wset_intensity = $existing['wset_intensity'] ?? null;
+          $wset_complexity = $existing['wset_complexity'] ?? null;
+          $wsetpts = $existing['wsetpts'] ?? null;
         }
       }
 
@@ -222,7 +231,7 @@
               <option value="">Select a tasting note</option>
               <?php 
                 $scale = getRatingScale();
-                $wset_enabled = isWsetSATEnabled();
+                $wset_enabled = isWsetSATEntryEnabled();
                 foreach ($notes as $note): 
                   $status_label = ($note['status'] === 'published') ? ' (Published)' : '';
                   $rating_label = formatRatingDisplay($note, $scale, true);
@@ -279,7 +288,16 @@
             <h3>Ratings</h3>
 
             <?php if ($wset_enabled): ?>
-              <strong>WSET Systematic Approach to Tasting</strong><br>
+              <strong>WSET Systematic Approach to Tasting</strong>
+              <?php 
+                $wset_mode = getWsetSATMode();
+                if ($wset_mode === 'backend_only') {
+                  echo " <small style='color:#777; font-weight:normal;'>(Internal &mdash; hidden on public site)</small>";
+                } elseif ($wset_mode === 'logged_in') {
+                  echo " <small style='color:#777; font-weight:normal;'>(Visible to logged-in users only)</small>";
+                }
+              ?>
+              <br>
               <label for="wset_balance">Balance:</label>
               <select name="wset_balance" id="wset_balance">
                 <option value="" <?php echo ($selected_note['wset_balance'] === null) ? 'selected' : ''; ?>></option>

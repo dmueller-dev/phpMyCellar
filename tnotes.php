@@ -157,7 +157,9 @@
           <tr><td>Flawed?</td><td style="width:5px;"></td><td><?php echo $tasting_note["flawed_yn"];?></td></tr>
           <?php 
             $scale = getRatingScale();
-            $wset_enabled = isWsetSATEnabled();
+            $wset_visible = isWsetSATVisibleToViewer();
+            $wset_format = getWsetSATDisplayFormat();
+            $wset_mode = getWsetSATMode();
             $score_initials = htmlspecialchars($tasting_note["initials"] ?? 'DM', ENT_QUOTES, 'UTF-8');
             $active_score = ($scale === '100-point') ? ($tasting_note['pts_100'] ?? null) : ($tasting_note['pts_20'] ?? $tasting_note['dmpts'] ?? null);
             $max_score = getRatingScaleMax($scale);
@@ -181,7 +183,7 @@
               ?>
             </td>
           </tr>
-          <?php if ($wset_enabled && !empty($tasting_note['wsetpts'])): ?>
+          <?php if ($wset_visible && !empty($tasting_note['wsetpts'])): ?>
             <tr>
               <td>WSET SAT:</td>
               <td style="width:5px;"></td>
@@ -194,9 +196,24 @@
                   } else {
                     echo htmlspecialchars($wset_pts, ENT_QUOTES, 'UTF-8') . " / 4.0";
                   }
+                  if ($wset_mode === 'logged_in') {
+                    echo " <span style='font-size:0.85em;' title='Private rating: visible only to logged-in users'>🔒</span>";
+                  }
                 ?>
               </td>
             </tr>
+            <?php if ($wset_format === 'detailed' && ($tasting_note['wset_balance'] !== null || $tasting_note['wset_length'] !== null || $tasting_note['wset_intensity'] !== null || $tasting_note['wset_complexity'] !== null)): ?>
+              <tr>
+                <td>BLIC:</td>
+                <td style="width:5px;"></td>
+                <td style="font-size:0.85em; color:#555;">
+                  <span title="Balance">B: <?php echo htmlspecialchars($tasting_note['wset_balance'] ?? '0.0', ENT_QUOTES, 'UTF-8'); ?></span> &bull;
+                  <span title="Length">L: <?php echo htmlspecialchars($tasting_note['wset_length'] ?? '0.0', ENT_QUOTES, 'UTF-8'); ?></span> &bull;
+                  <span title="Intensity">I: <?php echo htmlspecialchars($tasting_note['wset_intensity'] ?? '0.0', ENT_QUOTES, 'UTF-8'); ?></span> &bull;
+                  <span title="Complexity">C: <?php echo htmlspecialchars($tasting_note['wset_complexity'] ?? '0.0', ENT_QUOTES, 'UTF-8'); ?></span>
+                </td>
+              </tr>
+            <?php endif; ?>
           <?php endif; ?>
           <tr>
             <td>Favourite:</td>

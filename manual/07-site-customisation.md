@@ -16,7 +16,8 @@ Administrators can adjust branding elements in real time without editing source 
   - **Owner Name & Email:** Contact details displayed in legal notices and notifications.
   - **Currency Symbol:** Default currency used for valuation calculations (e.g. `€`, `$`, `£`, `CHF`).
   - **Rating Scale:** Preferred primary scoring methodology (`20-point` or `100-point`).
-  - **WSET SAT Assessment:** Enable or disable optional WSET Systematic Approach to Tasting ratings across tasting notes.
+  - **WSET SAT Assessment Mode:** Configure WSET Systematic Approach to Tasting evaluation mode (`Public`, `Members Only`, `Backend Only`, or `Disabled`).
+  - **WSET Display Format:** Choose between `Standard` (overall score and qualitative level) or `Detailed` (overall score plus Balance, Length, Intensity, Complexity criteria breakdown).
   - **Theme Accent Colours:** Primary (`#CD5C5C`), secondary (`#B22222`), and hover/active accents (`#8B0000`) dynamically injected across navigation menus and buttons.
   - **Logo URL:** Path to your custom header logo image.
 

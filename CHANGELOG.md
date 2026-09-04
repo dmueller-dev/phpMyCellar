@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Flexible WSET SAT operational modes (`public`, `logged_in`, `backend_only`, and `disabled`) in Site Settings and Installation Wizard.
+- Support for internal backend-only WSET data entry for personal cellar tracking without public display.
+- Configurable WSET display format (`standard` vs. `detailed` BLIC criteria breakdown) on tasting notes.
+- Private indicator badge on tasting notes for ratings displayed under `logged_in` mode.
+- Transparent auto-migration converting legacy `wset_enabled` setting to `wset_mode` on upgrade.
+
+### Changed
+- Retired legacy `wset_enabled` setting from active codebase and seed database schema; deprecated `isWsetSATEnabled()` helper in favor of `isWsetSATEntryEnabled()` and `isWsetSATVisibleToViewer()`.
+
+### Fixed
+- Fixed data preservation issue in `editTastingNote.php` where editing a note while WSET was disabled globally would overwrite previously recorded WSET criteria with `NULL`.
+
 ## [1.0.1] - 2026-09-01
 
 ### Added

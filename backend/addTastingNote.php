@@ -28,7 +28,7 @@
       $flawed = sanitizeInput($_POST['flawed']);
       
       $scale = getRatingScale();
-      $wset_enabled = isWsetSATEnabled();
+      $wset_enabled = isWsetSATEntryEnabled();
       
       $pts_20 = filter_input(INPUT_POST, 'pts_20', FILTER_VALIDATE_INT);
       if ($pts_20 === null && isset($_POST['dmpts']) && $_POST['dmpts'] !== '') {
@@ -252,11 +252,20 @@
 
             <?php 
               $rating_scale = getRatingScale();
-              $wset_enabled = isWsetSATEnabled();
+              $wset_enabled = isWsetSATEntryEnabled();
             ?>
 
             <?php if ($wset_enabled): ?>
-              <strong>WSET Systematic Approach to Tasting</strong><br>
+              <strong>WSET Systematic Approach to Tasting</strong>
+              <?php 
+                $wset_mode = getWsetSATMode();
+                if ($wset_mode === 'backend_only') {
+                  echo " <small style='color:#777; font-weight:normal;'>(Internal &mdash; hidden on public site)</small>";
+                } elseif ($wset_mode === 'logged_in') {
+                  echo " <small style='color:#777; font-weight:normal;'>(Visible to logged-in users only)</small>";
+                }
+              ?>
+              <br>
               <label for="wset_balance">Balance:</label>
               <select name="wset_balance" id="wset_balance">
                 <option value="0" <?php echo (isset($_POST['wset_balance']) && $_POST['wset_balance'] == '0') ? 'selected' : 'selected'; ?>>0.0</option>

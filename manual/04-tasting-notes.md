@@ -28,9 +28,9 @@ phpMyCellar supports configurable rating methodologies with flexible dual-scale 
 | :--- | :--- | :--- |
 | **20-Point Scale** | Traditional European / René Gabriel / Jancis Robinson scale assessing color, aroma, taste, harmony, and aging potential. | 0 – 20 points (e.g. `18 / 20` or `18.5`) |
 | **100-Point Scale** | Modern international standard (Parker / Wine Spectator standard). | 50 – 100 points (e.g. `94 / 100`) |
-| **WSET SAT (Optional)** | Wine & Spirit Education Trust Systematic Approach to Tasting (Poor, Acceptable, Good, Very Good, Outstanding). | Qualitative Assessment (can be enabled alongside 20-point or 100-point scale) |
+| **WSET SAT (Optional)** | Wine & Spirit Education Trust Systematic Approach to Tasting (Poor, Acceptable, Good, Very Good, Outstanding). | Qualitative Assessment (configurable modes: Public, Members Only, Backend Only, or Disabled) |
 
-*Tip: You can select your collection's active primary scale (20-point vs 100-point) and enable/disable the optional WSET SAT assessment in `Backend > Site Settings`.*
+*Tip: You can select your collection's active primary scale (20-point vs 100-point) and configure WSET SAT visibility mode (`Public`, `Members Only`, `Backend Only`, or `Disabled`) as well as display detail (Standard vs. Detailed BLIC breakdown) in `Backend > Site Settings`.*
 
 ---
 
