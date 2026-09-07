@@ -12,6 +12,17 @@
 
   $errors = [];
   $success_message = '';
+  $tasting_note_id = null;
+
+  // Determine operational mode: 'blind' or 'standard'
+  $mode = sanitizeInput($_GET['mode'] ?? $_POST['mode'] ?? '');
+  if (empty($mode)) {
+    if (isset($_GET['bottle_id']) || isset($_POST['bottle_id'])) {
+      $mode = 'blind';
+    } else {
+      $mode = 'standard';
+    }
+  }
 
   // Handle form submission
   if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -21,7 +32,7 @@
         die("CSRF token validation failed");
       }
       // Sanitize and validate inputs
-      $bottle_id = null;
+      $bottle_id = filter_input(INPUT_POST, 'bottle_id', FILTER_VALIDATE_INT) ?: null;
       $wine_id = filter_input(INPUT_POST, 'wine_id', FILTER_VALIDATE_INT);
       $tasting_date = sanitizeInput($_POST['tasting_date']);
       $tasting_note = sanitizeInput($_POST['tasting_note']);
@@ -78,6 +89,7 @@
         $conn->begin_transaction();
         try {
           if (insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $_SESSION['user_id'], $tasting_note, $flawed, $pts_20, $pts_100, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite)) {
+            $tasting_note_id = $conn->insert_id;
             $conn->commit();
             $success_message = "Note added successfully.";
           } else {
@@ -97,44 +109,107 @@
           $errors = array_merge($errors, $errorsValidation);
         }
       }
+    } elseif (isset($_POST['confirmConsume'])) {
+      // Validate CSRF token
+      if (!validateCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+      }
+      $consume_bottle_id = filter_input(INPUT_POST, 'consume_bottle_id', FILTER_VALIDATE_INT);
+      $consumption_date = sanitizeInput($_POST['consumption_date']);
+      $tasting_note_id = filter_input(INPUT_POST, 'tasting_note_id', FILTER_VALIDATE_INT);
+      
+      if ($consume_bottle_id && !empty($consumption_date)) {
+        if (markBottleAsConsumed($conn, $consume_bottle_id, $consumption_date, $tasting_note_id)) {
+          $success_message = "Bottle #" . $consume_bottle_id . " marked as consumed.";
+        } else {
+          $errors[] = "Error marking bottle as consumed.";
+        }
+      } else {
+        $errors[] = "Invalid inputs for marking bottle as consumed.";
+      }
     }
   }
 
-  // Get all wines for the dropdown
+  // Load wines and bottles data
   $wines = getWines($conn);
-  $masters = getWineMasters($conn);
-  $vintages = getVintages($conn);
+  $bottles = ($mode === 'blind') ? getBottlesInCellar($conn) : [];
 
-  // Get selected wine details
+  // Get selected bottle or wine details
+  $selected_bottle = null;
   $selected_wine = null;
-  if (isset($_GET['wine_id'])) {
-    $wine_id = filter_input(INPUT_GET, 'wine_id', FILTER_VALIDATE_INT);
-    if ($wine_id !== false && $wine_id !== null) {
-      $selected_wine = getWineDetails($conn, $wine_id);
+  $wine_name = '';
+
+  $bottle_id_param = filter_input(INPUT_GET, 'bottle_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_POST, 'bottle_id', FILTER_VALIDATE_INT);
+  if ($bottle_id_param) {
+    $selected_bottle = getBottleDetails($conn, $bottle_id_param);
+    if ($selected_bottle) {
+      $wine_name = getWineName(
+        $selected_bottle["nameconvention"],
+        $selected_bottle["vintage"],
+        $selected_bottle["name"],
+        $selected_bottle["producer"],
+        $selected_bottle["grape"],
+        $selected_bottle["vineyard"]
+      );
+      $wine_id = $selected_bottle['wine_id'];
+    }
+  }
+
+  $wine_id_param = filter_input(INPUT_GET, 'wine_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_POST, 'wine_id', FILTER_VALIDATE_INT);
+  if (!$selected_bottle && $wine_id_param) {
+    $selected_wine = getWineDetails($conn, $wine_id_param);
+    if ($selected_wine) {
+      $wine_id = $selected_wine['wine_id'];
+      foreach ($wines as $w) {
+        if ((int)$w['wine_id'] === (int)$wine_id) {
+          $wine_name = getWineName(
+            $w["nameconvention"],
+            $w["vintage"],
+            $w["name"],
+            $w["producer"],
+            $w["grape"],
+            $w["vineyard"]
+          );
+          break;
+        }
+      }
     }
   }
 
   // Generate CSRF token
   $csrf_token = generateCSRFToken();
-?>
 
-<?php
-  $page_title = 'Add tasting note';
+  $page_title = ($mode === 'blind') ? 'Add blind tasting note' : 'Add tasting note';
 
   $extra_head = <<<HTML
     <script>
       let allWines = [];
+      let allBottles = [];
 
       document.addEventListener("DOMContentLoaded", function() {
-        const select = document.getElementById('wine_id');
-        if (select) {
-          // Cache all options on page load (except the placeholder)
-          for (let i = 1; i < select.options.length; i++) {
-            const opt = select.options[i];
+        const wineSelect = document.getElementById('wine_id');
+        if (wineSelect) {
+          // Cache all wine options on page load (except the placeholder)
+          for (let i = 1; i < wineSelect.options.length; i++) {
+            const opt = wineSelect.options[i];
             allWines.push({
               value: opt.value,
               text: opt.textContent,
               search: (opt.dataset.search || '').toLowerCase() + " " + opt.textContent.toLowerCase(),
+              selected: opt.selected
+            });
+          }
+        }
+
+        const bottleSelect = document.getElementById('bottle_id');
+        if (bottleSelect) {
+          // Cache all bottle options on page load (except the placeholder)
+          for (let i = 1; i < bottleSelect.options.length; i++) {
+            const opt = bottleSelect.options[i];
+            allBottles.push({
+              value: opt.value,
+              text: opt.textContent,
+              search: opt.getAttribute('data-search') || opt.textContent,
               selected: opt.selected
             });
           }
@@ -169,6 +244,37 @@
           }
         });
       }
+
+      function filterBottles() {
+        const query = document.getElementById('searchBottleBox').value.toLowerCase().trim();
+        const select = document.getElementById('bottle_id');
+        if (!select) return;
+        
+        const currentValue = select.value;
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+
+        // Clear options, preserving the placeholder
+        while (select.options.length > 1) {
+          select.remove(1);
+        }
+
+        // Re-populate with matching options
+        allBottles.forEach(b => {
+          const searchLower = b.search.toLowerCase();
+          const matches = terms.every(term => searchLower.includes(term));
+
+          if (matches) {
+            const opt = document.createElement('option');
+            opt.value = b.value;
+            opt.textContent = b.text;
+            opt.setAttribute('data-search', b.search);
+            if (b.value === currentValue) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          }
+        });
+      }
     </script>
   HTML;
 
@@ -179,7 +285,19 @@
   <div class="column main">
     <div class="card">
       <section>
-        <h3>New tasting note</h3>
+        <h3><?php echo ($mode === 'blind') ? 'New blind tasting' : 'New tasting note'; ?></h3>
+
+        <div style="margin-bottom: 20px; font-size: small;">
+          <span style="font-weight: bold; margin-right: 10px;">Mode:</span>
+          <?php if ($mode === 'blind'): ?>
+            <a href="/backend/addTastingNote.php" style="margin-right: 15px; text-decoration: none; color: #555;">Standard (by wine)</a>
+            <span style="font-weight: bold; border-bottom: 2px solid indianred; padding-bottom: 2px;">Blind tasting (by bottle)</span>
+          <?php else: ?>
+            <span style="font-weight: bold; border-bottom: 2px solid indianred; padding-bottom: 2px; margin-right: 15px;">Standard (by wine)</span>
+            <a href="/backend/addTastingNote.php?mode=blind" style="text-decoration: none; color: #555;">Blind tasting (by bottle)</a>
+          <?php endif; ?>
+        </div>
+
         <?php
           if (!empty($errors)) {
             echo "<div style='color: red;'><ul>";
@@ -190,53 +308,126 @@
           }
 
           if (!empty($success_message)) {
-            echo "<div style='color: green;'>" . $success_message . "</div>";
-            if (isset($_GET['wine_id']) || isset($_POST['wine_id'])) {
-              $back_wine_id = isset($_POST['wine_id']) ? (int)$_POST['wine_id'] : (int)$_GET['wine_id'];
-              echo "<p><a href='/wines.php?id=" . $back_wine_id . "'>View updated wine page</a></p>";
+            echo "<div style='color: green; font-weight: bold; margin-bottom: 15px;'>" . $success_message . "</div>";
+
+            if (isset($bottle_id) && $bottle_id && isset($tasting_date) && !empty($tasting_date) && $success_message === "Note added successfully.") {
+              echo "<div style='margin: 20px 0; padding: 15px; border: 1px solid indianred; background-color: #fff8f8; border-radius: 4px;'>";
+              echo "  <p style='margin-top: 0; color: #333;'>Would you like to mark bottle <strong>#" . htmlspecialchars($bottle_id, ENT_QUOTES, 'UTF-8') . "</strong> as consumed on <strong>" . htmlspecialchars($tasting_date, ENT_QUOTES, 'UTF-8') . "</strong>?</p>";
+              echo "  <form method='POST' style='display: inline;'>";
+              echo "    <input type='hidden' name='csrf_token' value='" . $csrf_token . "'>";
+              echo "    <input type='hidden' name='mode' value='" . htmlspecialchars($mode, ENT_QUOTES, 'UTF-8') . "'>";
+              echo "    <input type='hidden' name='consume_bottle_id' value='" . htmlspecialchars($bottle_id, ENT_QUOTES, 'UTF-8') . "'>";
+              echo "    <input type='hidden' name='consumption_date' value='" . htmlspecialchars($tasting_date, ENT_QUOTES, 'UTF-8') . "'>";
+              if (isset($tasting_note_id) && $tasting_note_id) {
+                echo "    <input type='hidden' name='tasting_note_id' value='" . htmlspecialchars($tasting_note_id, ENT_QUOTES, 'UTF-8') . "'>";
+              }
+              echo "    <input type='submit' name='confirmConsume' value='Yes' style='background-color: indianred; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: bold; margin-right: 10px;'>";
+              echo "  </form>";
+              echo "  <a href='/backend/addTastingNote.php?mode=" . urlencode($mode) . "' style='text-decoration: none;'><button type='button' style='background-color: #ccc; color: #333; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: bold;'>No</button></a>";
+              echo "</div>";
             }
-            echo "<p><a href='/backend/addTastingNote.php'>New tasting note.</a></p>";
+
+            if (!empty($bottle_id)) {
+              echo "<p><a href='/backend/browseBottles.php'>Return to browse bottles</a></p>";
+            }
+            if (!empty($wine_id)) {
+              echo "<p><a href='/wines.php?id=" . (int)$wine_id . "'>View updated wine page</a></p>";
+            }
+            if ($mode === 'blind') {
+              echo "<p><a href='/backend/addTastingNote.php?mode=blind'>New blind tasting note.</a></p>";
+            } else {
+              echo "<p><a href='/backend/addTastingNote.php'>New tasting note.</a></p>";
+            }
           }
         ?>
 
-        <form method="GET">
-          <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Select Wine:</label>
-          <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
-            <input type="text" id="searchWineBox" onkeyup="filterWines()"
-              placeholder="🔍 Search wine..."
-              style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
-              autocomplete="off">
-            <select name="wine_id" id="wine_id" onchange="this.form.submit()"
-              style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
-              <option value="">Select a wine</option>
-              <?php foreach ($wines as $wine): ?>
-              <?php 
-                $search_terms = [
-                  $wine['country'],
-                  $wine['region'],
-                  $wine['producer'],
-                  $wine['vintage'] ? $wine['vintage'] : 'NV',
-                  $wine['name'],
-                  $wine['grape'],
-                  $wine['vineyard']
-                ];
-                $search_string = implode(' ', array_filter(array_map('trim', $search_terms)));
-              ?>
-              <option value="<?php echo $wine['wine_id']; ?>" 
-                      data-search="<?php echo htmlspecialchars($search_string, ENT_QUOTES, 'UTF-8'); ?>"
-                      <?php echo (isset($_GET['wine_id']) && $_GET['wine_id'] == $wine['wine_id']) ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($wine['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($wine['region'], ENT_QUOTES, 'UTF-8') . ": " . getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']) ; ?>
-              </option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-        </form>
+        <?php if ($mode === 'blind'): ?>
+          <form method="GET">
+            <input type="hidden" name="mode" value="blind">
+            <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Select a bottle:</label>
+            <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+              <input type="text" id="searchBottleBox" onkeyup="filterBottles()"
+                placeholder="🔍 Search bottle ID or info..."
+                style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+                autocomplete="off">
+              <select name="bottle_id" id="bottle_id" onchange="this.form.submit()"
+                style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+                <option value="">Select a bottle</option>
+                <?php foreach ($bottles as $bottle): ?>
+                  <?php
+                    $search_parts = [
+                      $bottle['bottle_id'],
+                      $bottle['producer'] ?? '',
+                      $bottle['name'] ?? '',
+                      $bottle['vintage'] ?? '',
+                      $bottle['grape'] ?? '',
+                      $bottle['vineyard'] ?? ''
+                    ];
+                    $search_text = htmlspecialchars(implode(' ', array_filter($search_parts)), ENT_QUOTES, 'UTF-8');
+                  ?>
+                  <option value="<?php echo $bottle['bottle_id']; ?>" 
+                    data-search="<?php echo $search_text; ?>"
+                    <?php echo (isset($selected_bottle['bottle_id']) && $selected_bottle['bottle_id'] == $bottle['bottle_id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($bottle['bottle_id'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </form>
+        <?php else: ?>
+          <form method="GET">
+            <label style="font-size: small; font-weight: bold; display: block; margin-bottom: 5px;">Select Wine:</label>
+            <div style="border: 1px solid #ccc; border-radius: 4px; max-width: 400px; font-family: Georgia, serif; box-sizing: border-box; background: white; margin-bottom: 15px;">
+              <input type="text" id="searchWineBox" onkeyup="filterWines()"
+                placeholder="🔍 Search wine..."
+                style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 4px 4px 0 0; background: #fafafa;"
+                autocomplete="off">
+              <select name="wine_id" id="wine_id" onchange="this.form.submit()"
+                style="width: 100%; border: none; padding: 8px 36px 8px 8px; box-sizing: border-box; font-family: Georgia, serif; font-size: small; outline: none; border-radius: 0 0 4px 4px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px auto;">
+                <option value="">Select a wine</option>
+                <?php foreach ($wines as $wine): ?>
+                <?php 
+                  $search_terms = [
+                    $wine['country'],
+                    $wine['region'],
+                    $wine['producer'],
+                    $wine['vintage'] ? $wine['vintage'] : 'NV',
+                    $wine['name'],
+                    $wine['grape'],
+                    $wine['vineyard']
+                  ];
+                  $search_string = implode(' ', array_filter(array_map('trim', $search_terms)));
+                ?>
+                <option value="<?php echo $wine['wine_id']; ?>" 
+                        data-search="<?php echo htmlspecialchars($search_string, ENT_QUOTES, 'UTF-8'); ?>"
+                        <?php echo (isset($selected_wine['wine_id']) && $selected_wine['wine_id'] == $wine['wine_id']) ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($wine['country'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($wine['region'], ENT_QUOTES, 'UTF-8') . ": " . getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']) ; ?>
+                </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </form>
+        <?php endif; ?>
 
-        <?php if ($selected_wine && empty($success_message)): ?>
+        <?php if (($selected_wine || $selected_bottle) && empty($success_message)): ?>
           <h3>Write tasting note</h3>
           <form method="POST" accept-charset="UTF-8">
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-            <input type="hidden" name="wine_id" value="<?php echo isset($_POST['wine_id']) ? htmlspecialchars($_POST['wine_id'], ENT_QUOTES, 'UTF-8') : $selected_wine['wine_id']; ?>">
+            <input type="hidden" name="mode" value="<?php echo htmlspecialchars($mode, ENT_QUOTES, 'UTF-8'); ?>">
+            <?php if ($selected_bottle): ?>
+              <input type="hidden" name="bottle_id" value="<?php echo htmlspecialchars($selected_bottle['bottle_id'], ENT_QUOTES, 'UTF-8'); ?>">
+              <input type="hidden" name="wine_id" value="<?php echo htmlspecialchars($selected_bottle['wine_id'], ENT_QUOTES, 'UTF-8'); ?>">
+              <?php if ($mode === 'blind'): ?>
+                <hr><details><summary>Reveal the wine?</summary><small><?php echo htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8'); ?></small></details><hr style="margin-top:10px;"><br>
+              <?php else: ?>
+                <p><strong>Wine:</strong> <?php echo htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8'); ?> (Bottle #<?php echo htmlspecialchars($selected_bottle['bottle_id'], ENT_QUOTES, 'UTF-8'); ?>)</p>
+              <?php endif; ?>
+            <?php else: ?>
+              <input type="hidden" name="wine_id" value="<?php echo htmlspecialchars($selected_wine['wine_id'], ENT_QUOTES, 'UTF-8'); ?>">
+              <?php if (!empty($wine_name)): ?>
+                <p><strong>Wine:</strong> <?php echo htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
+            <?php endif; ?>
 
             <label for="tasting_date">Tasting date:</label>
             <br><input type="date" id="tasting_date" name="tasting_date" value="<?php echo isset($_POST['tasting_date']) ? htmlspecialchars(sanitizeInput($_POST['tasting_date']), ENT_QUOTES, 'UTF-8') : ''; ?>" required>
@@ -338,8 +529,12 @@
             <br><br>
             <label for="blind">Tasted blind?</label><br>
             <select name="blind" id="blind" required>
-              <option value="not blind" <?php echo (isset($_POST['blind']) && $_POST['blind'] == 'not blind') ? 'selected' : 'selected'; ?>>not blind</option>
-              <option value="blind" <?php echo (isset($_POST['blind']) && $_POST['blind'] == 'blind') ? 'selected' : ''; ?>>blind</option>
+              <?php 
+                $defaultBlind = ($mode === 'blind') ? 'blind' : 'not blind';
+                $currentBlind = $_POST['blind'] ?? $defaultBlind;
+              ?>
+              <option value="not blind" <?php echo ($currentBlind === 'not blind') ? 'selected' : ''; ?>>not blind</option>
+              <option value="blind" <?php echo ($currentBlind === 'blind') ? 'selected' : ''; ?>>blind</option>
             </select>
 
             <h3>Drinking window</h3>

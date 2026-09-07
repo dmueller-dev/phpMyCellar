@@ -47,6 +47,7 @@ The following table summarizes all components deprecated in the `1.x` series tha
 | `tnote.php` | Page / File | `1.0.0` | `2.0.0` | Use `tnotes.php` directly; configure web server rewrite if external links exist |
 | `wine.php` | Page / File | `1.0.0` | `2.0.0` | Use `wines.php` directly; configure web server rewrite if external links exist |
 | `blogpost.php` | Page / File | `1.0.0` | `2.0.0` | Use `blog.php` directly; configure web server rewrite if external links exist |
+| `backend/blindTasting.php` | Page / File | `1.1.0` | `2.0.0` | Merged into `/backend/addTastingNote.php?mode=blind`; access `addTastingNote.php` directly |
 | `dmpts` (view column) | SQL View Alias | `1.0.1` | `2.0.0` | Use `pts_20` column in `view_vintage_top_wines` and query results |
 | `avg_dmpts` (view column) | SQL View Alias | `1.0.1` | `2.0.0` | Use `avg_pts_20` or `avg_score` in `view_vintage_region_colour_stats` |
 | `$_POST['dmpts']` | Form Input | `1.0.1` | `2.0.0` | Submit rating using `$_POST['pts_20']` in tasting note forms |
@@ -227,6 +228,16 @@ $avg = $vintageStats['avg_dmpts'];
 $score = $row['pts_20'];
 $avg = $vintageStats['avg_score'] ?? $vintageStats['avg_pts_20'];
 ```
+
+---
+
+### 5. Blind Tasting Consolidation (`backend/blindTasting.php` → `backend/addTastingNote.php`)
+
+In version 1.1.0, the standalone script `backend/blindTasting.php` was merged into `backend/addTastingNote.php`:
+* **Concealed Bottle Selection**: Selecting a cellar bottle (`getBottlesInCellar()`) now operates within `addTastingNote.php?mode=blind`. Dropdown items display only bottle IDs to avoid bias.
+* **Wine Identity Disclosure**: Wine names are concealed behind a `<details><summary>Reveal the wine?</summary>` disclosure.
+* **Bottle Consumption Prompt**: Adding a note for a physical bottle displays an interactive confirmation to mark the bottle as consumed in the cellar.
+* **Redirect Stub**: `backend/blindTasting.php` remains as a transparent 301 redirect stub preserving query parameters until version 2.0.0. Update bookmarks and external references to `/backend/addTastingNote.php?mode=blind`.
 
 ---
 

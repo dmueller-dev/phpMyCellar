@@ -22,7 +22,7 @@
           <ul>
             <?php if (hasPrivilege($conn, 'add_tasting_note')): ?>
               <li><a href="addTastingNote.php" title="Add a new tasting note">New tasting note</a>
-                | <a href="blindTasting.php" title="Add a new tasting note">New <strong>blind</strong> tasting note</a></li>
+                | <a href="addTastingNote.php?mode=blind" title="Add a new blind tasting note">New <strong>blind</strong> tasting note</a></li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'edit_tasting_note') || hasPrivilege($conn, 'edit_all_tasting_notes')): ?>
               <li><a href="editTastingNote.php" title="Edit tasting notes">Edit tasting note</a></li>

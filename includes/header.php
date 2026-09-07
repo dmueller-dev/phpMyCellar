@@ -254,8 +254,10 @@
               "<label for='drop-contribute' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>";
             if ($canAddNote) {
-              echo "<li><a class='" . (($currentPath == '/backend/addTastingNote.php') ? 'active' : '') . "' href='/backend/addTastingNote.php' title='New tasting note'>Write tasting note</a></li>" .
-                   "<li><a class='" . (($currentPath == '/backend/blindTasting.php') ? 'active' : '') . "' href='/backend/blindTasting.php' title='New blind tasting note'>Write <em>blind</em> tasting note</a></li>";
+              $isBlindNoteActive = ($currentPath == '/backend/blindTasting.php') || ($currentPath == '/backend/addTastingNote.php' && isset($_GET['mode']) && $_GET['mode'] === 'blind');
+              $isNormalNoteActive = ($currentPath == '/backend/addTastingNote.php' && (!isset($_GET['mode']) || $_GET['mode'] !== 'blind'));
+              echo "<li><a class='" . ($isNormalNoteActive ? 'active' : '') . "' href='/backend/addTastingNote.php' title='New tasting note'>Write tasting note</a></li>" .
+                   "<li><a class='" . ($isBlindNoteActive ? 'active' : '') . "' href='/backend/addTastingNote.php?mode=blind' title='New blind tasting note'>Write <em>blind</em> tasting note</a></li>";
             }
             if ($canEditNote) {
               echo "<li><a class='" . (($currentPath == '/backend/editTastingNote.php') ? 'active' : '') . "' href='/backend/editTastingNote.php' title='Edit tasting notes'>Edit tasting note</a></li>";

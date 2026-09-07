@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Private indicator badge on tasting notes for ratings displayed under `logged_in` mode.
 - Transparent auto-migration converting legacy `wset_enabled` setting to `wset_mode` on upgrade.
 - Comprehensive `UPGRADE.md` migration guide detailing deprecations, database migrations, and upcoming breaking changes in v2.0.0.
+- Unified blind tasting workflow and cellar bottle selection into `backend/addTastingNote.php`, featuring concealed bottle selection, wine reveal disclosure, and post-submission bottle consumption tracking.
 
 ### Changed
 - Retired legacy `wset_enabled` setting from active codebase and seed database schema.
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modernized tasting note rating display in `backend/addBlogpost.php` to use scale-aware `formatNoteRatingBadge()`.
 
 ### Deprecated
+- Standalone `backend/blindTasting.php` is deprecated in favor of `backend/addTastingNote.php?mode=blind`. Scheduled for removal in v2.0.0.
 - Helper `isWsetSATEnabled()` is deprecated in favor of `isWsetSATEntryEnabled()` and `isWsetSATVisibleToViewer()`. Scheduled for removal in v2.0.0.
 - Legacy `site_settings.wset_enabled` setting key is deprecated in favor of `wset_mode`. It is automatically migrated on read and will be removed in v2.0.0.
 - Standalone redirect stubs `tnote.php`, `wine.php`, and `blogpost.php` are deprecated in favor of direct requests to `tnotes.php`, `wines.php`, and `blog.php`. Scheduled for removal in v2.0.0.

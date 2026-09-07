@@ -289,7 +289,7 @@
     // Generate shortcut link if user can add tasting notes
     $blind_taste_link = "";
     if ($can_add_note) {
-      $blind_taste_link = " <a href='/backend/blindTasting.php?bottle_id=" . $wine["bottle_id"] . "' title='Write blind tasting note' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
+      $blind_taste_link = " <a href='/backend/addTastingNote.php?mode=blind&bottle_id=" . $wine["bottle_id"] . "' title='Write blind tasting note' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
     }
 
     // Output
