@@ -8,7 +8,7 @@ This guide outlines how to customise branding, theme colours, and manage static 
 
 Administrators can adjust branding elements in real time without editing source files.
 
-- **Navigate to:** Top navigation `Admin > Site settings` (`/backend/settings.php`) or `Admin > Dashboard > Administration > Site settings`.
+- **Navigate to:** Top navigation `Admin > Site settings` (`/backend/settings.php`) or `Admin > Admin Hub > System & Settings > Site settings & branding`.
 - **Configurable Options:**
   - **Site Name:** The main title of your cellar (e.g. *phpMyCellar*).
   - **Tagline:** Subtitle appearing in headings and meta descriptions.
@@ -27,7 +27,7 @@ Administrators can adjust branding elements in real time without editing source 
 
 phpMyCellar stores core static pages and section sidebar notices directly in the database (`static_pages` table) with full WYSIWYG editing capabilities.
 
-- **Navigate to:** Top navigation `Admin > Static pages` (`/backend/manageStaticPages.php`) or `Admin > Dashboard > Administration > Static pages`.
+- **Navigate to:** Top navigation `Admin > Static pages` (`/backend/manageStaticPages.php`) or `Admin > Admin Hub > System & Settings > Static content pages`.
 - **Editable Content Areas:**
   - **Full Informational Pages:**
     - **Impressum (`impressum`):** Mandatory legal notice, operator details, postal address, and contact information (`/impressum.php`).

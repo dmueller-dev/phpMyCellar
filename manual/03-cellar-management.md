@@ -24,7 +24,7 @@ To accurately represent wine collections, phpMyCellar structures records into a 
 
 Producers represent wineries, domaines, estates, châteaux, or bodegas.
 
-- **Navigate to:** `Admin > Dashboard` (`/backend/index.php`) > **Producers > Add new producer** (`addProducer.php`) or edit existing producers (`editProducer.php`). Alternatively, click the *Edit producer* shortcut directly when viewing wines grouped by producer in `browseWines.php` or `browseBottles.php`.
+- **Navigate to:** `Admin > Admin Hub` (`/backend/index.php`) > **Terroir & Geography > Producers > + Add** (`addProducer.php`) or edit existing producers (`editProducer.php`). Alternatively, click the *Edit producer* shortcut directly when viewing wines grouped by producer in `browseWines.php` or `browseBottles.php`.
 - **Key Attributes:**
   - **Producer Name:** Full estate name (e.g. *Domaine Leflaive*).
   - **Country & Region:** Geographic origin (e.g. *France > Burgundy > Côte de Beaune*).
@@ -36,7 +36,7 @@ Producers represent wineries, domaines, estates, châteaux, or bodegas.
 
 A **Wine Master** establishes the overarching identity and classification of a wine before assigning individual harvest vintages.
 
-- **Navigate to:** `Admin > Dashboard` (`/backend/index.php`) > **Wines > Add new master** (`addWineMaster.php`) or edit via `editWineMaster.php`.
+- **Navigate to:** `Admin > Admin Hub` (`/backend/index.php`) > **Wine Catalog & Masters > + Master** (`addWineMaster.php`) or edit via `editWineMaster.php`.
 - **Key Attributes:**
   - **Producer:** Winery or estate crafting the cuvée.
   - **Wine Name:** Specific cuvée designation (e.g. *Les Pucelles*).
@@ -52,7 +52,7 @@ A **Wine Master** establishes the overarching identity and classification of a w
 
 Once a Wine Master is created, individual harvest years are added as **Wine Vintages**.
 
-- **Navigate to:** Top navigation `Admin > Add wine` (`/backend/addWine.php`) or `Admin > Dashboard > Wines > Add new wine`.
+- **Navigate to:** Top navigation `Admin > Add wine` (`/backend/addWine.php`) or `Admin > Admin Hub > Wine Catalog & Masters > + Vintage`.
 - **Key Attributes:**
   - **Wine Master:** Select the base wine profile.
   - **Vintage Year:** Harvest year (or `NV` for Non-Vintage champagnes and fortified wines).
@@ -88,7 +88,7 @@ Individual physical bottles belong to a Wine Vintage and represent tangible cell
 
 phpMyCellar lets you record purchasing transactions to calculate your cellar valuation, average bottle costs, and track merchant deliveries.
 
-- **Navigate to:** `Admin > Dashboard > Cellar management > Create new order` (`addOrder.php`) and `Manage open orders` (`manageOrders.php`).
+- **Navigate to:** `Admin > Admin Hub > Cellar & Inventory > Create purchase order` (`addOrder.php`) and `Manage open orders` (`manageOrders.php`).
 - **Key Attributes:**
   - **Merchant / Store:** Retailer, auctioneer, or direct domaine purchase.
   - **Order Reference & Date:** Purchase order reference and acquisition date.

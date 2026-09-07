@@ -108,7 +108,7 @@
   <?php endif; ?>
   <?php endif; ?>
 
-  <link rel="stylesheet" href="/includes/styles.css">
+  <link rel="stylesheet" href="/includes/styles.css?v=<?php echo file_exists(__DIR__ . '/styles.css') ? filemtime(__DIR__ . '/styles.css') : '1'; ?>">
   <?php
     $theme_accent    = function_exists('getSiteSetting') ? getSiteSetting('theme_accent_color', '#CD5C5C') : '#CD5C5C';
     $theme_secondary = function_exists('getSiteSetting') ? getSiteSetting('theme_accent_secondary', '#B22222') : '#B22222';
@@ -206,8 +206,9 @@
           $canAddBottle = hasPrivilege($conn, 'add_bottle');
           $canBrowseWines = hasPrivilege($conn, 'browse_wines');
           $canAddWine = hasPrivilege($conn, 'add_wine');
+          $canManageOrders = hasPrivilege($conn, 'manage_orders') || hasPrivilege($conn, 'add_order');
 
-          $hasAdminMenuItems = $canManagePrivileges || $canManageUsers || $canBrowseBottles || $canAddBottle || $canBrowseWines || $canAddWine;
+          $hasAdminMenuItems = $canManagePrivileges || $canManageUsers || $canBrowseBottles || $canAddBottle || $canBrowseWines || $canAddWine || $canManageOrders;
 
           if ($hasAdminMenuItems) {
             echo "<li class='dropdown right'>" .
@@ -215,27 +216,40 @@
               "<input type='checkbox' id='drop-admin' class='drop-check'>" .
               "<label for='drop-admin' class='drop-icon'>&#9660;</label>" .
               "<ul class='submenu'>" .
-              "<li><a class='" . (($currentPath == '/backend/index.php') ? 'active' : '') . "' href='/backend/index.php' title='Dashboard'>Dashboard</a></li>";
-            if ($canBrowseBottles) {
-              echo "<li><a class='" . (($currentPath == '/backend/browseBottles.php') ? 'active' : '') . "' href='/backend/browseBottles.php' title='Browse all bottles'>Browse bottles</a></li>";
+              "<li><a class='" . (($currentPath == '/backend/index.php') ? 'active' : '') . "' href='/backend/index.php' title='Admin Hub'><strong>Admin Hub</strong></a></li>";
+
+            $hasInventoryItems = $canBrowseBottles || $canAddBottle || $canBrowseWines || $canAddWine || $canManageOrders;
+            if ($hasInventoryItems) {
+              echo "<li class='submenu-header'>Cellar &amp; Catalog</li>";
+              if ($canBrowseBottles) {
+                echo "<li><a class='" . (($currentPath == '/backend/browseBottles.php') ? 'active' : '') . "' href='/backend/browseBottles.php' title='Browse all bottles'>Browse bottles</a></li>";
+              }
+              if ($canAddBottle) {
+                echo "<li><a class='" . (($currentPath == '/backend/addBottle.php') ? 'active' : '') . "' href='/backend/addBottle.php' title='Add bottle'>Add bottle</a></li>";
+              }
+              if ($canBrowseWines) {
+                echo "<li><a class='" . (($currentPath == '/backend/browseWines.php') ? 'active' : '') . "' href='/backend/browseWines.php' title='Browse all wines'>Browse wines</a></li>";
+              }
+              if ($canAddWine) {
+                echo "<li><a class='" . (($currentPath == '/backend/addWine.php') ? 'active' : '') . "' href='/backend/addWine.php' title='Add wine'>Add wine</a></li>";
+              }
+              if ($canManageOrders) {
+                echo "<li><a class='" . (($currentPath == '/backend/manageOrders.php') ? 'active' : '') . "' href='/backend/manageOrders.php' title='Manage open orders'>Orders</a></li>";
+              }
             }
-            if ($canAddBottle) {
-              echo "<li><a class='" . (($currentPath == '/backend/addBottle.php') ? 'active' : '') . "' href='/backend/addBottle.php' title='Add bottle'>Add bottle</a></li>";
-            }
-            if ($canBrowseWines) {
-              echo "<li><a class='" . (($currentPath == '/backend/browseWines.php') ? 'active' : '') . "' href='/backend/browseWines.php' title='Browse all wines'>Browse wines</a></li>";
-            }
-            if ($canAddWine) {
-              echo "<li><a class='" . (($currentPath == '/backend/addWine.php') ? 'active' : '') . "' href='/backend/addWine.php' title='Add wine'>Add wine</a></li>";
-            }
-            if ($canManagePrivileges) {
-              echo "<li><a class='" . (($currentPath == '/backend/settings.php') ? 'active' : '') . "' href='/backend/settings.php' title='Site settings & branding'>Site settings</a></li>";
-              echo "<li><a class='" . (($currentPath == '/backend/manageStaticPages.php' || $currentPath == '/backend/editStaticPage.php') ? 'active' : '') . "' href='/backend/manageStaticPages.php' title='Manage static pages'>Static pages</a></li>";
-              echo "<li><a class='" . (($currentPath == '/backend/managePrivileges.php') ? 'active' : '') . "' href='/backend/managePrivileges.php' title='User & role privileges'>User & role privileges</a></li>";
-            }
-            if ($canManageUsers) {
-              echo "<li><a class='" . (($currentPath == '/backend/addUser.php') ? 'active' : '') . "' href='/backend/addUser.php' title='Add user'>Add user</a></li>";
-              echo "<li><a class='" . (($currentPath == '/backend/editUser.php') ? 'active' : '') . "' href='/backend/editUser.php' title='Edit user & reset password'>Edit user</a></li>";
+
+            $hasConfigItems = $canManagePrivileges || $canManageUsers;
+            if ($hasConfigItems) {
+              echo "<li class='submenu-header'>Administration</li>";
+              if ($canManagePrivileges) {
+                echo "<li><a class='" . (($currentPath == '/backend/settings.php') ? 'active' : '') . "' href='/backend/settings.php' title='Site settings & branding'>Site settings</a></li>";
+                echo "<li><a class='" . (($currentPath == '/backend/manageStaticPages.php' || $currentPath == '/backend/editStaticPage.php') ? 'active' : '') . "' href='/backend/manageStaticPages.php' title='Manage static pages'>Static pages</a></li>";
+                echo "<li><a class='" . (($currentPath == '/backend/managePrivileges.php') ? 'active' : '') . "' href='/backend/managePrivileges.php' title='User & role privileges'>User &amp; role privileges</a></li>";
+              }
+              if ($canManageUsers) {
+                echo "<li><a class='" . (($currentPath == '/backend/addUser.php') ? 'active' : '') . "' href='/backend/addUser.php' title='Add user'>Add user</a></li>";
+                echo "<li><a class='" . (($currentPath == '/backend/editUser.php') ? 'active' : '') . "' href='/backend/editUser.php' title='Edit user & reset password'>Edit user</a></li>";
+              }
             }
             echo "</ul></li>";
           }
@@ -272,13 +286,9 @@
           }
 
           if (hasPrivilege($conn, 'view_cellar_menu')) {
-            echo "<li class='dropdown right'>" .
-              "<label for='drop-friends' class='menu-label" . (($currentPage == 'winemenu.php') ? ' active' : '') . "'>For friends</label>" .
-              "<input type='checkbox' id='drop-friends' class='drop-check'>" .
-              "<label for='drop-friends' class='drop-icon'>&#9660;</label>" .
-              "<ul class='submenu'>" .
-              "<li><a class='" . (($currentPage == 'winemenu.php') ? 'active ' : '') . "' href='/winemenu.php' title='Carte des vins'>Carte des vins</a></li>" .
-              "</ul></li>";
+            echo "<li class='right'>" .
+              "<a class='" . (($currentPage == 'winemenu.php') ? 'active ' : '') . "' href='/winemenu.php' title='Carte des vins'>Carte des vins</a>" .
+              "</li>";
           }
         }
       ?>

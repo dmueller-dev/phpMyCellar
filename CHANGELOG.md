@@ -17,8 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Transparent auto-migration converting legacy `wset_enabled` setting to `wset_mode` on upgrade.
 - Comprehensive `UPGRADE.md` migration guide detailing deprecations, database migrations, and upcoming breaking changes in v2.0.0.
 - Unified blind tasting workflow and cellar bottle selection into `backend/addTastingNote.php`, featuring concealed bottle selection, wine reveal disclosure, and post-submission bottle consumption tracking.
+- Modern, responsive **Admin Hub** control center (`backend/index.php`) featuring at-a-glance KPI metric cards (bottles in cellar, ready-to-drink percentage, catalog vintages/masters, tasting notes, pending orders), touch-friendly quick action shortcuts, domain cards, compact terroir matrix, and interactive storage location breakdown.
+- Section headers (`.submenu-header`) in dropdown navigation menus for clearer visual grouping of administrative tools.
+- Intermediate responsive navigation rules (721px–1060px viewports) providing comfortable padding and font-sizing on tablet screens without navbar wrapping.
 
 ### Changed
+- Renamed legacy "Dashboard" to **"Admin Hub"** across application navigation, page titles, quick links, and user manual.
+- Flattened the single-item "For friends" dropdown into an immediate top-level **"Carte des vins"** navigation link.
+- Structured the "Admin" dropdown menu into clear visual sections (`Admin Hub`, `Cellar & Catalog`, and `Administration`).
+- Replaced outdated external profile text on `backend/index.php` with a live System Status card displaying PHP runtime, database status, and cellar inventory metrics.
 - Retired legacy `wset_enabled` setting from active codebase and seed database schema.
 - Enhanced `buildKeywordsList()` with flexible arguments (supporting strings, arrays, or nested lists), HTML tag stripping, whitespace normalization, surrounding quote trimming, and robust case-insensitive deduplication.
 - Modernized tasting note rating display in `backend/addBlogpost.php` to use scale-aware `formatNoteRatingBadge()`.

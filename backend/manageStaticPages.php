@@ -192,7 +192,7 @@
       <ul>
         <li><a href="settings.php">Site Settings</a></li>
         <li><a href="managePrivileges.php">User &amp; Role Privileges</a></li>
-        <li><a href="index.php">Backend Dashboard</a></li>
+        <li><a href="index.php">Admin Hub</a></li>
       </ul>
     </div>
     <div class="card">

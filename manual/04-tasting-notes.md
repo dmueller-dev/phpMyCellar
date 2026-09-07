@@ -8,7 +8,7 @@ This guide explains how to draft tasting notes, utilize rating scales, conduct b
 
 Tasting notes can be recorded directly from the wine/vintage overview or via the contributor menu:
 
-- **Navigate to:** Top navigation `Contribute > Write tasting note` (`/backend/addTastingNote.php`) or `Admin > Dashboard > Tasting notes > New tasting note`.
+- **Navigate to:** Top navigation `Contribute > Write tasting note` (`/backend/addTastingNote.php`), Quick Action `+ Write Note`, or `Admin > Admin Hub > Tasting Notes & Editorial > Write tasting note`.
 - **Key Attributes:**
   - **Wine or Bottle:** Select the wine vintage (Standard mode) or specific cellar bottle (Blind mode).
   - **Tasting Date:** Date when the wine was sampled.

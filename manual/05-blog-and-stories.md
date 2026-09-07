@@ -6,7 +6,7 @@ phpMyCellar features a built-in editorial publishing engine for writing wine art
 
 ## 1. Writing Articles
 
-- **Navigate to:** Top navigation `Contribute > Write story` (`/backend/addBlogpost.php`) or `Admin > Dashboard > Blog > Add new story`.
+- **Navigate to:** Top navigation `Contribute > Write story` (`/backend/addBlogpost.php`) or `Admin > Admin Hub > Tasting Notes & Editorial > Write new story`.
 - **Key Fields:**
   - **Title:** Headline for the story or tasting report.
   - **Publication Date:** Date of article release (`pub_date`).
