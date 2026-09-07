@@ -6,17 +6,21 @@ This guide explains how to draft tasting notes, utilize rating scales, conduct b
 
 ## 1. Creating a Tasting Note
 
-Tasting notes can be recorded directly from the wine/vintage overview or via the backend:
+Tasting notes can be recorded directly from the wine/vintage overview or via the contributor menu:
 
-- **Navigate to:** `Backend > Tasting Notes > Add Note`.
+- **Navigate to:** Top navigation `Contribute > Write tasting note` (`/backend/addTastingNote.php`) or `Admin > Dashboard > Tasting notes > New tasting note`.
 - **Key Attributes:**
-  - **Vintage:** Select the specific wine and vintage tasted.
-  - **Tasting Date:** Date of tasting.
-  - **Taster / Author:** Automatically set to your user account (or selected co-taster).
-  - **Decanting Duration:** E.g. *2 hours in Zalto Bordeaux decanter*.
-  - **Serving Temperature & Glassware:** Notes on glass selection and temperature.
-  - **Sensory Impressions:** Structured or freeform narrative (Appearance, Nose, Palate, Finish).
-  - **Bottle Photo:** Upload a high-resolution bottle or label photo to `uploads/img/`.
+  - **Wine or Bottle:** Select the wine vintage (Standard mode) or specific cellar bottle (Blind mode).
+  - **Tasting Date:** Date when the wine was sampled.
+  - **Rating / Score:** Score on your cellar's active scale (20-point integer scale or 100-point scale).
+  - **WSET SAT Evaluation (Optional):** Balance, Length, Intensity, and Complexity scores when WSET mode is enabled.
+  - **Flawed Status:** Flag corked, oxidized, or otherwise faulty bottles (`flawed_yn = 'yes'`).
+  - **Blind Status:** Record whether the wine was tasted blind.
+  - **Drinking Window:** Projected optimal years (`Drink from (yyyy)` through `Drink through (yyyy)`).
+  - **Sensory Impressions:** Freeform text detailing appearance, nose, palate, structure, and finish.
+  - **Bottle Photo & Alignment:** Upload a bottle or label photo to `uploads/img/` with optional alignment classes.
+  - **Favourite Flag:** Mark standout bottles as personal favourites.
+  - **Status:** Save as `draft` or `publish` directly (based on publication privileges).
 
 ---
 
@@ -26,31 +30,32 @@ phpMyCellar supports configurable rating methodologies with flexible dual-scale 
 
 | Rating Scale | Description | Scoring Range |
 | :--- | :--- | :--- |
-| **20-Point Scale** | Traditional European / René Gabriel / Jancis Robinson scale assessing color, aroma, taste, harmony, and aging potential. | 0 – 20 points (e.g. `18 / 20` or `18.5`) |
-| **100-Point Scale** | Modern international standard (Parker / Wine Spectator standard). | 50 – 100 points (e.g. `94 / 100`) |
-| **WSET SAT (Optional)** | Wine & Spirit Education Trust Systematic Approach to Tasting (Poor, Acceptable, Good, Very Good, Outstanding). | Qualitative Assessment (configurable modes: Public, Members Only, Backend Only, or Disabled) |
+| **20-Point Scale** | Traditional European / René Gabriel / Jancis Robinson scale assessing color, aroma, taste, harmony, and aging potential. | 0 – 20 points (integers, e.g. `18 / 20`) |
+| **100-Point Scale** | Modern international standard (Parker / Wine Spectator standard). | 50 – 100 points (integers, e.g. `94 / 100`) |
+| **WSET SAT (Optional)** | Wine & Spirit Education Trust Systematic Approach to Tasting (Poor, Acceptable, Good, Very Good, Outstanding). | Qualitative Assessment (configurable modes: Public, Logged In, Backend Only, or Disabled) |
 
-*Tip: You can select your collection's active primary scale (20-point vs 100-point) and configure WSET SAT visibility mode (`Public`, `Members Only`, `Backend Only`, or `Disabled`) as well as display detail (Standard vs. Detailed BLIC breakdown) in `Backend > Site Settings`.*
+*Tip: You can select your collection's active primary scale (20-point vs 100-point) and configure WSET SAT visibility mode (`Public`, `Logged In`, `Backend Only`, or `Disabled`) as well as display detail (Standard vs. Detailed BLIC breakdown) in `Admin > Site Settings`.*
 
 ---
 
 ## 3. Blind Tasting Mode
 
-phpMyCellar includes dedicated blind tasting support to eliminate confirmation bias:
+phpMyCellar includes dedicated blind tasting support to eliminate confirmation bias, seamlessly integrated into the tasting note editor:
 
-1. **Step 1:** Select *Blind Tasting Mode* when creating a note.
-2. **Step 2:** Record your raw sensory observations, preliminary score, and guessed grape/region.
-3. **Step 3:** Reveal and link the note to the actual bottle in your cellar.
+1. **Step 1 (Switch Mode):** Click **Blind tasting (by bottle)** at the top of `backend/addTastingNote.php` (or access `/backend/addTastingNote.php?mode=blind`).
+2. **Step 2 (Select Cellar Bottle):** Select a bottle from your cellar inventory. The dropdown shows only the bottle ID number (e.g. `#42`), keeping wine metadata hidden to maintain blind conditions.
+3. **Step 3 (Evaluate):** Record your sensory impressions and rating. An optional `<details><summary>Reveal the wine?</summary>` toggle allows unmasking the wine name at any time.
+4. **Step 4 (Save & Mark Consumed):** Upon saving the note, the editor prompts: *"Would you like to mark bottle #X as consumed on [date]?"* Clicking **Yes** automatically updates the bottle's inventory status to `consumed` and links it to the newly created tasting note.
 
 ---
 
 ## 4. Drinking Window Predictions
 
-Every tasting note allows you to update or refine the vintage's forecasted drinking window based on current maturity:
+Every tasting note allows you to establish or refine forecasted drinking windows for cellar inventory planning:
 
-- **Too Young / Developing:** Needs further cellaring.
-- **Peak / Optimal:** Drinking at its zenith.
-- **Past Peak / Declining:** Drink immediately.
+- **Drink From (`drinkwindow_min`):** Starting calendar year (`yyyy`) when the wine enters its approachable drinking plateau.
+- **Drink Through (`drinkwindow_max`):** Ending calendar year (`yyyy`) before the wine is anticipated to decline.
+- In the *Carte des vins* and cellar management screens, bottles whose `Drink From` year has been reached are highlighted as ready to drink today.
 
 ---
 

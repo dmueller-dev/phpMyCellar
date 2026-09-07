@@ -24,56 +24,63 @@ To accurately represent wine collections, phpMyCellar structures records into a 
 
 Producers represent wineries, domaines, estates, châteaux, or bodegas.
 
-- **Navigate to:** `Backend > Producers > Add Producer` (or edit existing producers).
+- **Navigate to:** `Admin > Dashboard` (`/backend/index.php`) > **Producers > Add new producer** (`addProducer.php`) or edit existing producers (`editProducer.php`). Alternatively, click the *Edit producer* shortcut directly when viewing wines grouped by producer in `browseWines.php` or `browseBottles.php`.
 - **Key Attributes:**
-  - **Producer Name:** Full estate name (e.g. *Château Margaux*).
-  - **Country & Region:** Geographic origin (e.g. *France > Bordeaux > Margaux*).
+  - **Producer Name:** Full estate name (e.g. *Domaine Leflaive*).
+  - **Country & Region:** Geographic origin (e.g. *France > Burgundy > Côte de Beaune*).
   - **Website & Notes:** Reference links, winemaking philosophies, or visit memories.
 
 ---
 
-## 3. Managing Wines & Naming Conventions
+## 3. Managing Wine Masters & Naming Conventions
 
-Wines are created under a specific Producer.
+A **Wine Master** establishes the overarching identity and classification of a wine before assigning individual harvest vintages.
 
-- **Navigate to:** `Backend > Wines > Add Wine`.
+- **Navigate to:** `Admin > Dashboard` (`/backend/index.php`) > **Wines > Add new master** (`addWineMaster.php`) or edit via `editWineMaster.php`.
 - **Key Attributes:**
-  - **Wine Name:** Specific cuvée or appellation designation.
-  - **Naming Convention:** Determines how the wine title is formatted across menus and headings (e.g. `[Producer] [Wine Name]` or `[Appellation] [Producer]`).
-  - **Colour & Style:** Red, White, Rosé, Sparkling, Sweet / Dessert, Fortified.
-  - **Grape Varieties & Blend Percentages:** Primary and secondary grapes (e.g. *80% Cabernet Sauvignon, 20% Merlot*).
-  - **Vineyard / Lieu-dit:** Specific plot classification (e.g. *Grand Cru*, *Premier Cru*, or single-vineyard designation).
+  - **Producer:** Winery or estate crafting the cuvée.
+  - **Wine Name:** Specific cuvée designation (e.g. *Les Pucelles*).
+  - **Naming Convention:** Determines how the wine title is formatted across menus and headings (e.g. `[Vintage] [Producer] [Vineyard] [Name]` or `[Vintage] [Producer] [Name]`).
+  - **Colour:** `red`, `white`, `rosé`, or `orange`.
+  - **Style:** `still (dry)`, `still (off-dry)`, `still (sweet)`, `sparkling`, or `fortified`.
+  - **Grape Variety:** Primary grape variety.
+  - **Appellation & Vineyard:** Specific AOC/DOCG designation and single-vineyard (*lieu-dit*) plot.
 
 ---
 
-## 4. Managing Vintages & Drinking Windows
+## 4. Managing Wine Vintages
 
-Each wine can have one or more vintages associated with it.
+Once a Wine Master is created, individual harvest years are added as **Wine Vintages**.
 
-- **Navigate to:** `Backend > Vintages > Add Vintage`.
+- **Navigate to:** Top navigation `Admin > Add wine` (`/backend/addWine.php`) or `Admin > Dashboard > Wines > Add new wine`.
 - **Key Attributes:**
-  - **Vintage Year:** Harvest year (or `NV` for Non-Vintage / Multi-Vintage champagnes and fortified wines).
-  - **Alcohol by Volume (ABV):** E.g. *13.5%*.
-  - **Classification:** E.g. *DOCG*, *AOC*, *VDP Grosse Lage*.
-  - **Drinking Window:** Estimated maturity range (e.g. `Maturity from: 2026`, `Maturity to: 2040`).
+  - **Wine Master:** Select the base wine profile.
+  - **Vintage Year:** Harvest year (or `NV` for Non-Vintage champagnes and fortified wines).
+  - **CellarTracker ID (Optional):** Numerical ID for cross-referencing with CellarTracker.
+  - **Vintage Notes / Description:** Winemaking details, weather conditions, or blend variations.
 
 ---
 
-## 5. Adding Bottles & Storage Locations
+## 5. Adding Bottles, Storage Locations & Drinking Windows
 
-Individual bottles belong to a Vintage and are associated with a specific storage location.
+Individual physical bottles belong to a Wine Vintage and represent tangible cellar stock.
 
+- **Navigate to:** Top navigation `Admin > Add bottle` (`/backend/addBottle.php`) or via purchase order delivery.
 - **Bottle Formats Supported:**
-  - Half Bottle (375ml / 0.375L)
-  - Standard Bottle (750ml / 0.75L)
-  - Magnum (1500ml / 1.5L)
-  - Double Magnum / Jeroboam (3000ml / 3.0L)
-  - Imperial / Methuselah (6000ml / 6.0L)
-- **Location Bins:** Track precise physical coordinates in your wine cooler, cellar rack, or external storage facility (e.g. `Rack 1, Shelf B, Slot 4`).
+  - `375ml` (Half bottle)
+  - `500ml` (Half-litre bottle)
+  - `750ml` (Standard bottle)
+  - `1000ml` (One-litre bottle)
+  - `1500ml` (Magnum)
+  - `3000ml` (Double magnum / Jéroboam)
+  - `6000ml` (Impériale / Methuselah)
+  - Large formats up to `18000ml` (Melchior)
+- **Storage Locations:** Assign bottles to specific cellars and bin locations (e.g. `Rack 1, Shelf B, Slot 4`).
+- **Drinking Window:** Set `Drink from (yyyy)` and `Drink through (yyyy)` to guide readiness calculations in the cellar and the *Carte des vins*.
 - **Bottle Statuses:**
-  - *In Cellar:* Active inventory available for consumption.
-  - *Consumed:* Drunk (with link to corresponding Tasting Note).
-  - *Gifted / Sold / Traded:* Disposed of without a personal tasting note.
+  - `in cellar`: Active physical inventory ready or aging in the cellar.
+  - `consumed`: Drunk bottle (linked to tasting date, tasting note ID, and consumption notes).
+  - `empty / missing`: Lost, broken, or gifted bottles.
 
 ---
 
@@ -81,8 +88,10 @@ Individual bottles belong to a Vintage and are associated with a specific storag
 
 phpMyCellar lets you record purchasing transactions to calculate your cellar valuation, average bottle costs, and track merchant deliveries.
 
-- **Navigate to:** `Backend > Orders > Add Order`.
+- **Navigate to:** `Admin > Dashboard > Cellar management > Create new order` (`addOrder.php`) and `Manage open orders` (`manageOrders.php`).
 - **Key Attributes:**
-  - **Merchant / Wine Merchant:** E.g. *Berry Bros. & Rudd*, *Farr Vintners*, or direct winery purchase.
-  - **Order Date & Delivery Status:** Track en-primeur / pre-orders vs. delivered inventory.
-  - **Invoice Upload:** Securely upload and archive PDF invoices or merchant receipts into `uploads/invoices/`.
+  - **Merchant / Store:** Retailer, auctioneer, or direct domaine purchase.
+  - **Order Reference & Date:** Purchase order reference and acquisition date.
+  - **Order Items:** Format, quantity, unit price, tax status (duty paid vs in-bond), and delivery status.
+  - **Receiving Deliveries:** Accept deliveries via `manageOrders.php` to assign bins and automatically move bottles into active `in cellar` status.
+  - **Invoice Archive:** Securely upload and store PDF receipts and merchant invoices in `uploads/invoices/`.

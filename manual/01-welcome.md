@@ -22,32 +22,33 @@ Generic inventory systems often struggle with the multi-tiered hierarchies intri
 phpMyCellar models these relationships with clarity.
 
 ### 3. Sharing Impressions
-Wine is inherently communal. phpMyCellar lets you maintain a private digital cellar notebook while giving you the option to share an elegant **Wine Menu (*Carte des vins*)**, long-form **Tasting Notes**, and **Vintage Articles** with dinner guests, tasting groups, or the broader wine community.
+Wine is inherently communal. phpMyCellar lets you maintain a private digital cellar notebook while publishing long-form **Tasting Notes**, **Vintage Reports**, and **Stories** for public readers, alongside an interactive **Wine Menu (*Carte des vins*)** reserved for dinner guests and tasting group members.
 
 ---
 
 ## High-Level Architecture Overview
 
 ```text
-[Public Visitors & Guests]        [Tasting Group Members]          [Cellar Administrator]
-          │                                  │                               │
-          ▼                                  ▼                               ▼
-┌──────────────────┐               ┌───────────────────┐           ┌──────────────────┐
-│ Public Wine Menu │               │  Tasting Notes &  │           │ Complete Backend │
-│  & Public Blog   │               │   Subscriptions   │           │ Administration   │
-└─────────┬────────┘               └─────────┬─────────┘           └────────┬─────────┘
-          │                                  │                              │
-          └──────────────────────────────────┼──────────────────────────────┘
-                                             │
-                                   ┌─────────▼─────────┐
-                                   │    phpMyCellar    │
-                                   │    PHP Backend    │
-                                   └─────────┬─────────┘
-                                             │
-                                   ┌─────────▼─────────┐
-                                   │  MariaDB / MySQL  │
-                                   │  Relational Data  │
-                                   └───────────────────┘
+[Public Visitors]             [Members & Tasting Guests]           [Cellar Administrator]
+       │                                  │                                  │
+       ▼                                  ▼                                  ▼
+┌──────────────────────┐        ┌──────────────────────┐           ┌──────────────────┐
+│ Public Tasting Notes │        │   Carte des vins     │           │ Complete Backend │
+│ Vintage Reports      │        │  (Cellar Wine Menu)  │           │ Administration & │
+│ Wine Database & Blog │        │ Discussion & Alerts  │           │ Inventory Control│
+└──────────┬───────────┘        └──────────┬───────────┘           └────────┬─────────┘
+           │                               │                                │
+           └───────────────────────────────┼────────────────────────────────┘
+                                           │
+                                 ┌─────────▼─────────┐
+                                 │    phpMyCellar    │
+                                 │    PHP Backend    │
+                                 └─────────┬─────────┘
+                                           │
+                                 ┌─────────▼─────────┐
+                                 │  MariaDB / MySQL  │
+                                 │  Relational Data  │
+                                 └───────────────────┘
 ```
 
 ---

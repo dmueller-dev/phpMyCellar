@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Legacy backend form parameter `$_POST['dmpts']` is deprecated in favor of `pts_20` across tasting note editors. Scheduled for removal in v2.0.0.
 
 ### Fixed
+- Corrected inaccurate and obsolete descriptions in user manual (`manual/01` through `manual/07`), fixing Carte des vins access permissions (member-only by default), aligning navigation paths with the application interface, detailing the 29 actual system privileges, documenting the unified blind tasting workflow, and correcting static page database keys.
 - Fixed data preservation issue in `editTastingNote.php` where editing a note while WSET was disabled globally would overwrite previously recorded WSET criteria with `NULL`.
 - Fixed duplicate meta keywords across all site pages by universally routing keyword resolution in `header.php` through `buildKeywordsList()`, eliminating double occurrences when site title and owner name are identical (e.g. on `index.php`, `impressum.php`, `privacy.php`).
 - Added dedicated, deduplicated meta keywords for legal notice and policy pages (`impressum.php` and `privacy.php`).

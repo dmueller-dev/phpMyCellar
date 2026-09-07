@@ -35,7 +35,7 @@
 | **Interactive Menu** | • Live *Carte des vins* highlighting ready-to-drink wines for guests.<br>• Filter by colour, style, vintage, grape variety, and producer.<br>• Sortable by producer, vintage, or wine style with visual colour badges. |
 | **Stories & Articles** | • Integrated WYSIWYG editor with captioned image insertion.<br>• In-depth vintage report overviews dynamically aggregated from tasting history.<br>• Public commenting system with email subscription notifications. |
 | **Security & RBAC** | • Granular Role-Based Access Control (Public, Reader, Contributor, Admin).<br>• Granular user privilege overrides.<br>• Synchronizer CSRF tokens on all state-changing actions.<br>• Hardened `uploads/` directory with script execution restrictions. |
-| **Customisation** | • Dynamic branding: Site name, tagline, base URL, currency symbol, and owner details.<br>• Real-time theme accent colour customisation.<br>• Database-managed static pages (Welcome, Impressum, Privacy Policy, Rating Scale guide). |
+| **Customisation** | • Dynamic branding: Site name, tagline, base URL, currency symbol, and owner details.<br>• Real-time theme accent colour customisation.<br>• Database-managed static pages and section notices (Welcome, Impressum, Privacy Policy, Sidebars). |
 
 ---
 

@@ -6,13 +6,12 @@ phpMyCellar features a built-in editorial publishing engine for writing wine art
 
 ## 1. Writing Articles
 
-- **Navigate to:** `Backend > Blog / Stories > Add Article`.
+- **Navigate to:** Top navigation `Contribute > Write story` (`/backend/addBlogpost.php`) or `Admin > Dashboard > Blog > Add new story`.
 - **Key Fields:**
-  - **Title:** Headline for the article.
-  - **Slug / Permalink:** Clean URL identifier (e.g. `2016-bordeaux-horizontal-retrospective`).
-  - **Category / Tags:** E.g. *Producer Profile*, *Vintage Report*, *Travel*.
-  - **Publication Date & Status:** Draft or Published.
-  - **Hero Image:** Featured banner image displayed at the top of the article.
+  - **Title:** Headline for the story or tasting report.
+  - **Publication Date:** Date of article release (`pub_date`).
+  - **Publication Status:** Save as `draft` or `publish` directly (depending on author privileges).
+  - **Article Content:** Rich-text narrative formatted using the integrated WYSIWYG editor. Stories are accessed via canonical query URLs (`/blog.php?id=<id>`).
 
 ---
 
@@ -43,8 +42,8 @@ Images uploaded for articles and tasting notes are stored under `uploads/img/`.
 
 ---
 
-## 4. Public Reader Interaction & Email Subscriptions
+## 4. Reader Interaction & Discussion Subscriptions
 
-- Readers can post comments on published articles.
-- The administrator can moderate, edit, or delete comments via `Backend > Manage Comments`.
-- Registered users can toggle email notifications in their account settings to receive updates when new articles are published.
+- Authenticated readers with the `post_comments` privilege can participate in discussion threads beneath published stories.
+- **Thread Subscriptions:** Users can click **🔔 Subscribe to discussion** on any article or wine to receive instant notifications when new comments are posted.
+- **Notification Preferences:** Registered users can review and manage their active thread subscriptions and toggle email delivery from **My account > Settings** (`/accountSettings.php`).
