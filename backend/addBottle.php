@@ -27,6 +27,7 @@
   $consumption_note = '';
   $for_sale = '';
   $note_id = '';
+  $restricted = 0;
 
   // Handle form submission
   if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -51,13 +52,14 @@
       $consumption_note = sanitizeInput($_POST['consumption_note']);
       $for_sale = sanitizeInput($_POST['for_sale']);
       $note_id = filter_input(INPUT_POST, 'note_id', FILTER_VALIDATE_INT);
-      $errors = validateBottleInput(0, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id);
+      $restricted = filter_input(INPUT_POST, 'restricted', FILTER_VALIDATE_INT) ?? 0;
+      $errors = validateBottleInput(0, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted);
       if (empty($errors)) {
         // Start transaction
         $conn->begin_transaction();
         try {
           for ($n = 1; $n <= $numBottles; $n++) {
-            if (insertBottle($conn, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id)) {
+            if (insertBottle($conn, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted)) {
               $conn->commit();
               if ($n>=$numBottles) {
                 $success_message = $numBottles . " bottle(s) inserted successfully. You can now:<br>" .
@@ -73,6 +75,13 @@
                 $purchase_price = '';
                 $arrival_date = '';
                 $status = '';
+                $drink_from = '';
+                $drink_through = '';
+                $consumption_date = '';
+                $consumption_note = '';
+                $for_sale = '';
+                $note_id = '';
+                $restricted = 0;
                 $drink_from = '';
                 $drink_through = '';
                 $consumption_date = '';
@@ -272,6 +281,13 @@
           <select name="for_sale" id="for_sale" required>
             <option value="no" <?php echo ($for_sale == 'no') ? 'selected' : ''; ?>>no</option>
             <option value="yes" <?php echo ($for_sale == 'yes') ? 'selected' : ''; ?>>yes</option>
+          </select>
+
+          <br><br>
+          <label for="restricted">Restricted / Private reserve?</label><br>
+          <select name="restricted" id="restricted">
+            <option value="0" <?php echo ($restricted == 0) ? 'selected' : ''; ?>>no</option>
+            <option value="1" <?php echo ($restricted == 1) ? 'selected' : ''; ?>>yes</option>
           </select>
 
           <br><br>

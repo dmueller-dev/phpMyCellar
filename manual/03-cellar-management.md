@@ -76,7 +76,8 @@ Individual physical bottles belong to a Wine Vintage and represent tangible cell
   - `6000ml` (Impériale / Methuselah)
   - Large formats up to `18000ml` (Melchior)
 - **Storage Locations:** Assign bottles to specific cellars and bin locations (e.g. `Rack 1, Shelf B, Slot 4`).
-- **Drinking Window:** Set `Drink from (yyyy)` and `Drink through (yyyy)` to guide readiness calculations in the cellar and the *Carte des vins*.
+- **Drinking Window:** Set `Drink from (yyyy)` and `Drink through (yyyy)` to guide readiness calculations in the cellar and the *Carte des vins*. Bottles maturing prior to `Drink from` or past `Drink through` display status micro-icons on the wine menu.
+- **Restricted / Private Reserve:** Mark individual bottles as `restricted` to designate private reserves, rare allocations, or bottles held back from guest selection. Restricted bottles display a subtle padlock icon in `browseBottles.php` and on the Carte des vins.
 - **Bottle Statuses:**
   - `in cellar`: Active physical inventory ready or aging in the cellar.
   - `consumed`: Drunk bottle (linked to tasting date, tasting note ID, and consumption notes).

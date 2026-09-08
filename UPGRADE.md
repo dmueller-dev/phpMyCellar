@@ -13,6 +13,8 @@ This guide provides instructions for upgrading **phpMyCellar** between releases,
    - [2. Rating Scale Column Standardisation (`dmpts` → `pts_20`)](#2-rating-scale-column-standardisation-dmpts--pts_20)
    - [3. Legacy Singular URL Stubs (`tnote.php`, `wine.php`, `blogpost.php`)](#3-legacy-singular-url-stubs-tnotephp-winephp-blogpostphp)
    - [4. Helper Functions & API Query Result Keys](#4-helper-functions--api-query-result-keys)
+   - [5. Blind Tasting Consolidation (`backend/blindTasting.php` → `backend/addTastingNote.php`)](#5-blind-tasting-consolidation-backendblindtastingphp--backendaddtastingnotephp)
+   - [6. Bottle Restrictions & Wine Menu Visibility (`bottles.restricted`, `winemenu_include_unready`)](#6-bottle-restrictions--wine-menu-visibility-bottlesrestricted-winemenu_include_unready)
 4. [Step-by-Step Version Upgrade Instructions](#step-by-step-version-upgrade-instructions)
    - [Upgrading to 1.1.0](#upgrading-to-110)
    - [Upgrading to 1.0.1](#upgrading-to-101)
@@ -238,6 +240,25 @@ In version 1.1.0, the standalone script `backend/blindTasting.php` was merged in
 * **Wine Identity Disclosure**: Wine names are concealed behind a `<details><summary>Reveal the wine?</summary>` disclosure.
 * **Bottle Consumption Prompt**: Adding a note for a physical bottle displays an interactive confirmation to mark the bottle as consumed in the cellar.
 * **Redirect Stub**: `backend/blindTasting.php` remains as a transparent 301 redirect stub preserving query parameters until version 2.0.0. Update bookmarks and external references to `/backend/addTastingNote.php?mode=blind`.
+
+---
+
+### 6. Bottle Restrictions & Wine Menu Visibility (`bottles.restricted`, `winemenu_include_unready`)
+
+To support cellar reserve management and fine-grained public visibility:
+* **Bottle Restriction Flag (`bottles.restricted`)**: Boolean flag indicating that a specific bottle is restricted / private reserve. Restricted bottles display a subtle lock icon on the *Carte des vins* (`winemenu.php`) and in the cellar inventory browser (`backend/browseBottles.php`).
+* **Unready Wines Visibility (`winemenu_include_unready`)**: Administrative setting controlling whether wines that have not yet reached their minimum drinking window year (`Drink from`) are displayed on `winemenu.php`. When included, unready wines display an aging clock icon.
+
+#### Manual Database Migration (for DBAs)
+```sql
+-- 1. Add 'restricted' column to 'bottles' table
+ALTER TABLE `bottles` ADD COLUMN `restricted` TINYINT(1) NOT NULL DEFAULT 0;
+
+-- 2. Add 'winemenu_include_unready' setting to 'site_settings' (defaults to 0 / exclude)
+INSERT INTO `site_settings` (`setting_key`, `setting_value`, `setting_group`)
+VALUES ('winemenu_include_unready', '0', 'general')
+ON DUPLICATE KEY UPDATE `setting_value` = VALUES(`setting_value`);
+```
 
 ---
 

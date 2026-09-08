@@ -448,6 +448,7 @@ CREATE TABLE `bottles` (
   `bottle_notes` varchar(255) DEFAULT NULL,
   `format` varchar(7) NOT NULL DEFAULT '750ml',
   `order_id` int(11) DEFAULT NULL,
+  `restricted` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`bottle_id`),
   KEY `idx_bot_wine` (`wine_id`),
   KEY `idx_bot_storage` (`storage_location`),

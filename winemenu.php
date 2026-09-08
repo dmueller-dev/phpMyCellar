@@ -187,6 +187,31 @@
         ?>
       </aside>
     </div>
+    <div class="card winemenu-legend-card">
+      <h3 style="margin-top:0;margin-bottom:12px;">Legend</h3>
+      <ul class="winemenu-legend-list">
+        <li class="winemenu-legend-item">
+          <span class="legend-icon"><?php echo renderRestrictedIconSvg('legend-svg', 'Restricted bottle', 14); ?></span>
+          <span class="legend-text"><strong>Restricted:</strong> Private reserve or limited allocation bottle.</span>
+        </li>
+        <li class="winemenu-legend-item">
+          <span class="legend-icon"><?php echo renderClockWaitIconSvg('legend-svg', 'Aging', 14); ?></span>
+          <span class="legend-text"><strong>Aging:</strong> Drinking window not reached yet; cellar maturing.</span>
+        </li>
+        <li class="winemenu-legend-item">
+          <span class="legend-icon"><?php echo renderClockUrgentIconSvg('legend-svg', 'Drink soon', 14); ?></span>
+          <span class="legend-text"><strong>Drink soon:</strong> Drinking window has passed; recommended to enjoy promptly.</span>
+        </li>
+        <li class="winemenu-legend-item">
+          <span class="legend-icon"><span style="font-size:14px;line-height:1;">❤️</span></span>
+          <span class="legend-text"><strong>Favourite:</strong> Marked as a personal cellar favourite.</span>
+        </li>
+        <li class="winemenu-legend-item">
+          <span class="legend-icon"><img src="/uploads/img/red_16px.gif" alt="Colour indicator" style="vertical-align:middle;width:12px;height:12px;"></span>
+          <span class="legend-text"><strong>Wine style:</strong> Colour indicator (red, white, rosé, sparkling, sweet).</span>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
 
@@ -257,6 +282,18 @@
   $prevBin = "";
   $prevStyle = "";
 
+  // Check whether to include unready wines (drink_from in future)
+  $include_unready = shouldWinemenuIncludeUnready();
+  $unreadyConstraint = $include_unready ? "" : " and (year(curdate()) >= bottles.drink_from or bottles.drink_from is null)";
+  $randomUnreadyConstraint = $include_unready ? "" : " and (year(curdate()) >= b2.drink_from or b2.drink_from is null)";
+
+  // Check whether restricted column exists in bottles table
+  $has_restricted = hasBottlesRestrictedColumn($conn);
+  $restricted_select = $has_restricted
+    ? "max(case when bottles.restricted = 1 then 1 else 0 end) as is_restricted,
+      sum(case when bottles.restricted = 1 then 1 else 0 end) as num_restricted,"
+    : "0 as is_restricted, 0 as num_restricted,";
+
   // Random wine?
   $randomWineConstraint = " ";
   if ($sort=="rand") {
@@ -272,7 +309,7 @@
       from bottles b2
       $randomCellarJoins
       where b2.status = 'in cellar'
-        and (year(curdate()) >= b2.drink_from or b2.drink_from is null)
+        $randomUnreadyConstraint
         $randomCellarWhere
       order by rand()
       limit 1
@@ -288,11 +325,12 @@
   // Perform query
   $result = $mysqli -> query(
     "select
-      bottles.bottle_id,
+      min(bottles.bottle_id) as bottle_id,
       bottles.status,
-      bottles.drink_from,
-      bottles.drink_through,
-      bottles.for_sale,
+      min(bottles.drink_from) as drink_from,
+      max(bottles.drink_through) as drink_through,
+      max(case when bottles.for_sale = 'yes' then 1 else 0 end) as for_sale,
+      " . $restricted_select . "
       bottle_formats.format,
       bottle_formats.format_desc,
       cellars.cellar_name,
@@ -336,7 +374,8 @@
       left join subregions on wines_master.subregion_id=subregions.subregion_id
       left join appellations on wines_master.appellation_id=appellations.appellation_id
       left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
-    where status='in cellar' and (year(curdate())>=bottles.drink_from or bottles.drink_from is null)"
+    where status='in cellar'"
+    .$unreadyConstraint
     .$cellarConstraint
     .$searchConstraint
     .$favouriteConstraint
@@ -426,15 +465,37 @@
         'vintage' => $row["vintage"],
         'wine_desc' => $row["wine_desc"],
         'is_favourite' => (isset($row['is_favourite']) && $row['is_favourite'] > 0),
+        'is_restricted' => false,
+        'min_drink_from' => null,
+        'max_drink_through' => null,
         'bins' => []
       ];
+    }
+
+    $b_restricted = (!empty($row['is_restricted']) && $row['is_restricted'] > 0);
+    $b_drink_from = (!empty($row['drink_from'])) ? (int)$row['drink_from'] : null;
+    $b_drink_through = (!empty($row['drink_through'])) ? (int)$row['drink_through'] : null;
+
+    if ($b_restricted) {
+      $grouped_masters[$master_key]['vintages'][$wine_id]['is_restricted'] = true;
+    }
+    if ($b_drink_from !== null) {
+      $cur_min = $grouped_masters[$master_key]['vintages'][$wine_id]['min_drink_from'];
+      $grouped_masters[$master_key]['vintages'][$wine_id]['min_drink_from'] = ($cur_min === null) ? $b_drink_from : min($cur_min, $b_drink_from);
+    }
+    if ($b_drink_through !== null) {
+      $cur_max = $grouped_masters[$master_key]['vintages'][$wine_id]['max_drink_through'];
+      $grouped_masters[$master_key]['vintages'][$wine_id]['max_drink_through'] = ($cur_max === null) ? $b_drink_through : max($cur_max, $b_drink_through);
     }
 
     $grouped_masters[$master_key]['vintages'][$wine_id]['bins'][] = [
       'format' => $row['format'],
       'cellar_name' => $row['cellar_name'],
       'bin_name' => $row['bin_name'],
-      'numWineBin' => (int)($row['numWineBin'] ?? 0)
+      'numWineBin' => (int)($row['numWineBin'] ?? 0),
+      'is_restricted' => $b_restricted,
+      'drink_from' => $b_drink_from,
+      'drink_through' => $b_drink_through
     ];
   }
 
@@ -521,10 +582,14 @@
     echo "</span>";
     echo "<div class='vintage-chip-group'>";
 
+    $currentYear = (int)date('Y');
     foreach ($group['vintages'] as $v) {
       $total_vintage_bottles = array_sum(array_column($v['bins'], 'numWineBin'));
       $btl_label = $total_vintage_bottles . " " . ($total_vintage_bottles === 1 ? "btl." : "btls.");
       $is_fav = !empty($v['is_favourite']);
+      $is_restricted = !empty($v['is_restricted']);
+      $is_unready = ($v['min_drink_from'] !== null && $v['min_drink_from'] > $currentYear);
+      $is_urgent = ($v['max_drink_through'] !== null && $v['max_drink_through'] < $currentYear);
 
       echo "<details class='vintage-menu-detail'>";
       echo "<summary class='vintage-chip vintage-menu-chip' title='Click to view storage details'>";
@@ -534,6 +599,16 @@
       echo "<span class='chip-vintage'>" . htmlspecialchars($v['vintage'], ENT_QUOTES, 'UTF-8') . "</span>";
       echo "<span class='chip-sep'>·</span>";
       echo "<span class='chip-bottles'>" . $btl_label . "</span>";
+
+      if ($is_restricted) {
+        echo "<span class='chip-icon chip-restricted' title='Restricted bottle / Private reserve'>" . renderRestrictedIconSvg('chip-svg', 'Restricted bottle / Private reserve', 11) . "</span>";
+      }
+      if ($is_unready) {
+        echo "<span class='chip-icon chip-clock-wait' title='Drinking window begins in " . $v['min_drink_from'] . " (aging)'>" . renderClockWaitIconSvg('chip-svg', 'Drinking window begins in ' . $v['min_drink_from'], 11) . "</span>";
+      } elseif ($is_urgent) {
+        echo "<span class='chip-icon chip-clock-urgent' title='Drinking window ended in " . $v['max_drink_through'] . " (drink soon)'>" . renderClockUrgentIconSvg('chip-svg', 'Drinking window ended in ' . $v['max_drink_through'], 11) . "</span>";
+      }
+
       echo "</summary>";
 
       echo "<div class='vintage-menu-popover'>";
@@ -545,10 +620,24 @@
         $b_qty = $b['numWineBin'] . " " . ($b['numWineBin'] === 1 ? "btl." : "btls.");
         $format_label = !empty($b['format']) ? htmlspecialchars($b['format'], ENT_QUOTES, 'UTF-8') : "750ml";
         $loc_label = htmlspecialchars($b['cellar_name'] . " / " . $b['bin_name'], ENT_QUOTES, 'UTF-8');
+
+        $bin_badges = "";
+        if (!empty($b['is_restricted'])) {
+          $bin_badges .= "<span class='vintage-menu-badge badge-restricted' title='Restricted bottle / Private reserve'>" . renderRestrictedIconSvg('badge-svg', '', 11) . " Restricted</span>";
+        }
+        if ($b['drink_from'] !== null && $b['drink_from'] > $currentYear) {
+          $bin_badges .= "<span class='vintage-menu-badge badge-clock-wait' title='Drinking window begins in " . $b['drink_from'] . "'>" . renderClockWaitIconSvg('badge-svg', '', 11) . " Aging · From " . $b['drink_from'] . "</span>";
+        } elseif ($b['drink_through'] !== null && $b['drink_through'] < $currentYear) {
+          $bin_badges .= "<span class='vintage-menu-badge badge-clock-urgent' title='Drinking window ended in " . $b['drink_through'] . "'>" . renderClockUrgentIconSvg('badge-svg', '', 11) . " Drink soon · Past " . $b['drink_through'] . "</span>";
+        }
+
         echo "<li>";
         echo "<span class='bin-format'>{$format_label}</span>";
         echo "<span class='bin-sep'>—</span>";
         echo "<span class='bin-loc'>{$loc_label}</span>";
+        if (!empty($bin_badges)) {
+          echo "<span class='bin-badges'>{$bin_badges}</span>";
+        }
         echo "<span class='bin-qty'>{$b_qty}</span>";
         echo "</li>";
       }

@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `restricted` boolean flag on the `bottles` table to mark private reserve or restricted-allocation bottles.
+- Bottle restriction selector (`Restricted / Private reserve?`) in bottle management forms (`backend/addBottle.php` and `backend/editBottle.php`).
+- Visual padlock indicator on `backend/browseBottles.php` for restricted inventory.
+- Subtle status indicators on the Carte des vins (`winemenu.php`) vintage chips and popovers: padlock micro-icon for restricted bottles, clock micro-icon for bottles whose drinking window has not yet opened, and urgent alarm clock micro-icon for bottles that have passed their estimated drinking window.
+- New Legend card in the sidebar of `winemenu.php` explaining all status micro-icons, favourites, and wine style colour indicators.
+- Carte des Vins unready wines visibility setting (`winemenu_include_unready`) in Site Settings (`backend/settings.php`), enabling cellarmen to exclude (default) or display maturing wines.
 - `AGENTS.md` coding directives and standards for agentic programming.
 
 ## [1.1.0] - 2026-09-08

@@ -36,12 +36,13 @@
       $consumption_note = sanitizeInput($_POST['consumption_note']);
       $for_sale = sanitizeInput($_POST['for_sale']);
       $note_id = filter_input(INPUT_POST, 'note_id', FILTER_VALIDATE_INT);
-      $errors = validateBottleInput($bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id);
+      $restricted = filter_input(INPUT_POST, 'restricted', FILTER_VALIDATE_INT) ?? 0;
+      $errors = validateBottleInput($bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted);
       if (empty($errors)) {
         // Start transaction
         $conn->begin_transaction();
         try {
-          if (updateBottle($conn, $bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id)) {
+          if (updateBottle($conn, $bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted)) {
             $conn->commit();
             $success_message = "Bottle updated successfully";
           } else {
@@ -304,6 +305,13 @@
             <select name="for_sale" id="for_sale" required>
               <option value="no" <?php echo ($selected_bottle['for_sale'] == 'no') ? 'selected' : ''; ?>>no</option>
               <option value="yes" <?php echo ($selected_bottle['for_sale'] == 'yes') ? 'selected' : ''; ?>>yes</option>
+            </select>
+
+            <br><br>
+            <label for="restricted">Restricted / Private reserve?</label><br>
+            <select name="restricted" id="restricted">
+              <option value="0" <?php echo (empty($selected_bottle['restricted'])) ? 'selected' : ''; ?>>no</option>
+              <option value="1" <?php echo (!empty($selected_bottle['restricted']) && $selected_bottle['restricted'] == 1) ? 'selected' : ''; ?>>yes</option>
             </select>
 
             <br><br>

@@ -35,6 +35,10 @@
       $wset_display_format = 'standard';
     }
     $meta_description = sanitizeInput($_POST['meta_description'] ?? '');
+    $winemenu_include_unready = trim($_POST['winemenu_include_unready'] ?? '0');
+    if (!in_array($winemenu_include_unready, ['0', '1'], true)) {
+      $winemenu_include_unready = '0';
+    }
     $theme_accent_color = trim($_POST['theme_accent_color'] ?? '#CD5C5C');
     $theme_accent_secondary = trim($_POST['theme_accent_secondary'] ?? '#B22222');
     $theme_accent_hover = trim($_POST['theme_accent_hover'] ?? '#8B0000');
@@ -59,6 +63,7 @@
       updateSiteSetting('wset_mode', $wset_mode, 'general');
       updateSiteSetting('wset_display_format', $wset_display_format, 'general');
       deleteSiteSetting('wset_enabled');
+      updateSiteSetting('winemenu_include_unready', $winemenu_include_unready, 'general');
       updateSiteSetting('meta_description', $meta_description, 'general');
       updateSiteSetting('theme_accent_color', $theme_accent_color, 'theme');
       updateSiteSetting('theme_accent_secondary', $theme_accent_secondary, 'theme');
@@ -79,6 +84,7 @@
   $rating_scale = getSiteSetting('rating_scale', '20-point');
   $wset_mode = getWsetSATMode();
   $wset_display_format = getWsetSATDisplayFormat();
+  $winemenu_include_unready = getSiteSetting('winemenu_include_unready', '0');
   $meta_description = getSiteSetting('meta_description', '');
   $theme_accent_color = getSiteSetting('theme_accent_color', '#CD5C5C');
   $theme_accent_secondary = getSiteSetting('theme_accent_secondary', '#B22222');
@@ -198,6 +204,15 @@
               <option value="detailed" <?php echo ($wset_display_format === 'detailed') ? 'selected' : ''; ?>>Detailed &mdash; Total score plus BLIC breakdown (Balance, Length, Intensity, Complexity)</option>
             </select>
             <br><small style="color:#666;">Choose whether to show the overall score or additionally show the 4 individual BLIC criteria values on public tasting notes.</small>
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label for="winemenu_include_unready"><strong>Carte des Vins &mdash; Unready Wines Visibility:</strong></label><br>
+            <select id="winemenu_include_unready" name="winemenu_include_unready" style="padding:8px;">
+              <option value="0" <?php echo ($winemenu_include_unready === '0') ? 'selected' : ''; ?>>Exclude &mdash; Hide wines that have not yet reached their minimum drinking window year (default)</option>
+              <option value="1" <?php echo ($winemenu_include_unready === '1') ? 'selected' : ''; ?>>Include &mdash; Display unready wines on the wine menu with an aging clock icon</option>
+            </select>
+            <br><small style="color:#666;">Controls whether wines whose minimum drinking window year (<em>Drink from</em>) is in the future appear on the public Carte des vins (<code>/winemenu.php</code>).</small>
           </div>
 
           <hr style="margin:25px 0;">

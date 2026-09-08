@@ -681,7 +681,8 @@ function getBottleDetails($conn, $bottle_id) {
     bottles.consumption_date,
     bottles.consumption_note,
     bottles.for_sale,
-    bottles.note_id
+    bottles.note_id,
+    bottles.restricted
 	from bottles
 	left join wines on bottles.wine_id=wines.wine_id
 	left join wines_master on wines.master_id=wines_master.master_id
@@ -786,8 +787,29 @@ function updateMaster($conn, $master_id, $producer_id, $region_id, $subregion_id
   return $stmt->execute();
 }
 
-function updateBottle($conn, $bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date = null, $consumption_note = null, $for_sale, $note_id = null) {
-
+/**
+ * Update an existing bottle in the cellar inventory.
+ *
+ * @param mysqli $conn Database connection.
+ * @param int $bottle_id Bottle ID.
+ * @param int $wine_id Wine ID.
+ * @param string $format Bottle format.
+ * @param int|null $bin_id Storage bin ID.
+ * @param int $store_id Store / merchant ID.
+ * @param string $purchase_date Purchase date.
+ * @param float|null $purchase_price Purchase price.
+ * @param string|null $arrival_date Arrival date.
+ * @param string $status Bottle status ('in cellar', 'consumed', etc.).
+ * @param int|null $drink_from Minimum drinking window year.
+ * @param int|null $drink_through Maximum drinking window year.
+ * @param string|null $consumption_date Date consumed.
+ * @param string|null $consumption_note Consumption notes.
+ * @param string $for_sale For sale flag ('no' or 'yes').
+ * @param int|null $note_id Tasting note ID.
+ * @param int|string|bool $restricted Restricted status (0 or 1).
+ * @return bool True on success, false on failure.
+ */
+function updateBottle($conn, $bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date = null, $consumption_note = null, $for_sale = 'no', $note_id = null, $restricted = 0) {
   if (empty($bin_id) || $bin_id=="") { $bin_id=null; }
   if (empty($purchase_price) || $purchase_price=="") { $purchase_price=null; }
   if (empty($arrival_date) || $arrival_date=="") { $arrival_date=null; }
@@ -796,10 +818,17 @@ function updateBottle($conn, $bottle_id, $wine_id, $format, $bin_id, $store_id, 
   if (empty($consumption_date) || $consumption_date=="") { $consumption_date=null; }
   if (empty($consumption_note) || $consumption_note=="") { $consumption_note=null; }
   if (empty($note_id) || $note_id=="") { $note_id=null; }
+  $restricted_val = (!empty($restricted) && in_array((string)$restricted, ['1', 'yes', 'true'], true)) ? 1 : 0;
 
-  $sql = "update bottles set wine_id = ?, format = ?, storage_location = ?, purchased_from = ?, purchase_date = ?, purchase_price = ?, arrival_date = ?, status = ?, drink_from = ?, drink_through = ?, consumption_date = ?, consumption_note = ?, for_sale = ?, note_id = ? where bottle_id = ?";
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param("isiisdssiisssii", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $bottle_id);
+  if (hasBottlesRestrictedColumn($conn)) {
+    $sql = "update bottles set wine_id = ?, format = ?, storage_location = ?, purchased_from = ?, purchase_date = ?, purchase_price = ?, arrival_date = ?, status = ?, drink_from = ?, drink_through = ?, consumption_date = ?, consumption_note = ?, for_sale = ?, note_id = ?, restricted = ? where bottle_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("isiisdssiisssiii", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted_val, $bottle_id);
+  } else {
+    $sql = "update bottles set wine_id = ?, format = ?, storage_location = ?, purchased_from = ?, purchase_date = ?, purchase_price = ?, arrival_date = ?, status = ?, drink_from = ?, drink_through = ?, consumption_date = ?, consumption_note = ?, for_sale = ?, note_id = ? where bottle_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("isiisdssiisssii", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $bottle_id);
+  }
   return $stmt->execute();
 }
 
@@ -970,8 +999,28 @@ function insertWine($conn, $master_id, $ct_id = null, $vintage = null, $wine_des
   return $stmt->execute();
 }
 
-// Function to insert new bottle
-function insertBottle($conn, $wine_id, $format, $bin_id = null, $store_id, $purchase_date, $purchase_price = null, $arrival_date = null, $status, $drink_from = null, $drink_through = null, $consumption_date = null, $consumption_note = null, $for_sale, $note_id = null) {
+/**
+ * Insert a new bottle into the cellar inventory.
+ *
+ * @param mysqli $conn Database connection.
+ * @param int $wine_id Wine ID.
+ * @param string $format Bottle format.
+ * @param int|null $bin_id Storage bin ID.
+ * @param int $store_id Merchant / store ID.
+ * @param string $purchase_date Purchase date.
+ * @param float|null $purchase_price Purchase price.
+ * @param string|null $arrival_date Arrival date.
+ * @param string $status Bottle status.
+ * @param int|null $drink_from Minimum drinking window year.
+ * @param int|null $drink_through Maximum drinking window year.
+ * @param string|null $consumption_date Date consumed.
+ * @param string|null $consumption_note Consumption notes.
+ * @param string $for_sale For sale flag ('no' or 'yes').
+ * @param int|null $note_id Tasting note ID.
+ * @param int|string|bool $restricted Restricted status (0 or 1).
+ * @return bool True on success, false on failure.
+ */
+function insertBottle($conn, $wine_id, $format, $bin_id = null, $store_id, $purchase_date, $purchase_price = null, $arrival_date = null, $status, $drink_from = null, $drink_through = null, $consumption_date = null, $consumption_note = null, $for_sale = 'no', $note_id = null, $restricted = 0) {
   if ($bin_id=='' || empty($bin_id)) { $bin_id = null; }
   if ($purchase_price=='' || empty($purchase_price)) { $purchase_price = null; }
   if ($arrival_date=='' || empty($arrival_date)) { $arrival_date = null; }
@@ -980,9 +1029,17 @@ function insertBottle($conn, $wine_id, $format, $bin_id = null, $store_id, $purc
   if ($consumption_date=='' || empty($consumption_date)) { $consumption_date = null; }
   if ($consumption_note=='' || empty($consumption_note)) { $consumption_note = null; }
   if ($note_id=='' || empty($note_id)) { $note_id = null; }
-  $sql = "INSERT INTO bottles (wine_id, format, storage_location, purchased_from, purchase_date, purchase_price, arrival_date, status, drink_from, drink_through, consumption_date, consumption_note, for_sale, note_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param("isiisdssiisssi", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id);
+  $restricted_val = (!empty($restricted) && in_array((string)$restricted, ['1', 'yes', 'true'], true)) ? 1 : 0;
+
+  if (hasBottlesRestrictedColumn($conn)) {
+    $sql = "INSERT INTO bottles (wine_id, format, storage_location, purchased_from, purchase_date, purchase_price, arrival_date, status, drink_from, drink_through, consumption_date, consumption_note, for_sale, note_id, restricted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("isiisdssiisssii", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted_val);
+  } else {
+    $sql = "INSERT INTO bottles (wine_id, format, storage_location, purchased_from, purchase_date, purchase_price, arrival_date, status, drink_from, drink_through, consumption_date, consumption_note, for_sale, note_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("isiisdssiisssi", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id);
+  }
   return $stmt->execute();
 }
 
@@ -1358,7 +1415,7 @@ function validateMasterInput($conn, $master_id, $producer_id, $region_id, $subre
 }
 
 // Function to validate bottle input
-function validateBottleInput($bottle_id, $wine_id, $format, $bin_id = null, $store_id, $purchase_date, $purchase_price = null, $arrival_date = null, $status, $drink_from = null, $drink_through = null, $consumption_date = null, $consumption_note = null, $for_sale, $note_id = null) {
+function validateBottleInput($bottle_id, $wine_id, $format, $bin_id = null, $store_id, $purchase_date, $purchase_price = null, $arrival_date = null, $status, $drink_from = null, $drink_through = null, $consumption_date = null, $consumption_note = null, $for_sale = 'no', $note_id = null, $restricted = 0) {
   $errors = [];
 
   if ($bin_id=="") { $bin_id=null; }
@@ -1408,6 +1465,10 @@ function validateBottleInput($bottle_id, $wine_id, $format, $bin_id = null, $sto
     if (!is_numeric($note_id) || $note_id == "") {
       $errors[] = "Invalid tasting note ID.";
     }
+  }
+
+  if ($restricted !== null && $restricted !== '' && !in_array((string)$restricted, ['0', '1', 'yes', 'no', 'true', 'false'], true)) {
+    $errors[] = "Invalid restricted flag.";
   }
     
   return $errors;
@@ -3556,6 +3617,85 @@ function deleteSiteSetting($key) {
   $stmt->close();
   getSiteSetting('', '', true); // Reset settings cache
   return $success;
+}
+
+/**
+ * Check whether unready wines (drink_from in the future) should be included in the Carte des vins.
+ *
+ * @return bool True if unready wines should be included, false if excluded.
+ */
+function shouldWinemenuIncludeUnready(): bool {
+  $val = getSiteSetting('winemenu_include_unready', '0');
+  return in_array((string)$val, ['1', 'yes', 'true', 'include'], true);
+}
+
+/**
+ * Check whether the 'restricted' column exists in the 'bottles' table.
+ * Results are statically cached per request for efficiency.
+ *
+ * @param mysqli $conn Database connection.
+ * @return bool True if column exists, false otherwise.
+ */
+function hasBottlesRestrictedColumn($conn): bool {
+  static $exists = null;
+  if ($exists !== null) {
+    return $exists;
+  }
+  if (!($conn instanceof mysqli)) {
+    return false;
+  }
+  try {
+    $check = $conn->query("SHOW COLUMNS FROM `bottles` LIKE 'restricted'");
+    $exists = ($check && $check->num_rows > 0);
+    if ($check) {
+      $check->free();
+    }
+  } catch (Throwable $e) {
+    $exists = false;
+  }
+  return (bool)$exists;
+}
+
+/**
+ * Render the restricted lock icon SVG.
+ *
+ * @param string $class Additional CSS classes.
+ * @param string $title Accessible title and tooltip.
+ * @param int $size Width and height in pixels (default 12).
+ * @return string Inline SVG HTML string.
+ */
+function renderRestrictedIconSvg(string $class = '', string $title = 'Restricted / Private reserve', int $size = 12): string {
+  $cls = trim('winemenu-icon icon-restricted ' . $class);
+  $titleAttr = !empty($title) ? ' title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"' : '';
+  return '<svg class="' . htmlspecialchars($cls, ENT_QUOTES, 'UTF-8') . '" viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' . $titleAttr . '><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
+}
+
+/**
+ * Render the waiting clock icon SVG for wines before their drinking window.
+ *
+ * @param string $class Additional CSS classes.
+ * @param string $title Accessible title and tooltip.
+ * @param int $size Width and height in pixels (default 12).
+ * @return string Inline SVG HTML string.
+ */
+function renderClockWaitIconSvg(string $class = '', string $title = 'Drinking window not reached yet (aging)', int $size = 12): string {
+  $cls = trim('winemenu-icon icon-clock-wait ' . $class);
+  $titleAttr = !empty($title) ? ' title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"' : '';
+  return '<svg class="' . htmlspecialchars($cls, ENT_QUOTES, 'UTF-8') . '" viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' . $titleAttr . '><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+}
+
+/**
+ * Render the subtle urgent clock icon SVG for wines past their drinking window.
+ *
+ * @param string $class Additional CSS classes.
+ * @param string $title Accessible title and tooltip.
+ * @param int $size Width and height in pixels (default 12).
+ * @return string Inline SVG HTML string.
+ */
+function renderClockUrgentIconSvg(string $class = '', string $title = 'Drinking window has passed (drink soon)', int $size = 12): string {
+  $cls = trim('winemenu-icon icon-clock-urgent ' . $class);
+  $titleAttr = !empty($title) ? ' title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"' : '';
+  return '<svg class="' . htmlspecialchars($cls, ENT_QUOTES, 'UTF-8') . '" viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' . $titleAttr . '><circle cx="12" cy="13" r="8"></circle><polyline points="12 9 12 13 15 13"></polyline><line x1="5" y1="3" x2="2" y2="6"></line><line x1="19" y1="3" x2="22" y2="6"></line></svg>';
 }
 
 /**

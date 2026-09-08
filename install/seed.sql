@@ -20,6 +20,7 @@ INSERT INTO `site_settings` (`setting_key`, `setting_value`, `setting_group`) VA
 ('rating_scale', '20-point', 'general'),
 ('wset_mode', 'public', 'general'),
 ('wset_display_format', 'standard', 'general'),
+('winemenu_include_unready', '0', 'general'),
 ('meta_description', 'Personal wine cellar management, tasting notes, and ratings notebook.', 'general'),
 ('theme_accent_color', '#CD5C5C', 'theme'),
 ('theme_accent_secondary', '#B22222', 'theme'),
