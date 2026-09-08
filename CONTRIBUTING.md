@@ -85,7 +85,7 @@ All contributors and participants are expected to adhere to our [Code of Conduct
 
 ## Coding Standards & Architecture
 
-phpMyCellar emphasizes simplicity, long-term maintainability, zero bloated frontend dependencies, and robust defensive security.
+phpMyCellar emphasises simplicity, long-term maintainability, zero bloated frontend dependencies, and robust defensive security. See also [AGENTS.md](AGENTS.md) for coding standards, language conventions (British English), and directives for AI pair programming.
 
 ### 1. PHP Code Style
 - Adhere to the **PSR-12** coding standard.

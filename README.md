@@ -115,7 +115,7 @@ phpMyCellar/
 ├── nginx.conf.example     # Nginx server block configuration template
 ├── SECURITY.md            # Security policy and vulnerability disclosure
 ├── UPGRADE.md             # Version upgrade instructions, migration steps, and deprecations
-└── RELEASE.md             # Current release highlights and publication notes
+└── AGENTS.md              # Agentic programming directives and coding standards
 ```
 
 ---
@@ -126,6 +126,7 @@ Full user guides, migration notes, and administrator manuals are available:
 
 - [Upgrade & Migration Guide](UPGRADE.md)
 - [Changelog](CHANGELOG.md)
+- [Agent & Contributor Directives](AGENTS.md)
 - [01. Welcome & Core Philosophy](manual/01-welcome.md)
 - [02. Getting Started & Installation](manual/02-getting-started.md)
 - [03. Wine Cellar & Order Management](manual/03-cellar-management.md)
