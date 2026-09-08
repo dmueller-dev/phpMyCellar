@@ -31,7 +31,7 @@
 | Category | Highlights |
 | :--- | :--- |
 | **Cellar Management** | • Track producers, wine masters, appellations, vineyards, and vintages.<br>• Multiple bottle formats (375ml half-bottles, 750ml, 1500ml magnums, and large formats).<br>• Storage location bin tracking (e.g. Rack A1, Shelf 3).<br>• Purchase order management with delivery receipts and PDF invoice uploads. |
-| **Tasting Notes** | • Detailed sensory evaluations with drinking window forecasting.<br>• Configurable rating scales: 20-point scale and 100-point scale with optional WSET SAT assessment.<br>• Blind tasting mode allowing notes to be drafted before revealing the wine.<br>• Automatic SEO metadata, OpenGraph tags, and JSON-LD structured data. |
+| **Tasting Notes** | • Configurable rating scales: 20-point and 100-point scales, plus flexible WSET SAT assessment (public, members-only, backend-only) with standard or detailed BLIC breakdown.<br>• Unified blind tasting workflow with concealed cellar bottle selection and identity reveal.<br>• Automatic SEO metadata, OpenGraph tags, and JSON-LD structured data. |
 | **Interactive Menu** | • Live *Carte des vins* highlighting ready-to-drink wines for guests.<br>• Filter by colour, style, vintage, grape variety, and producer.<br>• Sortable by producer, vintage, or wine style with visual colour badges. |
 | **Stories & Articles** | • Integrated WYSIWYG editor with captioned image insertion.<br>• In-depth vintage report overviews dynamically aggregated from tasting history.<br>• Public commenting system with email subscription notifications. |
 | **Security & RBAC** | • Granular Role-Based Access Control (Public, Reader, Contributor, Admin).<br>• Granular user privilege overrides.<br>• Synchronizer CSRF tokens on all state-changing actions.<br>• Hardened `uploads/` directory with script execution restrictions. |
@@ -113,15 +113,19 @@ phpMyCellar/
 ├── .env.example           # Environment template
 ├── .htaccess.example      # Apache server configuration template
 ├── nginx.conf.example     # Nginx server block configuration template
-└── SECURITY.md            # Security policy and vulnerability disclosure
+├── SECURITY.md            # Security policy and vulnerability disclosure
+├── UPGRADE.md             # Version upgrade instructions, migration steps, and deprecations
+└── RELEASE.md             # Current release highlights and publication notes
 ```
 
 ---
 
 ## Documentation & Manual
 
-Full user guides and administrator manuals are available in the [manual/](manual/) directory:
+Full user guides, migration notes, and administrator manuals are available:
 
+- [Upgrade & Migration Guide](UPGRADE.md)
+- [Changelog](CHANGELOG.md)
 - [01. Welcome & Core Philosophy](manual/01-welcome.md)
 - [02. Getting Started & Installation](manual/02-getting-started.md)
 - [03. Wine Cellar & Order Management](manual/03-cellar-management.md)

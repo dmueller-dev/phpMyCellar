@@ -14,7 +14,7 @@ This guide provides instructions for upgrading **phpMyCellar** between releases,
    - [3. Legacy Singular URL Stubs (`tnote.php`, `wine.php`, `blogpost.php`)](#3-legacy-singular-url-stubs-tnotephp-winephp-blogpostphp)
    - [4. Helper Functions & API Query Result Keys](#4-helper-functions--api-query-result-keys)
 4. [Step-by-Step Version Upgrade Instructions](#step-by-step-version-upgrade-instructions)
-   - [Upgrading to 1.1.0 (Unreleased)](#upgrading-to-110-unreleased)
+   - [Upgrading to 1.1.0](#upgrading-to-110)
    - [Upgrading to 1.0.1](#upgrading-to-101)
    - [Upgrading to 1.0.0](#upgrading-to-100)
 
@@ -243,7 +243,7 @@ In version 1.1.0, the standalone script `backend/blindTasting.php` was merged in
 
 ## Step-by-Step Version Upgrade Instructions
 
-### Upgrading to 1.1.0 (Unreleased)
+### Upgrading to 1.1.0
 1. **Pull the latest codebase**:
    ```bash
    git pull origin main

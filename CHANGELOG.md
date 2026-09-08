@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-08
+
 ### Added
 - Flexible WSET SAT operational modes (`public`, `logged_in`, `backend_only`, and `disabled`) in Site Settings and Installation Wizard.
 - Support for internal backend-only WSET data entry for personal cellar tracking without public display.
@@ -22,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Intermediate responsive navigation rules (721px–1060px viewports) providing comfortable padding and font-sizing on tablet screens without navbar wrapping.
 
 ### Changed
+- Streamlined Admin navigation dropdown across desktop and mobile viewports: removed redundant `Browse wines` and `Add wine` links, and consolidated separate `Add user` and `Edit user` links into a single `Users` management interface (`backend/editUser.php`).
+- Added responsive mobile scroll containment (`overflow-y: auto; max-height: calc(100vh - 75px)`) to topnav menu to prevent menu clipping and ensure comfortable scrolling on small screens.
 - Renamed legacy "Dashboard" to **"Admin Hub"** across application navigation, page titles, quick links, and user manual.
 - Flattened the single-item "For friends" dropdown into an immediate top-level **"Carte des vins"** navigation link.
 - Structured the "Admin" dropdown menu into clear visual sections (`Admin Hub`, `Cellar & Catalog`, and `Administration`).
