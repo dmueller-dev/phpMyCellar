@@ -247,7 +247,7 @@ In version 1.1.0, the standalone script `backend/blindTasting.php` was merged in
 
 To support cellar reserve management and fine-grained public visibility:
 * **Bottle Restriction Flag (`bottles.restricted`)**: Boolean flag indicating that a specific bottle is restricted / private reserve. Restricted bottles display a subtle lock icon on the *Carte des vins* (`winemenu.php`) and in the cellar inventory browser (`backend/browseBottles.php`).
-* **Unready Wines Visibility (`winemenu_include_unready`)**: Administrative setting controlling whether wines that have not yet reached their minimum drinking window year (`Drink from`) are displayed on `winemenu.php`. When included, unready wines display an aging clock icon.
+* **Unready Wines Visibility (`winemenu_include_unready`)**: Administrative setting controlling whether wines that have not yet reached their minimum drinking window year (`Drink from`) are displayed on `winemenu.php`. When included, unready wines display an ageing clock icon.
 
 #### Manual Database Migration (for DBAs)
 ```sql

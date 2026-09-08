@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Carte des Vins unready wines visibility setting (`winemenu_include_unready`) in Site Settings (`backend/settings.php`), enabling cellarmen to exclude (default) or display maturing wines.
 - `AGENTS.md` coding directives and standards for agentic programming.
 
+### Changed
+- Simplified Carte des vins status badges in storage popovers (`winemenu.php`): trimmed verbose "Drink soon · Past yyyy" to "Drink soon" and "Aging · From yyyy" to British English "Ageing", preserving full drinking window details in hover tooltips.
+- Refactored storage bin popover lists (`.vintage-menu-bins`) to use responsive flex wrapping on mobile viewports (&le; 720px) in `includes/styles.css`, preventing bottle count labels from overshooting card boundaries.
+- Standardised British English spelling from "aging" to "ageing" across UI strings, setting options, docblocks, and documentation.
+- Harmonised Carte des vins Legend card vertical margin and internal top/bottom spacing with the site-wide card standard.
+
 ## [1.1.0] - 2026-09-08
 
 ### Added

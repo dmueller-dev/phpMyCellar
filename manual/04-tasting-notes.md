@@ -30,7 +30,7 @@ phpMyCellar supports configurable rating methodologies with flexible dual-scale 
 
 | Rating Scale | Description | Scoring Range |
 | :--- | :--- | :--- |
-| **20-Point Scale** | Traditional European / René Gabriel / Jancis Robinson scale assessing color, aroma, taste, harmony, and aging potential. | 0 – 20 points (integers, e.g. `18 / 20`) |
+| **20-Point Scale** | Traditional European / René Gabriel / Jancis Robinson scale assessing colour, aroma, taste, harmony, and ageing potential. | 0 – 20 points (integers, e.g. `18 / 20`) |
 | **100-Point Scale** | Modern international standard (Parker / Wine Spectator standard). | 50 – 100 points (integers, e.g. `94 / 100`) |
 | **WSET SAT (Optional)** | Wine & Spirit Education Trust Systematic Approach to Tasting (Poor, Acceptable, Good, Very Good, Outstanding). | Qualitative Assessment (configurable modes: Public, Logged In, Backend Only, or Disabled) |
 

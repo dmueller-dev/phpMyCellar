@@ -18,7 +18,7 @@ Administrators can adjust branding elements in real time without editing source 
   - **Rating Scale:** Preferred primary scoring methodology (`20-point` or `100-point`).
   - **WSET SAT Assessment Mode:** Configure WSET Systematic Approach to Tasting evaluation mode (`Public`, `Logged In`, `Backend Only`, or `Disabled`).
   - **WSET Display Format:** Choose between `Standard` (overall score and qualitative level) or `Detailed` (overall score plus Balance, Length, Intensity, Complexity criteria breakdown).
-  - **Carte des Vins — Unready Wines Visibility:** Choose whether wines whose minimum drinking window year (`Drink from`) is in the future are hidden (`Exclude`, default) or displayed on the public wine menu with an aging clock icon (`Include`).
+  - **Carte des Vins — Unready Wines Visibility:** Choose whether wines whose minimum drinking window year (`Drink from`) is in the future are hidden (`Exclude`, default) or displayed on the public wine menu with an ageing clock icon (`Include`).
   - **Theme Accent Colours:** Primary (`#CD5C5C`), secondary (`#B22222`), and hover/active accents (`#8B0000`) dynamically injected across navigation menus and buttons.
   - **Logo URL:** Path to your custom header logo image.
 

@@ -36,7 +36,7 @@ This document establishes the official instructions, standards, and conventions 
    * Required privilege: 'add_bottle'
    */
   ```
-- **Explain the "Why", Not Just the "What":** Inline comments should explain non-obvious business logic, domain rationale (e.g. wine aging curves, WSET qualitative criteria), or edge-case handling rather than narrating what the syntax already reveals.
+- **Explain the "Why", Not Just the "What":** Inline comments should explain non-obvious business logic, domain rationale (e.g. wine ageing curves, WSET qualitative criteria), or edge-case handling rather than narrating what the syntax already reveals.
 - **Preserve Existing Documentation:** Do not delete existing comments, license notices, or historic annotations unless explicitly refactoring or replacing obsolete code.
 
 ---

@@ -188,15 +188,15 @@
       </aside>
     </div>
     <div class="card winemenu-legend-card">
-      <h3 style="margin-top:0;margin-bottom:12px;">Legend</h3>
+      <h3>Legend</h3>
       <ul class="winemenu-legend-list">
         <li class="winemenu-legend-item">
           <span class="legend-icon"><?php echo renderRestrictedIconSvg('legend-svg', 'Restricted bottle', 14); ?></span>
           <span class="legend-text"><strong>Restricted:</strong> Private reserve or limited allocation bottle.</span>
         </li>
         <li class="winemenu-legend-item">
-          <span class="legend-icon"><?php echo renderClockWaitIconSvg('legend-svg', 'Aging', 14); ?></span>
-          <span class="legend-text"><strong>Aging:</strong> Drinking window not reached yet; cellar maturing.</span>
+          <span class="legend-icon"><?php echo renderClockWaitIconSvg('legend-svg', 'Ageing', 14); ?></span>
+          <span class="legend-text"><strong>Ageing:</strong> Drinking window not reached yet; cellar maturing.</span>
         </li>
         <li class="winemenu-legend-item">
           <span class="legend-icon"><?php echo renderClockUrgentIconSvg('legend-svg', 'Drink soon', 14); ?></span>
@@ -604,7 +604,7 @@
         echo "<span class='chip-icon chip-restricted' title='Restricted bottle / Private reserve'>" . renderRestrictedIconSvg('chip-svg', 'Restricted bottle / Private reserve', 11) . "</span>";
       }
       if ($is_unready) {
-        echo "<span class='chip-icon chip-clock-wait' title='Drinking window begins in " . $v['min_drink_from'] . " (aging)'>" . renderClockWaitIconSvg('chip-svg', 'Drinking window begins in ' . $v['min_drink_from'], 11) . "</span>";
+        echo "<span class='chip-icon chip-clock-wait' title='Drinking window begins in " . $v['min_drink_from'] . " (ageing)'>" . renderClockWaitIconSvg('chip-svg', 'Drinking window begins in ' . $v['min_drink_from'], 11) . "</span>";
       } elseif ($is_urgent) {
         echo "<span class='chip-icon chip-clock-urgent' title='Drinking window ended in " . $v['max_drink_through'] . " (drink soon)'>" . renderClockUrgentIconSvg('chip-svg', 'Drinking window ended in ' . $v['max_drink_through'], 11) . "</span>";
       }
@@ -626,18 +626,16 @@
           $bin_badges .= "<span class='vintage-menu-badge badge-restricted' title='Restricted bottle / Private reserve'>" . renderRestrictedIconSvg('badge-svg', '', 11) . " Restricted</span>";
         }
         if ($b['drink_from'] !== null && $b['drink_from'] > $currentYear) {
-          $bin_badges .= "<span class='vintage-menu-badge badge-clock-wait' title='Drinking window begins in " . $b['drink_from'] . "'>" . renderClockWaitIconSvg('badge-svg', '', 11) . " Aging · From " . $b['drink_from'] . "</span>";
+          $bin_badges .= "<span class='vintage-menu-badge badge-clock-wait' title='Drinking window begins in " . $b['drink_from'] . " (ageing)'>" . renderClockWaitIconSvg('badge-svg', '', 11) . " Ageing</span>";
         } elseif ($b['drink_through'] !== null && $b['drink_through'] < $currentYear) {
-          $bin_badges .= "<span class='vintage-menu-badge badge-clock-urgent' title='Drinking window ended in " . $b['drink_through'] . "'>" . renderClockUrgentIconSvg('badge-svg', '', 11) . " Drink soon · Past " . $b['drink_through'] . "</span>";
+          $bin_badges .= "<span class='vintage-menu-badge badge-clock-urgent' title='Drinking window ended in " . $b['drink_through'] . " (drink soon)'>" . renderClockUrgentIconSvg('badge-svg', '', 11) . " Drink soon</span>";
         }
 
         echo "<li>";
         echo "<span class='bin-format'>{$format_label}</span>";
         echo "<span class='bin-sep'>—</span>";
         echo "<span class='bin-loc'>{$loc_label}</span>";
-        if (!empty($bin_badges)) {
-          echo "<span class='bin-badges'>{$bin_badges}</span>";
-        }
+        echo "<span class='bin-badges'>{$bin_badges}</span>";
         echo "<span class='bin-qty'>{$b_qty}</span>";
         echo "</li>";
       }

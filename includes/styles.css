@@ -1199,6 +1199,11 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   width: 1%;
 }
 
+.vintage-menu-bins .bin-badges:empty {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 /* Status micro-icons on vintage chips */
 .chip-icon {
   display: inline-flex;
@@ -1263,14 +1268,15 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 }
 
 /* Wine menu sidebar legend */
-.winemenu-legend-card {
-  margin-top: 15px;
+.winemenu-legend-card h3 {
+  margin-top: 1em;
+  margin-bottom: 12px;
 }
 
 .winemenu-legend-list {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 0 1em 0;
 }
 
 .winemenu-legend-item {
@@ -1328,9 +1334,60 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   }
   .vintage-menu-popover {
     max-width: 100%;
+    padding: 8px 10px;
+  }
+  .vintage-menu-bins {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .vintage-menu-bins li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+    padding: 4px 0;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+  .vintage-menu-bins li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .vintage-menu-bins .bin-format {
+    width: auto;
+    padding: 0;
+  }
+  .vintage-menu-bins .bin-sep {
+    width: auto;
+    padding: 0;
+  }
+  .vintage-menu-bins .bin-loc {
+    width: auto;
+    padding: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    word-break: break-word;
   }
   .vintage-menu-bins .bin-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 0;
+    width: auto;
     white-space: normal;
+  }
+  .vintage-menu-bins .bin-badges:empty {
+    display: none;
+  }
+  .vintage-menu-bins .bin-badges .vintage-menu-badge {
+    margin-right: 0;
+  }
+  .vintage-menu-bins .bin-qty {
+    width: auto;
+    padding: 0;
+    margin-left: auto;
+    font-weight: 500;
   }
 }
 

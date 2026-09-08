@@ -210,7 +210,7 @@
             <label for="winemenu_include_unready"><strong>Carte des Vins &mdash; Unready Wines Visibility:</strong></label><br>
             <select id="winemenu_include_unready" name="winemenu_include_unready" style="padding:8px;">
               <option value="0" <?php echo ($winemenu_include_unready === '0') ? 'selected' : ''; ?>>Exclude &mdash; Hide wines that have not yet reached their minimum drinking window year (default)</option>
-              <option value="1" <?php echo ($winemenu_include_unready === '1') ? 'selected' : ''; ?>>Include &mdash; Display unready wines on the wine menu with an aging clock icon</option>
+              <option value="1" <?php echo ($winemenu_include_unready === '1') ? 'selected' : ''; ?>>Include &mdash; Display unready wines on the wine menu with an ageing clock icon</option>
             </select>
             <br><small style="color:#666;">Controls whether wines whose minimum drinking window year (<em>Drink from</em>) is in the future appear on the public Carte des vins (<code>/winemenu.php</code>).</small>
           </div>
