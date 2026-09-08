@@ -218,7 +218,7 @@
               "<ul class='submenu'>" .
               "<li><a class='" . (($currentPath == '/backend/index.php') ? 'active' : '') . "' href='/backend/index.php' title='Admin Hub'><strong>Admin Hub</strong></a></li>";
 
-            $hasInventoryItems = $canBrowseBottles || $canAddBottle || $canBrowseWines || $canAddWine || $canManageOrders;
+            $hasInventoryItems = $canBrowseBottles || $canAddBottle || $canManageOrders;
             if ($hasInventoryItems) {
               echo "<li class='submenu-header'>Cellar &amp; Catalog</li>";
               if ($canBrowseBottles) {
@@ -226,12 +226,6 @@
               }
               if ($canAddBottle) {
                 echo "<li><a class='" . (($currentPath == '/backend/addBottle.php') ? 'active' : '') . "' href='/backend/addBottle.php' title='Add bottle'>Add bottle</a></li>";
-              }
-              if ($canBrowseWines) {
-                echo "<li><a class='" . (($currentPath == '/backend/browseWines.php') ? 'active' : '') . "' href='/backend/browseWines.php' title='Browse all wines'>Browse wines</a></li>";
-              }
-              if ($canAddWine) {
-                echo "<li><a class='" . (($currentPath == '/backend/addWine.php') ? 'active' : '') . "' href='/backend/addWine.php' title='Add wine'>Add wine</a></li>";
               }
               if ($canManageOrders) {
                 echo "<li><a class='" . (($currentPath == '/backend/manageOrders.php') ? 'active' : '') . "' href='/backend/manageOrders.php' title='Manage open orders'>Orders</a></li>";
@@ -247,8 +241,8 @@
                 echo "<li><a class='" . (($currentPath == '/backend/managePrivileges.php') ? 'active' : '') . "' href='/backend/managePrivileges.php' title='User & role privileges'>User &amp; role privileges</a></li>";
               }
               if ($canManageUsers) {
-                echo "<li><a class='" . (($currentPath == '/backend/addUser.php') ? 'active' : '') . "' href='/backend/addUser.php' title='Add user'>Add user</a></li>";
-                echo "<li><a class='" . (($currentPath == '/backend/editUser.php') ? 'active' : '') . "' href='/backend/editUser.php' title='Edit user & reset password'>Edit user</a></li>";
+                $isUserActive = ($currentPath == '/backend/editUser.php' || $currentPath == '/backend/addUser.php');
+                echo "<li><a class='" . ($isUserActive ? 'active' : '') . "' href='/backend/editUser.php' title='Manage user accounts & reset passwords'>Users</a></li>";
               }
             }
             echo "</ul></li>";

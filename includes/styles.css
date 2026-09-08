@@ -411,6 +411,13 @@ ul.submenu li.submenu-header {
     display: none;
   }
 
+  .mobile-menu:checked ~ .topnav {
+    display: block;
+    max-height: calc(100vh - 75px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   ul.top-menu li.right, ul.top-menu li {
     float: none;
   }
