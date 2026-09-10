@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Subtle status indicators on the Carte des vins (`winemenu.php`) vintage chips and popovers: padlock micro-icon for restricted bottles, clock micro-icon for bottles whose drinking window has not yet opened, and urgent alarm clock micro-icon for bottles that have passed their estimated drinking window.
 - New Legend card in the sidebar of `winemenu.php` explaining all status micro-icons, favourites, and wine style colour indicators.
 - Carte des Vins unready wines visibility setting (`winemenu_include_unready`) in Site Settings (`backend/settings.php`), enabling cellarmen to exclude (default) or display maturing wines.
-- `AGENTS.md` coding directives and standards for agentic programming.
+- `AGENTS.md` coding directives and standards for agentic programming, including strict cookie minimisation directives restricting usage to anonymous session cookies for logged-in users.
 
 ### Changed
 - Simplified Carte des vins status badges in storage popovers (`winemenu.php`): trimmed verbose "Drink soon · Past yyyy" to "Drink soon" and "Aging · From yyyy" to British English "Ageing", preserving full drinking window details in hover tooltips.

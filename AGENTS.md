@@ -112,6 +112,11 @@ Agents must keep all repository documentation strictly in sync with code changes
 - All backend pages and operations must enforce privilege checks using `hasPrivilege($conn, 'privilege_name')`.
 - Restrict public views according to `site_settings` (e.g. Carte des vins visibility, WSET display mode).
 
+### Restrictive Cookie Usage & Privacy
+- **Strict Cookie Minimisation:** Do not use cookies, with the sole exception of anonymous session cookies strictly required to keep authenticated users logged in.
+- **No Tracking or Non-Essential Cookies:** Never introduce tracking, analytics, persistent profiling, preference, or third-party cookies. Non-authenticated visitors must receive no cookies.
+- **Client State Management:** Client UI states, filters, or ephemeral parameters must rely on clean URL query parameters, server-side session variables, or transient storage where appropriate, never persistent tracking cookies.
+
 ### Frontend Standards
 - Pure semantic HTML5, responsive CSS in `includes/styles.css`, and vanilla JavaScript.
 - Do not introduce external frontend frameworks, bundlers, or npm dependencies.
@@ -144,5 +149,6 @@ Before completing any task or declaring work ready for review, verify:
 - [ ] **Language:** British English used in all code comments, docblocks, UI strings, and documentation.
 - [ ] **Documentation Sync:** `CHANGELOG.md`, `README.md`, and relevant `manual/` files updated succinctly.
 - [ ] **Security:** CSRF validated on forms, output escaped with `htmlspecialchars`, prepared statements used for all SQL queries.
+- [ ] **Privacy & Cookies:** Strict cookie minimisation enforced (no cookies except anonymous session cookies for logged-in users).
 - [ ] **Responsiveness:** Validated on both desktop (>720px) and mobile (&le;720px) screen viewports.
 - [ ] **Git Integrity:** Commits are atomic with succinct, descriptive messages.
