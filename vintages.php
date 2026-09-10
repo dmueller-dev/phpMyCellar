@@ -160,7 +160,8 @@
                 $wine_name = getWineName($wine['nameconvention'] ?? 'vintage_producer_name', $wine['vintage'] ?? 'NV', $wine['name'] ?? '', $wine['producer'] ?? '', $wine['grape'] ?? '', $wine['vineyard'] ?? '');
                 $score_text = formatNoteRatingBadge($wine, $active_scale, true);
                 $fav_icon = ($wine['favourite'] === 'yes') ? "<span style='color:#e25555; margin-left:4px;'>❤️</span>" : "";
-                $tasted_date = !empty($wine['tasting_date']) ? date_format(date_create($wine['tasting_date']), "d M Y") : '';
+                $t_dt = !empty($wine['tasting_date']) ? date_create($wine['tasting_date']) : false;
+                $tasted_date = ($t_dt !== false) ? date_format($t_dt, "d M Y") : '';
               ?>
               <li class="vintage-top-wine-card">
                 <div>

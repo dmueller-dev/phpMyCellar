@@ -620,14 +620,14 @@ SELECT
   -- Deprecated in v1.0.1; scheduled for removal in v2.0.0. Use `avg_pts_20`:
   ROUND(AVG(CASE WHEN `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`pts_20` IS NOT NULL THEN `tnotes`.`pts_20` END), 1) AS `avg_dmpts`,
   ROUND(AVG(CASE WHEN `tnotes`.`flawed_yn` = 'no' AND `tnotes`.`pts_100` IS NOT NULL THEN `tnotes`.`pts_100` END), 1) AS `avg_pts_100`,
-  `xvr`.`vintage_desc` AS `vintage_desc`
+  MAX(`xvr`.`vintage_desc`) AS `vintage_desc`
 FROM `tnotes`
 JOIN `wines` ON `tnotes`.`wine_id` = `wines`.`wine_id`
 JOIN `wines_master` ON `wines`.`master_id` = `wines_master`.`master_id`
 JOIN `regions` ON `wines_master`.`region_id` = `regions`.`region_id`
 LEFT JOIN `x_vintage_region` `xvr` ON `wines`.`vintage` = `xvr`.`vintage` AND `wines_master`.`region_id` = `xvr`.`region_id`
 WHERE `tnotes`.`status` = 'published'
-GROUP BY `wines`.`vintage`, `regions`.`country`, `regions`.`region`, `wines_master`.`region_id`, `wines_master`.`colour`, `xvr`.`vintage_desc`;
+GROUP BY `wines`.`vintage`, `regions`.`country`, `regions`.`region`, `wines_master`.`region_id`, `wines_master`.`colour`;
 
 DROP VIEW IF EXISTS `view_vintage_top_wines`;
 CREATE VIEW `view_vintage_top_wines` AS

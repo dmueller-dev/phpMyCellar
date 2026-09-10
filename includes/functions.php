@@ -2325,58 +2325,77 @@ function getVintageRegionStats($conn, $vintage) {
     throw new Exception("Invalid database connection");
   }
 
-  $scale = getRatingScale();
-  $col = ($scale === '100-point') ? 'pts_100' : 'pts_20';
-  $avgCol = ($scale === '100-point') ? 'avg_pts_100' : 'avg_pts_20';
+  try {
+    $scale = getRatingScale();
+    $col = ($scale === '100-point') ? 'pts_100' : 'pts_20';
+    $avgCol = ($scale === '100-point') ? 'avg_pts_100' : 'avg_pts_20';
 
-  $sql = "SELECT country, region, region_id, colour, country_region_colour, note_count, 
-                 {$avgCol} AS avg_score, avg_dmpts, vintage_desc
-          FROM view_vintage_region_colour_stats
-          WHERE vintage = ?
-          ORDER BY {$avgCol} DESC, country ASC, region ASC, colour ASC";
-  
-  $stmt = $conn->prepare($sql);
-  if (!$stmt) {
-    // Fallback query if SQL view has not been created in DB
-    $sqlFallback = "SELECT 
-        regions.country,
-        regions.region,
-        wines_master.region_id,
-        wines_master.colour,
-        CONCAT(regions.country, ': ', regions.region, ' (', wines_master.colour, ')') AS country_region_colour,
-        COUNT(tnotes.note_id) AS note_count,
-        ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN tnotes.{$col} END), 1) AS avg_score,
-        ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.pts_20 IS NOT NULL THEN tnotes.pts_20 END), 1) AS avg_dmpts,
-        xvr.vintage_desc
-    FROM tnotes
-    JOIN wines ON tnotes.wine_id = wines.wine_id
-    JOIN wines_master ON wines.master_id = wines_master.master_id
-    JOIN regions ON wines_master.region_id = regions.region_id
-    LEFT JOIN x_vintage_region xvr ON wines.vintage = xvr.vintage AND wines_master.region_id = xvr.region_id
-    WHERE tnotes.status = 'published' 
-      AND wines.vintage = ?
-    GROUP BY 
-        regions.country,
-        regions.region,
-        wines_master.region_id,
-        wines_master.colour,
-        xvr.vintage_desc
-    ORDER BY avg_score DESC, regions.country ASC, regions.region ASC, wines_master.colour ASC";
-    $stmt = $conn->prepare($sqlFallback);
-    if (!$stmt) {
-      return array();
+    $sql = "SELECT country, region, region_id, colour, country_region_colour, note_count, 
+                   {$avgCol} AS avg_score, avg_dmpts, vintage_desc
+            FROM view_vintage_region_colour_stats
+            WHERE vintage = ?
+            ORDER BY {$avgCol} DESC, country ASC, region ASC, colour ASC";
+
+    $stmt = $conn->prepare($sql);
+    $executed = false;
+    if ($stmt) {
+      $stmt->bind_param("i", $vintage);
+      $executed = @$stmt->execute();
     }
-  }
 
-  $stmt->bind_param("i", $vintage);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $rows = array();
-  while ($row = $result->fetch_assoc()) {
-    $rows[] = $row;
+    if (!$stmt || !$executed) {
+      if ($stmt) {
+        $stmt->close();
+      }
+      // Fallback query if SQL view has not been created in DB or execution failed
+      $sqlFallback = "SELECT 
+          regions.country,
+          regions.region,
+          wines_master.region_id,
+          wines_master.colour,
+          CONCAT(regions.country, ': ', regions.region, ' (', wines_master.colour, ')') AS country_region_colour,
+          COUNT(tnotes.note_id) AS note_count,
+          ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN tnotes.{$col} END), 1) AS avg_score,
+          ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.pts_20 IS NOT NULL THEN tnotes.pts_20 END), 1) AS avg_dmpts,
+          MAX(xvr.vintage_desc) AS vintage_desc
+      FROM tnotes
+      JOIN wines ON tnotes.wine_id = wines.wine_id
+      JOIN wines_master ON wines.master_id = wines_master.master_id
+      JOIN regions ON wines_master.region_id = regions.region_id
+      LEFT JOIN x_vintage_region xvr ON wines.vintage = xvr.vintage AND wines_master.region_id = xvr.region_id
+      WHERE tnotes.status = 'published' 
+        AND wines.vintage = ?
+      GROUP BY 
+          regions.country,
+          regions.region,
+          wines_master.region_id,
+          wines_master.colour
+      ORDER BY avg_score DESC, regions.country ASC, regions.region ASC, wines_master.colour ASC";
+      $stmt = $conn->prepare($sqlFallback);
+      if (!$stmt) {
+        return array();
+      }
+      $stmt->bind_param("i", $vintage);
+      if (!@$stmt->execute()) {
+        $stmt->close();
+        return array();
+      }
+    }
+
+    $result = $stmt->get_result();
+    $rows = array();
+    if ($result instanceof mysqli_result) {
+      while ($row = $result->fetch_assoc()) {
+        $rows[] = $row;
+      }
+      $result->free();
+    }
+    $stmt->close();
+    return $rows;
+  } catch (\Throwable $e) {
+    error_log("getVintageRegionStats error: " . $e->getMessage());
+    return array();
   }
-  $stmt->close();
-  return $rows;
 }
 
 // Function to get vintage country percentage stats (SQL View 2 with fallback)
@@ -2385,50 +2404,68 @@ function getVintageCountryStats($conn, $vintage) {
     throw new Exception("Invalid database connection");
   }
 
-  $sql = "SELECT country, country_notes_count, total_notes_count, country_percentage
-          FROM view_vintage_country_stats
-          WHERE vintage = ?
-          ORDER BY country_percentage DESC, country ASC";
+  try {
+    $sql = "SELECT country, country_notes_count, total_notes_count, country_percentage
+            FROM view_vintage_country_stats
+            WHERE vintage = ?
+            ORDER BY country_percentage DESC, country ASC";
 
-  $stmt = $conn->prepare($sql);
-  if (!$stmt) {
-    // Fallback query if SQL view has not been created in DB
-    $sqlFallback = "SELECT 
-        regions.country,
-        COUNT(tnotes.note_id) AS country_notes_count,
-        total_vintage.total_notes_count,
-        ROUND((COUNT(tnotes.note_id) * 100.0) / total_vintage.total_notes_count, 1) AS country_percentage
-    FROM tnotes
-    JOIN wines ON tnotes.wine_id = wines.wine_id
-    JOIN wines_master ON wines.master_id = wines_master.master_id
-    JOIN regions ON wines_master.region_id = regions.region_id
-    JOIN (
-        SELECT 
-            COUNT(tn2.note_id) AS total_notes_count
-        FROM tnotes tn2
-        JOIN wines w2 ON tn2.wine_id = w2.wine_id
-        WHERE tn2.status = 'published' AND w2.vintage = ?
-    ) total_vintage
-    WHERE tnotes.status = 'published' AND wines.vintage = ?
-    GROUP BY regions.country, total_vintage.total_notes_count
-    ORDER BY country_percentage DESC, regions.country ASC";
-    $stmt = $conn->prepare($sqlFallback);
-    if (!$stmt) {
-      return array();
+    $stmt = $conn->prepare($sql);
+    $executed = false;
+    if ($stmt) {
+      $stmt->bind_param("i", $vintage);
+      $executed = @$stmt->execute();
     }
-    $stmt->bind_param("ii", $vintage, $vintage);
-  } else {
-    $stmt->bind_param("i", $vintage);
-  }
 
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $rows = array();
-  while ($row = $result->fetch_assoc()) {
-    $rows[] = $row;
+    if (!$stmt || !$executed) {
+      if ($stmt) {
+        $stmt->close();
+      }
+      // Fallback query if SQL view has not been created in DB or execution failed
+      $sqlFallback = "SELECT 
+          regions.country,
+          COUNT(tnotes.note_id) AS country_notes_count,
+          total_vintage.total_notes_count,
+          ROUND((COUNT(tnotes.note_id) * 100.0) / total_vintage.total_notes_count, 1) AS country_percentage
+      FROM tnotes
+      JOIN wines ON tnotes.wine_id = wines.wine_id
+      JOIN wines_master ON wines.master_id = wines_master.master_id
+      JOIN regions ON wines_master.region_id = regions.region_id
+      JOIN (
+          SELECT 
+              COUNT(tn2.note_id) AS total_notes_count
+          FROM tnotes tn2
+          JOIN wines w2 ON tn2.wine_id = w2.wine_id
+          WHERE tn2.status = 'published' AND w2.vintage = ?
+      ) total_vintage
+      WHERE tnotes.status = 'published' AND wines.vintage = ?
+      GROUP BY regions.country, total_vintage.total_notes_count
+      ORDER BY country_percentage DESC, regions.country ASC";
+      $stmt = $conn->prepare($sqlFallback);
+      if (!$stmt) {
+        return array();
+      }
+      $stmt->bind_param("ii", $vintage, $vintage);
+      if (!@$stmt->execute()) {
+        $stmt->close();
+        return array();
+      }
+    }
+
+    $result = $stmt->get_result();
+    $rows = array();
+    if ($result instanceof mysqli_result) {
+      while ($row = $result->fetch_assoc()) {
+        $rows[] = $row;
+      }
+      $result->free();
+    }
+    $stmt->close();
+    return $rows;
+  } catch (\Throwable $e) {
+    error_log("getVintageCountryStats error: " . $e->getMessage());
+    return array();
   }
-  $stmt->close();
-  return $rows;
 }
 
 /**
@@ -2444,79 +2481,97 @@ function getVintageTopWines($conn, $vintage) {
     throw new Exception("Invalid database connection");
   }
 
-  $scale = getRatingScale();
-  $threshold = getTopWineScoreThreshold($scale);
-  $col = getActiveScoreColumn($scale);
+  try {
+    $scale = getRatingScale();
+    $threshold = getTopWineScoreThreshold($scale);
+    $col = getActiveScoreColumn($scale);
 
-  $sql = "SELECT note_id, wine_id, user_id, tasting_date, pts_20, pts_100, dmpts, flawed_yn, favourite,
-                 status, initials, vintage, master_id, name, nameconvention, grape, colour, style,
-                 producer_id, producer, vineyard_id, vineyard, region_id, region, country,
-                 appellation_id, appellation
-          FROM view_vintage_top_wines
-          WHERE vintage = ? AND {$col} >= ?
-          ORDER BY {$col} DESC, producer ASC, name ASC, tasting_date DESC";
+    $sql = "SELECT note_id, wine_id, user_id, tasting_date, pts_20, pts_100, dmpts, flawed_yn, favourite,
+                   status, initials, vintage, master_id, name, nameconvention, grape, colour, style,
+                   producer_id, producer, vineyard_id, vineyard, region_id, region, country,
+                   appellation_id, appellation
+            FROM view_vintage_top_wines
+            WHERE vintage = ? AND {$col} >= ?
+            ORDER BY {$col} DESC, producer ASC, name ASC, tasting_date DESC";
 
-  $stmt = $conn->prepare($sql);
-  if (!$stmt) {
-    // Fallback query if SQL view has not been created in DB
-    $sqlFallback = "SELECT 
-        tnotes.note_id,
-        tnotes.wine_id,
-        tnotes.user_id,
-        tnotes.tasting_date,
-        tnotes.pts_20,
-        tnotes.pts_20 AS dmpts,
-        tnotes.pts_100,
-        tnotes.flawed_yn,
-        tnotes.favourite,
-        tnotes.status,
-        users.initials,
-        wines.vintage,
-        wines_master.master_id,
-        wines_master.name,
-        wines_master.nameconvention,
-        wines_master.grape,
-        wines_master.colour,
-        wines_master.style,
-        producers.producer_id,
-        producers.producer,
-        vineyards.vineyard_id,
-        vineyards.vineyard,
-        regions.region_id,
-        regions.region,
-        regions.country,
-        appellations.appellation_id,
-        appellations.appellation
-    FROM tnotes
-    JOIN users ON tnotes.user_id = users.user_id
-    JOIN wines ON tnotes.wine_id = wines.wine_id
-    JOIN wines_master ON wines.master_id = wines_master.master_id
-    JOIN producers ON wines_master.producer_id = producers.producer_id
-    JOIN regions ON wines_master.region_id = regions.region_id
-    LEFT JOIN vineyards ON wines_master.vineyard_id = vineyards.vineyard_id
-    LEFT JOIN appellations ON wines_master.appellation_id = appellations.appellation_id
-    WHERE tnotes.status = 'published'
-      AND tnotes.flawed_yn = 'no'
-      AND tnotes.{$col} >= ?
-      AND wines.vintage = ?
-    ORDER BY tnotes.{$col} DESC, producers.producer ASC, wines_master.name ASC, tnotes.tasting_date DESC";
-    $stmt = $conn->prepare($sqlFallback);
-    if (!$stmt) {
-      return array();
+    $stmt = $conn->prepare($sql);
+    $executed = false;
+    if ($stmt) {
+      $stmt->bind_param("ii", $vintage, $threshold);
+      $executed = @$stmt->execute();
     }
-    $stmt->bind_param("ii", $threshold, $vintage);
-  } else {
-    $stmt->bind_param("ii", $vintage, $threshold);
-  }
 
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $rows = array();
-  while ($row = $result->fetch_assoc()) {
-    $rows[] = $row;
+    if (!$stmt || !$executed) {
+      if ($stmt) {
+        $stmt->close();
+      }
+      // Fallback query if SQL view has not been created in DB or execution failed
+      $sqlFallback = "SELECT 
+          tnotes.note_id,
+          tnotes.wine_id,
+          tnotes.user_id,
+          tnotes.tasting_date,
+          tnotes.pts_20,
+          tnotes.pts_20 AS dmpts,
+          tnotes.pts_100,
+          tnotes.flawed_yn,
+          tnotes.favourite,
+          tnotes.status,
+          users.initials,
+          wines.vintage,
+          wines_master.master_id,
+          wines_master.name,
+          wines_master.nameconvention,
+          wines_master.grape,
+          wines_master.colour,
+          wines_master.style,
+          producers.producer_id,
+          producers.producer,
+          vineyards.vineyard_id,
+          vineyards.vineyard,
+          regions.region_id,
+          regions.region,
+          regions.country,
+          appellations.appellation_id,
+          appellations.appellation
+      FROM tnotes
+      JOIN users ON tnotes.user_id = users.user_id
+      JOIN wines ON tnotes.wine_id = wines.wine_id
+      JOIN wines_master ON wines.master_id = wines_master.master_id
+      JOIN producers ON wines_master.producer_id = producers.producer_id
+      JOIN regions ON wines_master.region_id = regions.region_id
+      LEFT JOIN vineyards ON wines_master.vineyard_id = vineyards.vineyard_id
+      LEFT JOIN appellations ON wines_master.appellation_id = appellations.appellation_id
+      WHERE tnotes.status = 'published'
+        AND tnotes.flawed_yn = 'no'
+        AND tnotes.{$col} >= ?
+        AND wines.vintage = ?
+      ORDER BY tnotes.{$col} DESC, producers.producer ASC, wines_master.name ASC, tnotes.tasting_date DESC";
+      $stmt = $conn->prepare($sqlFallback);
+      if (!$stmt) {
+        return array();
+      }
+      $stmt->bind_param("ii", $threshold, $vintage);
+      if (!@$stmt->execute()) {
+        $stmt->close();
+        return array();
+      }
+    }
+
+    $result = $stmt->get_result();
+    $rows = array();
+    if ($result instanceof mysqli_result) {
+      while ($row = $result->fetch_assoc()) {
+        $rows[] = $row;
+      }
+      $result->free();
+    }
+    $stmt->close();
+    return $rows;
+  } catch (\Throwable $e) {
+    error_log("getVintageTopWines error: " . $e->getMessage());
+    return array();
   }
-  $stmt->close();
-  return $rows;
 }
 
 /**
@@ -2532,39 +2587,52 @@ function getVintageSummary($conn, $vintage) {
     throw new Exception("Invalid database connection");
   }
 
-  $scale = getRatingScale();
-  $col = getActiveScoreColumn($scale);
+  try {
+    $scale = getRatingScale();
+    $col = getActiveScoreColumn($scale);
 
-  $sql = "SELECT 
-            COUNT(tnotes.note_id) AS total_notes,
-            COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) AS rated_notes_count,
-            CASE 
-              WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) >= 5 
-              THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN tnotes.{$col} END), 1) 
-              ELSE NULL 
-            END AS avg_score,
-            ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.pts_20 IS NOT NULL THEN tnotes.pts_20 END), 1) AS avg_dmpts,
-            MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.{$col} END) AS max_score,
-            MIN(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.{$col} END) AS min_score,
-            COUNT(DISTINCT regions.country) AS country_count,
-            COUNT(DISTINCT regions.region_id) AS region_count,
-            COUNT(DISTINCT producers.producer_id) AS producer_count
-          FROM tnotes
-          JOIN wines ON tnotes.wine_id = wines.wine_id
-          JOIN wines_master ON wines.master_id = wines_master.master_id
-          JOIN producers ON wines_master.producer_id = producers.producer_id
-          JOIN regions ON wines_master.region_id = regions.region_id
-          WHERE tnotes.status = 'published' AND wines.vintage = ?";
+    $sql = "SELECT 
+              COUNT(tnotes.note_id) AS total_notes,
+              COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) AS rated_notes_count,
+              CASE 
+                WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) >= 5 
+                THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN tnotes.{$col} END), 1) 
+                ELSE NULL 
+              END AS avg_score,
+              ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.pts_20 IS NOT NULL THEN tnotes.pts_20 END), 1) AS avg_dmpts,
+              MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.{$col} END) AS max_score,
+              MIN(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.{$col} END) AS min_score,
+              COUNT(DISTINCT regions.country) AS country_count,
+              COUNT(DISTINCT regions.region_id) AS region_count,
+              COUNT(DISTINCT producers.producer_id) AS producer_count
+            FROM tnotes
+            JOIN wines ON tnotes.wine_id = wines.wine_id
+            JOIN wines_master ON wines.master_id = wines_master.master_id
+            JOIN producers ON wines_master.producer_id = producers.producer_id
+            JOIN regions ON wines_master.region_id = regions.region_id
+            WHERE tnotes.status = 'published' AND wines.vintage = ?";
 
-  $stmt = $conn->prepare($sql);
-  if (!$stmt) {
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
+    $stmt->bind_param("i", $vintage);
+    if (!@$stmt->execute()) {
+      $stmt->close();
+      return false;
+    }
+    $result = $stmt->get_result();
+    $res = false;
+    if ($result instanceof mysqli_result) {
+      $res = $result->fetch_assoc() ?: false;
+      $result->free();
+    }
+    $stmt->close();
+    return $res;
+  } catch (\Throwable $e) {
+    error_log("getVintageSummary error: " . $e->getMessage());
     return false;
   }
-  $stmt->bind_param("i", $vintage);
-  $stmt->execute();
-  $res = $stmt->get_result()->fetch_assoc();
-  $stmt->close();
-  return $res;
 }
 
 /**
@@ -2579,36 +2647,42 @@ function getAllVintagesSummary($conn) {
     throw new Exception("Invalid database connection");
   }
 
-  $scale = getRatingScale();
-  $col = getActiveScoreColumn($scale);
+  try {
+    $scale = getRatingScale();
+    $col = getActiveScoreColumn($scale);
 
-  $sql = "SELECT 
-            wines.vintage,
-            COUNT(tnotes.note_id) AS note_count,
-            COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) AS rated_count,
-            CASE 
-              WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) >= 5 
-              THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN tnotes.{$col} END), 1) 
-              ELSE NULL 
-            END AS avg_score,
-            ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.pts_20 IS NOT NULL THEN tnotes.pts_20 END), 1) AS avg_dmpts,
-            MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.{$col} END) AS max_score
-          FROM tnotes
-          JOIN wines ON tnotes.wine_id = wines.wine_id
-          WHERE tnotes.status = 'published' AND wines.vintage IS NOT NULL
-          GROUP BY wines.vintage
-          ORDER BY wines.vintage DESC";
+    $sql = "SELECT 
+              wines.vintage,
+              COUNT(tnotes.note_id) AS note_count,
+              COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) AS rated_count,
+              CASE 
+                WHEN COUNT(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN 1 END) >= 5 
+                THEN ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.{$col} IS NOT NULL THEN tnotes.{$col} END), 1) 
+                ELSE NULL 
+              END AS avg_score,
+              ROUND(AVG(CASE WHEN tnotes.flawed_yn = 'no' AND tnotes.pts_20 IS NOT NULL THEN tnotes.pts_20 END), 1) AS avg_dmpts,
+              MAX(CASE WHEN tnotes.flawed_yn = 'no' THEN tnotes.{$col} END) AS max_score
+            FROM tnotes
+            JOIN wines ON tnotes.wine_id = wines.wine_id
+            WHERE tnotes.status = 'published' AND wines.vintage IS NOT NULL
+            GROUP BY wines.vintage
+            ORDER BY wines.vintage DESC";
 
-  $result = $conn->query($sql);
-  if (!$result) {
+    $result = $conn->query($sql);
+    if (!$result || !($result instanceof mysqli_result)) {
+      return array();
+    }
+
+    $rows = array();
+    while ($row = $result->fetch_assoc()) {
+      $rows[] = $row;
+    }
+    $result->free();
+    return $rows;
+  } catch (\Throwable $e) {
+    error_log("getAllVintagesSummary error: " . $e->getMessage());
     return array();
   }
-
-  $rows = array();
-  while ($row = $result->fetch_assoc()) {
-    $rows[] = $row;
-  }
-  return $rows;
 }
 
 // Function to get adjacent previous and next vintages
@@ -2617,20 +2691,33 @@ function getAdjacentVintages($conn, $vintage) {
     return ['prev_vintage' => null, 'next_vintage' => null];
   }
 
-  $sql = "SELECT 
-            (SELECT MAX(w1.vintage) FROM tnotes tn1 JOIN wines w1 ON tn1.wine_id = w1.wine_id WHERE tn1.status = 'published' AND w1.vintage < ?) AS prev_vintage,
-            (SELECT MIN(w2.vintage) FROM tnotes tn2 JOIN wines w2 ON tn2.wine_id = w2.wine_id WHERE tn2.status = 'published' AND w2.vintage > ?) AS next_vintage";
+  try {
+    $sql = "SELECT 
+              (SELECT MAX(w1.vintage) FROM tnotes tn1 JOIN wines w1 ON tn1.wine_id = w1.wine_id WHERE tn1.status = 'published' AND w1.vintage < ?) AS prev_vintage,
+              (SELECT MIN(w2.vintage) FROM tnotes tn2 JOIN wines w2 ON tn2.wine_id = w2.wine_id WHERE tn2.status = 'published' AND w2.vintage > ?) AS next_vintage";
 
-  $stmt = $conn->prepare($sql);
-  if (!$stmt) {
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return ['prev_vintage' => null, 'next_vintage' => null];
+    }
+
+    $stmt->bind_param("ii", $vintage, $vintage);
+    if (!@$stmt->execute()) {
+      $stmt->close();
+      return ['prev_vintage' => null, 'next_vintage' => null];
+    }
+    $result = $stmt->get_result();
+    $res = null;
+    if ($result instanceof mysqli_result) {
+      $res = $result->fetch_assoc();
+      $result->free();
+    }
+    $stmt->close();
+    return $res ?: ['prev_vintage' => null, 'next_vintage' => null];
+  } catch (\Throwable $e) {
+    error_log("getAdjacentVintages error: " . $e->getMessage());
     return ['prev_vintage' => null, 'next_vintage' => null];
   }
-
-  $stmt->bind_param("ii", $vintage, $vintage);
-  $stmt->execute();
-  $res = $stmt->get_result()->fetch_assoc();
-  $stmt->close();
-  return $res ?: ['prev_vintage' => null, 'next_vintage' => null];
 }
 
 /* ==========================================================================

@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standardised British English spelling from "aging" to "ageing" across UI strings, setting options, docblocks, and documentation.
 - Harmonised Carte des vins Legend card vertical margin and internal top/bottom spacing with the site-wide card standard.
 
+### Fixed
+- Fixed single vintage report rendering failure on `vintages.php` when clicking on a vintage year:
+  - Guarded against fatal `fetch_assoc() on bool` TypeErrors by verifying `mysqli_result` instances across `getVintageSummary()`, `getVintageRegionStats()`, `getVintageCountryStats()`, `getVintageTopWines()`, and `getAdjacentVintages()`.
+  - Resolved `ONLY_FULL_GROUP_BY` and unindexed `TEXT` column grouping incompatibilities in `view_vintage_region_colour_stats` and fallback query by utilising `MAX(xvr.vintage_desc)` aggregate.
+  - Hardened top wines date formatting in `vintages.php` to verify `DateTimeInterface` objects before calling `date_format()`.
+
 ## [1.1.0] - 2026-09-08
 
 ### Added
