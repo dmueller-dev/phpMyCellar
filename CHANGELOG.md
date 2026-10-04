@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored storage bin popover lists (`.vintage-menu-bins`) to use responsive flex wrapping on mobile viewports (&le; 720px) in `includes/styles.css`, preventing bottle count labels from overshooting card boundaries.
 - Standardised British English spelling from "aging" to "ageing" across UI strings, setting options, docblocks, and documentation.
 - Harmonised Carte des vins Legend card vertical margin and internal top/bottom spacing with the site-wide card standard.
+- Harmonised typography and font sizing on vintage charts and reports (`vintages.php`) with site-wide Georgia serif standards, eliminating sub-12px text, aligning card introductions with site styling, and standardising sidebar rating scale presentation.
 
 ### Fixed
 - Fixed single vintage report rendering failure on `vintages.php` when clicking on a vintage year:

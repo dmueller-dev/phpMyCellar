@@ -632,17 +632,34 @@ ul.submenu li.submenu-header {
   padding-bottom: 15px;
 }
 
+.vintage-nav-btn {
+  display: inline-block;
+  background-color: var(--primary-accent, indianred);
+  color: white !important;
+  text-decoration: none !important;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-family: Georgia, serif;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.vintage-nav-btn:hover {
+  background-color: var(--primary-accent-hover, darkred);
+}
+
 .vintage-grid-decade {
   margin-bottom: 25px;
 }
 
 .vintage-decade-heading {
-  font-size: 16px;
+  font-size: 1.15rem;
+  font-family: Georgia, serif;
   font-weight: bold;
   color: #333;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   padding-bottom: 4px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #ddd;
 }
 
 .vintage-chart-grid {
@@ -674,14 +691,15 @@ ul.submenu li.submenu-header {
 
 .vintage-tile .vintage-year {
   font-size: 18px;
+  font-family: Georgia, serif;
   font-weight: bold;
   color: var(--secondary-accent, firebrick);
   margin-bottom: 4px;
 }
 
 .vintage-tile .vintage-meta {
-  font-size: 11px;
-  color: #64748b;
+  font-size: 13px;
+  color: #555;
   display: flex;
   gap: 6px;
   align-items: center;
@@ -690,10 +708,11 @@ ul.submenu li.submenu-header {
 .vintage-tile .vintage-score-pill {
   background-color: var(--primary-accent, indianred);
   color: white;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
+  line-height: 1.2;
 }
 
 .vintage-tile .vintage-score-pill.vintage-score-pill-na {
@@ -712,7 +731,8 @@ ul.submenu li.submenu-header {
 .vintage-country-table td {
   padding: 6px 4px;
   vertical-align: middle;
-  font-size: 13px;
+  font-size: 14px;
+  font-family: Georgia, serif;
 }
 
 .vintage-bar-wrapper {
@@ -740,13 +760,14 @@ ul.submenu li.submenu-header {
 }
 
 .vintage-region-detail summary {
-  padding: 9px 12px;
+  padding: 10px 14px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
   user-select: none;
-  font-size: 14px;
+  font-size: 15px;
+  font-family: Georgia, serif;
   background-color: #f8fafc;
   transition: background-color 0.2s;
 }
@@ -761,21 +782,23 @@ ul.submenu li.submenu-header {
 }
 
 .vintage-region-plain {
-  padding: 9px 12px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
+  font-size: 15px;
+  font-family: Georgia, serif;
   background-color: #f8fafc;
 }
 
 .vintage-desc-box {
-  padding: 12px 14px;
+  padding: 14px 16px;
   background-color: #fff;
   border-left: 3px solid var(--primary-accent, indianred);
-  font-size: 13px;
-  line-height: 1.5;
-  color: #334155;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-family: Georgia, serif;
+  color: inherit;
 }
 
 .vintage-desc-box p {
@@ -788,24 +811,30 @@ ul.submenu li.submenu-header {
 
 /* Vintage Top Wines List */
 .vintage-top-wine-card {
-  padding: 8px 10px;
+  padding: 10px 8px;
   margin-bottom: 8px;
   border-bottom: 1px solid #f1f5f9;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 10px;
+  gap: 12px;
 }
 
 .vintage-top-wine-card:last-child {
   border-bottom: none;
 }
 
+.vintage-top-wine-meta {
+  font-size: 13px;
+  color: #555;
+  margin-top: 3px;
+}
+
 .vintage-score-badge {
   font-weight: bold;
   color: var(--primary-accent-hover, darkred);
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .vintage-stats-grid {
@@ -825,15 +854,17 @@ ul.submenu li.submenu-header {
 }
 
 .vintage-stat-box .stat-val {
-  font-size: 18px;
+  font-size: 20px;
+  font-family: Georgia, serif;
   font-weight: bold;
   color: var(--secondary-accent, firebrick);
 }
 
 .vintage-stat-box .stat-lbl {
-  font-size: 11px;
-  color: #64748b;
+  font-size: 12px;
+  color: #555;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* --- COMMENT COUNT BADGE STYLES --- */

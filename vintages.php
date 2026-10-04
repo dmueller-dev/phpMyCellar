@@ -60,7 +60,7 @@
 
     <!-- Top Centre Back Button -->
     <div class="vintage-nav-center">
-      <a href="/vintages.php" class="btn-action" style="padding: 8px 18px; font-size: 14px; display: inline-block;">← Back to all vintages</a>
+      <a href="/vintages.php" class="vintage-nav-btn">← Back to all vintages</a>
     </div>
 
     <!-- Main Content Area -->
@@ -68,7 +68,7 @@
       <!-- Vintage Header Card -->
       <div class="card">
         <h3 style="margin-top:0; margin-bottom: 5px;">Vintage report: <?php echo $selected_vintage; ?></h3>
-        <p style="margin-top:0; color: #64748b;"><small>Detailed analysis of published tasting notes for the <?php echo $selected_vintage; ?> vintage.</small></p>
+        <p style="margin-top:0;">Detailed analysis of published tasting notes for the <?php echo $selected_vintage; ?> vintage.</p>
 
         <div class="vintage-stats-grid">
           <div class="vintage-stat-box">
@@ -94,7 +94,7 @@
         </div>
 
         <?php if ($avg_display === null): ?>
-          <p style="margin-top: 15px; margin-bottom: 0; color: #64748b; font-size: 13px;">
+          <p style="margin-top: 15px; margin-bottom: 0;">
             <em>Not enough tasting notes to calculate an average rating (at least 5 <b>rated</b> tasting notes required<?php echo ((int)$vintage_summary['rated_notes_count'] > 0) ? ', currently ' . (int)$vintage_summary['rated_notes_count'] : ''; ?>).</em>
           </p>
         <?php endif; ?>
@@ -103,7 +103,7 @@
       <!-- Regional Averages & Expandable Descriptions -->
       <div class="card">
         <h3 style="margin-top:0;">Average ratings by country &amp; region</h3>
-        <p style="margin-top:0; margin-bottom:15px;"><small>Average points (out of <?php echo $max_score; ?>, to one decimal place). Click on an entry to reveal vintage descriptions where available.</small></p>
+        <p style="margin-top:0; margin-bottom:15px;">Average points (out of <?php echo $max_score; ?>, to one decimal place). Click on an entry to reveal vintage descriptions where available.</p>
 
         <?php if (empty($region_stats)): ?>
           <p><i>No regional statistics available for this vintage.</i></p>
@@ -122,8 +122,8 @@
                   <summary>
                     <div>
                       <strong><?php echo $label; ?></strong>
-                      <small style="color: #64748b; margin-left: 6px;">(<?php echo $count_label; ?>)</small>
-                      <span style="font-size: 11px; color: indianred; margin-left: 6px;">📖 details</span>
+                      <span style="color: #666; font-size: 0.9em; margin-left: 6px;">(<?php echo $count_label; ?>)</span>
+                      <span style="font-size: 0.85em; color: var(--primary-accent, indianred); margin-left: 6px;">📖 details</span>
                     </div>
                     <div class="vintage-score-badge"><?php echo $avg; ?> / <?php echo $max_score; ?></div>
                   </summary>
@@ -135,7 +135,7 @@
                 <div class="vintage-region-plain">
                   <div>
                     <strong><?php echo $label; ?></strong>
-                    <small style="color: #64748b; margin-left: 6px;">(<?php echo $count_label; ?>)</small>
+                    <span style="color: #666; font-size: 0.9em; margin-left: 6px;">(<?php echo $count_label; ?>)</span>
                   </div>
                   <div class="vintage-score-badge"><?php echo $avg; ?> / <?php echo $max_score; ?></div>
                 </div>
@@ -148,7 +148,7 @@
       <!-- Top Wines of Vintage -->
       <div class="card">
         <h3 style="margin-top:0;">Top wines of the <?php echo $selected_vintage; ?> vintage</h3>
-        <p style="margin-top:0; margin-bottom:15px;"><small>Ranked from best to worst. Showing wines rated <?php echo $threshold; ?> and higher.</small></p>
+        <p style="margin-top:0; margin-bottom:15px;">Ranked from best to worst. Showing wines rated <?php echo $threshold; ?> and higher.</p>
 
         <?php if (empty($top_wines)): ?>
           <p><i>No wines rated <?php echo $threshold; ?> or higher for this vintage.</i></p>
@@ -169,10 +169,10 @@
                     <?php echo htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8'); ?>
                   </a>
                   <?php echo $fav_icon; ?>
-                  <div style="font-size: 12px; color: #64748b; margin-top: 3px;">
+                  <div class="vintage-top-wine-meta">
                     <?php echo htmlspecialchars($wine['region'] . ', ' . $wine['country'], ENT_QUOTES, 'UTF-8'); ?>
                     <?php if (!empty($wine['grape'])): ?> &bull; <?php echo htmlspecialchars($wine['grape'], ENT_QUOTES, 'UTF-8'); ?><?php endif; ?>
-                    <?php if (!empty($tasted_date)): ?> &bull; <small>Tasted <?php echo $tasted_date; ?></small><?php endif; ?>
+                    <?php if (!empty($tasted_date)): ?> &bull; Tasted <?php echo $tasted_date; ?><?php endif; ?>
                   </div>
                 </div>
                 <div style="text-align: right; min-width: 90px;">
@@ -190,7 +190,7 @@
       <!-- % of Notes per Country -->
       <div class="card">
         <h3 style="margin-top:0;">Tasting notes by country</h3>
-        <p style="margin-top:0; margin-bottom:10px;"><small>Distribution of published notes across countries for <?php echo $selected_vintage; ?>.</small></p>
+        <p style="margin-top:0; margin-bottom:10px;">Distribution of published notes across countries for <?php echo $selected_vintage; ?>.</p>
 
         <?php if (empty($country_stats)): ?>
           <p><i>No country data available.</i></p>
@@ -206,9 +206,9 @@
                     <div class="vintage-bar-fill" style="width: <?php echo min(100, max(5, (float)$c['country_percentage'])); ?>%;"></div>
                   </div>
                 </td>
-                <td style="width: 20%; text-align: right; font-size: 12px; color: #475569;">
+                <td style="width: 20%; text-align: right; color: #475569;">
                   <strong><?php echo number_format((float)$c['country_percentage'], 1); ?>%</strong>
-                  <br><small style="color: #94a3b8;"><?php echo $c['country_notes_count']; ?> note<?php echo $c['country_notes_count'] > 1 ? 's' : ''; ?></small>
+                  <br><span style="font-size: 12px; color: #666;"><?php echo $c['country_notes_count']; ?> note<?php echo $c['country_notes_count'] > 1 ? 's' : ''; ?></span>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -223,21 +223,21 @@
           <?php if (!empty($adjacent['prev_vintage'])): ?>
             <a class="filter-nav" href="/vintages.php?vintage=<?php echo (int)$adjacent['prev_vintage']; ?>">← <?php echo (int)$adjacent['prev_vintage']; ?></a>
           <?php else: ?>
-            <span style="color:#94a3b8; font-size:small;">← Older</span>
+            <span style="color:#777; font-size: 14px;">← Older</span>
           <?php endif; ?>
 
-          <span style="font-weight:bold; font-size: 16px;"><?php echo $selected_vintage; ?></span>
+          <span style="font-weight:bold; font-size: 18px;"><?php echo $selected_vintage; ?></span>
 
           <?php if (!empty($adjacent['next_vintage'])): ?>
             <a class="filter-nav" href="/vintages.php?vintage=<?php echo (int)$adjacent['next_vintage']; ?>"><?php echo (int)$adjacent['next_vintage']; ?> →</a>
           <?php else: ?>
-            <span style="color:#94a3b8; font-size:small;">Newer →</span>
+            <span style="color:#777; font-size: 14px;">Newer →</span>
           <?php endif; ?>
         </div>
 
         <div style="margin-top: 10px;">
-          <label for="vintageSelect" style="font-size: small; display:block; margin-bottom: 5px;">Jump to vintage:</label>
-          <select id="vintageSelect" onchange="if(this.value) window.location.href='/vintages.php?vintage=' + this.value;" style="width: 100%; padding: 5px; font-family: Georgia, serif;">
+          <label for="vintageSelect" style="display:block; margin-bottom: 5px;">Jump to vintage:</label>
+          <select id="vintageSelect" onchange="if(this.value) window.location.href='/vintages.php?vintage=' + this.value;" style="width: 100%; padding: 6px; font-family: Georgia, serif; font-size: 14px;">
             <option value="">-- Select a vintage --</option>
             <?php foreach ($all_vintages_list as $v_item): ?>
               <?php $v_item_avg = $v_item['avg_score'] ?? $v_item['avg_dmpts'] ?? null; ?>
@@ -253,61 +253,61 @@
       <div class="card">
         <h3 style="margin-top:0;">My rating scale</h3>
         <?php if ($active_scale === '100-point'): ?>
-          <p style="font-size: small; line-height: 1.4;">
+          <p>
             Wines are evaluated using the 100-point scale:
           </p>
-          <ul style="font-size: small; padding-left: 18px; margin: 0;">
-            <li><b>98-100</b>: extraordinary / classic</li>
-            <li><b>95-97</b>: extraordinary</li>
-            <li><b>90-94</b>: outstanding</li>
-            <li><b>85-89</b>: very good</li>
-            <li><b>80-84</b>: good</li>
-            <li><b>75-79</b>: acceptable / mediocre</li>
-            <li><b>70-74</b>: below average</li>
-            <li><b>&lt; 70</b>: poor / faulty</li>
-          </ul>
+          <table>
+            <tr><td style="width:70px">98-100</td><td>extraordinary / classic</td></tr>
+            <tr><td>95-97</td><td>extraordinary</td></tr>
+            <tr><td>90-94</td><td>outstanding</td></tr>
+            <tr><td>85-89</td><td>very good</td></tr>
+            <tr><td>80-84</td><td>good</td></tr>
+            <tr><td>75-79</td><td>acceptable / mediocre</td></tr>
+            <tr><td>70-74</td><td>below average</td></tr>
+            <tr><td>&lt; 70</td><td>poor / faulty</td></tr>
+          </table>
         <?php else: ?>
-          <p style="font-size: small; line-height: 1.4;">
+          <p>
             Wines are evaluated using the 20-point scale:
           </p>
-          <ul style="font-size: small; padding-left: 18px; margin: 0;">
-            <li><b>20</b>: one-of-a-kind</li>
-            <li><b>17-19</b>: grand vin</li>
-            <li><b>13-16</b>: excellent</li>
-            <li><b>9-12</b>: very good</li>
-            <li><b>5-8</b>: good</li>
-            <li><b>3-4</b>: passable</li>
-            <li><b>1-2</b>: subpar</li>
-            <li><b>0</b>: poor</li>
-          </ul>
+          <table>
+            <tr><td style="width:70px">20</td><td>one-of-a-kind</td></tr>
+            <tr><td>17-19</td><td>grand vin</td></tr>
+            <tr><td>13-16</td><td>excellent</td></tr>
+            <tr><td>9-12</td><td>very good</td></tr>
+            <tr><td>5-8</td><td>good</td></tr>
+            <tr><td>3-4</td><td>passable</td></tr>
+            <tr><td>1-2</td><td>subpar</td></tr>
+            <tr><td>0</td><td>poor</td></tr>
+          </table>
         <?php endif; ?>
-        <p style="margin-top:10px;"><small><a href="/blog.php">Explore tasting notes &amp; stories &rarr;</a></small></p>
+        <p style="margin-top:10px;"><a href="/blog.php">Explore tasting notes &amp; stories &rarr;</a></p>
       </div>
     </div>
 
     <!-- Bottom Centre Back Button -->
     <div class="vintage-nav-center bottom">
-      <a href="/vintages.php" class="btn-action" style="padding: 8px 18px; font-size: 14px; display: inline-block;">← Back to all vintages</a>
+      <a href="/vintages.php" class="vintage-nav-btn">← Back to all vintages</a>
     </div>
 
   <?php elseif ($vintage_error): ?>
     <!-- Error State for Invalid Vintage -->
     <div class="column main" style="width: 100%;">
       <div class="vintage-nav-center">
-        <a href="/vintages.php" class="btn-action" style="padding: 8px 18px; font-size: 14px; display: inline-block;">← Back to all vintages</a>
+        <a href="/vintages.php" class="vintage-nav-btn">← Back to all vintages</a>
       </div>
 
       <div class="card" style="text-align:center; padding: 40px 20px;">
         <h3 style="color: darkred; margin-top:0;">Vintage Not Found</h3>
         <p><?php echo htmlspecialchars($vintage_error, ENT_QUOTES, 'UTF-8'); ?></p>
-        <p><small>Please select an available vintage from the chart overview.</small></p>
+        <p>Please select an available vintage from the chart overview.</p>
         <div style="margin-top: 20px;">
-          <a href="/vintages.php" class="btn-action" style="padding: 8px 18px; font-size: 14px; display: inline-block;">View Vintage Chart</a>
+          <a href="/vintages.php" class="vintage-nav-btn">View Vintage Chart</a>
         </div>
       </div>
 
       <div class="vintage-nav-center bottom">
-        <a href="/vintages.php" class="btn-action" style="padding: 8px 18px; font-size: 14px; display: inline-block;">← Back to all vintages</a>
+        <a href="/vintages.php" class="vintage-nav-btn">← Back to all vintages</a>
       </div>
     </div>
 
@@ -364,7 +364,7 @@
     <div class="column main">
       <div class="card">
         <h3 style="margin-top:0; margin-bottom:5px;">Vintage chart &amp; reports</h3>
-        <p style="margin-top:0; color:#475569;"><small>Explore wines by vintage year. Click any vintage to view regional performance, top rated wines, and country breakdowns.</small></p>
+        <p style="margin-top:0;">Explore wines by vintage year. Click any vintage to view regional performance, top rated wines, and country breakdowns.</p>
       </div>
 
       <?php if (empty($all_vintages)): ?>
@@ -388,7 +388,7 @@
                   <a href="/vintages.php?vintage=<?php echo $v_year; ?>" class="vintage-tile" title="<?php echo ($v_avg !== null) ? 'View ' . $v_year . ' vintage report (avg ' . $v_avg . ')' : 'View ' . $v_year . ' vintage report (not enough tasting notes to calculate an average)'; ?>">
                     <span class="vintage-year"><?php echo $v_year; ?></span>
                     <span class="vintage-meta">
-                      <small><?php echo $v_count; ?> note<?php echo $v_count > 1 ? 's' : ''; ?></small>
+                      <span><?php echo $v_count; ?> note<?php echo $v_count > 1 ? 's' : ''; ?></span>
                       <?php if ($v_avg !== null): ?>
                         <span class="vintage-score-pill"><?php echo $v_avg; ?></span>
                       <?php else: ?>
@@ -426,7 +426,7 @@
         </div>
 
         <?php if ($highest_vintage): ?>
-          <p style="font-size:small; margin-top:15px;">
+          <p style="margin-top:15px;">
             Top performing vintage (min. 5 notes): <a href="/vintages.php?vintage=<?php echo $highest_vintage; ?>"><b><?php echo $highest_vintage; ?></b></a> (avg <?php echo number_format($highest_vintage_score, 1); ?> / <?php echo $max_score; ?>).
           </p>
         <?php endif; ?>
@@ -434,8 +434,8 @@
 
       <div class="card">
         <h3 style="margin-top:0;">Direct vintage lookup</h3>
-        <p style="font-size:small;">Select a vintage to jump directly to its report:</p>
-        <select onchange="if(this.value) window.location.href='/vintages.php?vintage=' + this.value;" style="width: 100%; padding: 6px; font-family: Georgia, serif;">
+        <p>Select a vintage to jump directly to its report:</p>
+        <select onchange="if(this.value) window.location.href='/vintages.php?vintage=' + this.value;" style="width: 100%; padding: 6px; font-family: Georgia, serif; font-size: 14px;">
           <option value="">-- Choose a vintage --</option>
           <?php foreach ($all_vintages as $v_item): ?>
             <?php $v_item_avg = $v_item['avg_score'] ?? $v_item['avg_dmpts'] ?? null; ?>
@@ -451,7 +451,7 @@
           <?php 
             echo getStaticPageContent(
               'vintages_sidebar',
-              '<h3 style="margin-top:0;">About vintage reports</h3><p style="font-size:small; line-height:1.4;">Vintage scores reflect my personal tasting notes on the wines reviewed. They are updated dynamically as new tasting notes are posted.</p><p style="font-size:small;"><a href="/tnotes.php">Browse all tasting notes &rarr;</a></p>'
+              '<h3 style="margin-top:0;">About vintage reports</h3><p>Vintage scores reflect my personal tasting notes on the wines reviewed. They are updated dynamically as new tasting notes are posted.</p><p><a href="/tnotes.php">Browse all tasting notes &rarr;</a></p>'
             ); 
           ?>
         </aside>
