@@ -38,6 +38,12 @@
       $note_id = filter_input(INPUT_POST, 'note_id', FILTER_VALIDATE_INT);
       $restricted = filter_input(INPUT_POST, 'restricted', FILTER_VALIDATE_INT) ?? 0;
       $errors = validateBottleInput($bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted);
+      if ($bin_id && $status === 'in cellar') {
+        $capCheck = checkStorageBinCapacity($conn, $bin_id, 1, $bottle_id);
+        if (!$capCheck['allowed']) {
+          $errors[] = $capCheck['error'];
+        }
+      }
       if (empty($errors)) {
         // Start transaction
         $conn->begin_transaction();
@@ -249,8 +255,18 @@
             <select name="bin_id" id="bin_id">
               <option value="" selected>Select a storage location</option>
               <?php foreach ($storageLocations as $storageLocation): ?>
-                <option value="<?php echo $storageLocation['bin_id']; ?>" <?php echo ($storageLocation['bin_id'] == $selected_bottle['storage_location']) ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($storageLocation['cellar_name'], ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($storageLocation['bin_name'], ENT_QUOTES, 'UTF-8'); ?>
+                <?php
+                  $capText = '';
+                  if (!empty($storageLocation['max_capacity'])) {
+                    $isFull = ((int)$storageLocation['current_bottles'] >= (int)$storageLocation['max_capacity']);
+                    $capText = ' (' . (int)$storageLocation['current_bottles'] . ' / ' . (int)$storageLocation['max_capacity'] . ' btls' . ($isFull ? ' — Full' : '') . ')';
+                  } elseif (isset($storageLocation['current_bottles']) && (int)$storageLocation['current_bottles'] > 0) {
+                    $capText = ' (' . (int)$storageLocation['current_bottles'] . ' btls)';
+                  }
+                  $isSelected = ($selected_bottle && $storageLocation['bin_id'] == $selected_bottle['storage_location']) || ($bin_id && $storageLocation['bin_id'] == $bin_id);
+                ?>
+                <option value="<?php echo $storageLocation['bin_id']; ?>" <?php echo $isSelected ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($storageLocation['cellar_name'] . ": " . $storageLocation['bin_name'] . $capText, ENT_QUOTES, 'UTF-8'); ?>
                 </option>
               <?php endforeach; ?>
             </select>

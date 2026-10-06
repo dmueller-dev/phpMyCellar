@@ -471,16 +471,54 @@ function getStores($conn) {
   }
 }
 
-// Function to get storage locations
+/**
+ * Check whether the 'max_capacity' column exists in table 'storageBins'.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return bool True if column exists, false otherwise.
+ */
+function hasStorageBinsMaxCapacityColumn($conn): bool {
+  static $exists = null;
+  if ($exists !== null) {
+    return $exists;
+  }
+  if (!($conn instanceof mysqli)) {
+    return false;
+  }
+  try {
+    $check = $conn->query("SHOW COLUMNS FROM `storageBins` LIKE 'max_capacity'");
+    $exists = ($check && $check->num_rows > 0);
+    if ($check) {
+      $check->free();
+    }
+  } catch (Throwable $e) {
+    $exists = false;
+  }
+  return (bool)$exists;
+}
+
+/**
+ * Retrieve all storage locations with cellar details, maximum capacity, and active bottle counts.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of storage bins with bin_id, bin_name, cellar_id, cellar_name, max_capacity, and current_bottles.
+ * @throws Exception If database query execution fails.
+ */
 function getStorageLocations($conn) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
   }
 
-  $sql = "select storageBins.bin_id, storageBins.bin_name, cellars.cellar_name
-    from storageBins
-    left join cellars on storageBins.cellar_id=cellars.cellar_id
-    order by cellars.cellar_name asc, storageBins.bin_name asc";
+  $hasCapacity = hasStorageBinsMaxCapacityColumn($conn);
+  $capacitySelect = $hasCapacity ? "storageBins.max_capacity," : "NULL AS max_capacity,";
+
+  $sql = "SELECT storageBins.bin_id, storageBins.bin_name, storageBins.cellar_id, " . $capacitySelect . " cellars.cellar_name,
+            COUNT(CASE WHEN bottles.status = 'in cellar' THEN 1 END) AS current_bottles
+          FROM storageBins
+          LEFT JOIN cellars ON storageBins.cellar_id = cellars.cellar_id
+          LEFT JOIN bottles ON storageBins.bin_id = bottles.storage_location
+          GROUP BY storageBins.bin_id, storageBins.bin_name, storageBins.cellar_id, " . ($hasCapacity ? "storageBins.max_capacity, " : "") . "cellars.cellar_name
+          ORDER BY cellars.cellar_name ASC, storageBins.bin_name ASC";
   $result = $conn->query($sql);
 
   if ($result === false) {
@@ -4768,5 +4806,380 @@ function generateBlogJsonLd($blogpost, $canonical_url, $image_url = null) {
   return $data;
 }
 
+/**
+ * Check whether assigning bottles to a storage bin would exceed its maximum capacity.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int|null $bin_id Target storage bin identifier.
+ * @param int $bottle_count Number of bottles to be assigned (default: 1).
+ * @param int|null $exclude_bottle_id Bottle ID to exclude (e.g. when editing existing bottle).
+ * @return array Associative array with 'allowed' (bool), 'bin_name', 'max_capacity', 'current_occupancy', 'available', and 'error' message if disallowed.
+ */
+function checkStorageBinCapacity($conn, $bin_id, $bottle_count = 1, $exclude_bottle_id = null): array {
+  if (empty($bin_id) || !is_numeric($bin_id)) {
+    return [
+      'allowed' => true,
+      'bin_name' => '',
+      'max_capacity' => null,
+      'current_occupancy' => 0,
+      'available' => null,
+      'error' => null
+    ];
+  }
 
+  $bin_id = (int)$bin_id;
+  $bottle_count = max(1, (int)$bottle_count);
 
+  if (!($conn instanceof mysqli) || !hasStorageBinsMaxCapacityColumn($conn)) {
+    return [
+      'allowed' => true,
+      'bin_name' => '',
+      'max_capacity' => null,
+      'current_occupancy' => 0,
+      'available' => null,
+      'error' => null
+    ];
+  }
+
+  $stmt = $conn->prepare("SELECT bin_name, max_capacity FROM storageBins WHERE bin_id = ?");
+  if (!$stmt) {
+    return [
+      'allowed' => true,
+      'bin_name' => '',
+      'max_capacity' => null,
+      'current_occupancy' => 0,
+      'available' => null,
+      'error' => null
+    ];
+  }
+  $stmt->bind_param("i", $bin_id);
+  $stmt->execute();
+  $stmt->bind_result($bin_name, $max_capacity);
+  if (!$stmt->fetch() || $max_capacity === null) {
+    $stmt->close();
+    return [
+      'allowed' => true,
+      'bin_name' => $bin_name ?? '',
+      'max_capacity' => null,
+      'current_occupancy' => 0,
+      'available' => null,
+      'error' => null
+    ];
+  }
+  $stmt->close();
+
+  $max_capacity = (int)$max_capacity;
+
+  if ($exclude_bottle_id && is_numeric($exclude_bottle_id)) {
+    $stmt_cnt = $conn->prepare("SELECT COUNT(*) FROM bottles WHERE storage_location = ? AND status = 'in cellar' AND bottle_id != ?");
+    $ex_id = (int)$exclude_bottle_id;
+    $stmt_cnt->bind_param("ii", $bin_id, $ex_id);
+  } else {
+    $stmt_cnt = $conn->prepare("SELECT COUNT(*) FROM bottles WHERE storage_location = ? AND status = 'in cellar'");
+    $stmt_cnt->bind_param("i", $bin_id);
+  }
+
+  if (!$stmt_cnt) {
+    return [
+      'allowed' => true,
+      'bin_name' => $bin_name,
+      'max_capacity' => $max_capacity,
+      'current_occupancy' => 0,
+      'available' => $max_capacity,
+      'error' => null
+    ];
+  }
+
+  $stmt_cnt->execute();
+  $stmt_cnt->bind_result($current_count);
+  $stmt_cnt->fetch();
+  $stmt_cnt->close();
+
+  $current_count = (int)$current_count;
+  $available = max(0, $max_capacity - $current_count);
+
+  if (($current_count + $bottle_count) > $max_capacity) {
+    return [
+      'allowed' => false,
+      'bin_name' => $bin_name,
+      'max_capacity' => $max_capacity,
+      'current_occupancy' => $current_count,
+      'available' => $available,
+      'error' => sprintf(
+        "Storage bin '%s' cannot accommodate %d bottle%s. Current occupancy: %d / %d (remaining capacity: %d).",
+        $bin_name,
+        $bottle_count,
+        ($bottle_count === 1 ? '' : 's'),
+        $current_count,
+        $max_capacity,
+        $available
+      )
+    ];
+  }
+
+  return [
+    'allowed' => true,
+    'bin_name' => $bin_name,
+    'max_capacity' => $max_capacity,
+    'current_occupancy' => $current_count,
+    'available' => $available,
+    'error' => null
+  ];
+}
+
+/**
+ * Retrieve all cellars ordered alphabetically by name.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of cellars.
+ * @throws Exception If database query fails.
+ */
+function getCellars($conn): array {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection");
+  }
+
+  $sql = "SELECT cellar_id, cellar_name, owner FROM cellars ORDER BY cellar_name ASC";
+  $res = $conn->query($sql);
+  if (!$res) {
+    throw new Exception("Failed to query cellars: " . $conn->error);
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Insert a new cellar into the cellars table.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $cellar_name Name of the cellar (up to 50 characters).
+ * @param int $owner_id User ID of the cellar owner.
+ * @return int|bool Inserted cellar_id on success, false on failure.
+ */
+function insertCellar($conn, $cellar_name, $owner_id) {
+  if (!($conn instanceof mysqli) || empty($cellar_name)) {
+    return false;
+  }
+
+  $cellar_name = trim($cellar_name);
+  $owner_id = (int)$owner_id;
+
+  $stmt = $conn->prepare("INSERT INTO cellars (cellar_name, owner) VALUES (?, ?)");
+  if (!$stmt) {
+    return false;
+  }
+  $stmt->bind_param("si", $cellar_name, $owner_id);
+  $res = $stmt->execute();
+  $insert_id = $stmt->insert_id;
+  $stmt->close();
+
+  return $res ? $insert_id : false;
+}
+
+/**
+ * Retrieve full details for a single storage bin, including current occupancy.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $bin_id Storage bin identifier.
+ * @return array|null Associative array of bin details or null if not found.
+ */
+function getStorageBinDetails($conn, $bin_id): ?array {
+  if (!($conn instanceof mysqli) || empty($bin_id) || !is_numeric($bin_id)) {
+    return null;
+  }
+
+  $bin_id = (int)$bin_id;
+  $hasCapacity = hasStorageBinsMaxCapacityColumn($conn);
+  $capSelect = $hasCapacity ? "sb.max_capacity," : "NULL AS max_capacity,";
+
+  $sql = "SELECT sb.bin_id, sb.bin_name, sb.cellar_id, " . $capSelect . " c.cellar_name,
+            COUNT(CASE WHEN b.status = 'in cellar' THEN 1 END) AS current_bottles
+          FROM storageBins sb
+          LEFT JOIN cellars c ON sb.cellar_id = c.cellar_id
+          LEFT JOIN bottles b ON sb.bin_id = b.storage_location
+          WHERE sb.bin_id = ?
+          GROUP BY sb.bin_id, sb.bin_name, sb.cellar_id, " . ($hasCapacity ? "sb.max_capacity, " : "") . "c.cellar_name";
+
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
+  $stmt->bind_param("i", $bin_id);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $row = $res ? $res->fetch_assoc() : null;
+  $stmt->close();
+
+  return $row;
+}
+
+/**
+ * Insert a new storage bin.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $bin_name Bin name (up to 10 characters).
+ * @param int $cellar_id Cellar identifier.
+ * @param int|null $max_capacity Maximum capacity (or null for unconstrained).
+ * @return int|bool Inserted bin_id on success, false on failure.
+ */
+function insertStorageBin($conn, $bin_name, $cellar_id, $max_capacity = null) {
+  if (!($conn instanceof mysqli) || empty($bin_name) || empty($cellar_id)) {
+    return false;
+  }
+
+  $bin_name = trim($bin_name);
+  $cellar_id = (int)$cellar_id;
+  $max_capacity = ($max_capacity !== null && $max_capacity !== '' && is_numeric($max_capacity) && (int)$max_capacity > 0) ? (int)$max_capacity : null;
+
+  if (hasStorageBinsMaxCapacityColumn($conn)) {
+    $stmt = $conn->prepare("INSERT INTO storageBins (bin_name, cellar_id, max_capacity) VALUES (?, ?, ?)");
+    if (!$stmt) {
+      return false;
+    }
+    $stmt->bind_param("sii", $bin_name, $cellar_id, $max_capacity);
+  } else {
+    $stmt = $conn->prepare("INSERT INTO storageBins (bin_name, cellar_id) VALUES (?, ?)");
+    if (!$stmt) {
+      return false;
+    }
+    $stmt->bind_param("si", $bin_name, $cellar_id);
+  }
+
+  $res = $stmt->execute();
+  $insert_id = $stmt->insert_id;
+  $stmt->close();
+
+  return $res ? $insert_id : false;
+}
+
+/**
+ * Update an existing storage bin.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $bin_id Storage bin identifier.
+ * @param string $bin_name Bin name (up to 10 characters).
+ * @param int $cellar_id Cellar identifier.
+ * @param int|null $max_capacity Maximum capacity (or null for unconstrained).
+ * @return bool True on success, false on failure.
+ */
+function updateStorageBin($conn, $bin_id, $bin_name, $cellar_id, $max_capacity = null): bool {
+  if (!($conn instanceof mysqli) || empty($bin_id) || empty($bin_name) || empty($cellar_id)) {
+    return false;
+  }
+
+  $bin_id = (int)$bin_id;
+  $bin_name = trim($bin_name);
+  $cellar_id = (int)$cellar_id;
+  $max_capacity = ($max_capacity !== null && $max_capacity !== '' && is_numeric($max_capacity) && (int)$max_capacity > 0) ? (int)$max_capacity : null;
+
+  if (hasStorageBinsMaxCapacityColumn($conn)) {
+    $stmt = $conn->prepare("UPDATE storageBins SET bin_name = ?, cellar_id = ?, max_capacity = ? WHERE bin_id = ?");
+    if (!$stmt) {
+      return false;
+    }
+    $stmt->bind_param("siii", $bin_name, $cellar_id, $max_capacity, $bin_id);
+  } else {
+    $stmt = $conn->prepare("UPDATE storageBins SET bin_name = ?, cellar_id = ? WHERE bin_id = ?");
+    if (!$stmt) {
+      return false;
+    }
+    $stmt->bind_param("sii", $bin_name, $cellar_id, $bin_id);
+  }
+
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Delete a storage bin if no bottles are currently assigned to it.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $bin_id Storage bin identifier.
+ * @return bool True on success.
+ * @throws Exception If bottles are currently stored in the bin or query fails.
+ */
+function deleteStorageBin($conn, $bin_id): bool {
+  if (!($conn instanceof mysqli) || empty($bin_id)) {
+    throw new Exception("Invalid database connection or bin ID");
+  }
+
+  $bin_id = (int)$bin_id;
+
+  // Check if any bottles reference this bin
+  $chk = $conn->prepare("SELECT COUNT(*) FROM bottles WHERE storage_location = ?");
+  if (!$chk) {
+    throw new Exception("Failed to check bottle references: " . $conn->error);
+  }
+  $chk->bind_param("i", $bin_id);
+  $chk->execute();
+  $chk->bind_result($btl_count);
+  $chk->fetch();
+  $chk->close();
+
+  if ($btl_count > 0) {
+    throw new Exception(sprintf("Cannot delete storage bin: %d bottle%s currently assigned to this location.", $btl_count, ($btl_count === 1 ? ' is' : 's are')));
+  }
+
+  $stmt = $conn->prepare("DELETE FROM storageBins WHERE bin_id = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare delete statement: " . $conn->error);
+  }
+  $stmt->bind_param("i", $bin_id);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all storage bins grouped with cellar details, occupancy stats, and usage percentage.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of storage bins with calculated statistics.
+ */
+function getStorageBinsWithStats($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $hasCapacity = hasStorageBinsMaxCapacityColumn($conn);
+  $capSelect = $hasCapacity ? "sb.max_capacity," : "NULL AS max_capacity,";
+
+  $sql = "SELECT 
+            sb.bin_id, 
+            sb.bin_name, 
+            sb.cellar_id, 
+            " . $capSelect . "
+            COALESCE(c.cellar_name, 'Unassigned Cellar') AS cellar_name,
+            COUNT(CASE WHEN b.status = 'in cellar' THEN 1 END) AS current_bottles
+          FROM storageBins sb
+          LEFT JOIN cellars c ON sb.cellar_id = c.cellar_id
+          LEFT JOIN bottles b ON sb.bin_id = b.storage_location
+          GROUP BY sb.bin_id, sb.bin_name, sb.cellar_id, " . ($hasCapacity ? "sb.max_capacity, " : "") . "c.cellar_name
+          ORDER BY c.cellar_name ASC, sb.bin_name ASC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  $rows = method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+  $enriched = [];
+
+  foreach ($rows as $row) {
+    $btls = (int)$row['current_bottles'];
+    $maxCap = ($row['max_capacity'] !== null) ? (int)$row['max_capacity'] : null;
+    $pct = ($maxCap !== null && $maxCap > 0) ? round(($btls / $maxCap) * 100) : null;
+
+    $row['current_bottles'] = $btls;
+    $row['max_capacity'] = $maxCap;
+    $row['usage_pct'] = $pct;
+    $row['is_full'] = ($maxCap !== null && $btls >= $maxCap);
+    $row['available'] = ($maxCap !== null) ? max(0, $maxCap - $btls) : null;
+    $enriched[] = $row;
+  }
+
+  return $enriched;
+}

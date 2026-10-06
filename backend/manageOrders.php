@@ -74,6 +74,27 @@
         $pending_bottles = getPendingOrderBottles($conn, $order_id);
         $pending_bottle_ids = array_column($pending_bottles, 'bottle_id');
 
+        // Pre-validate all bin assignments and enforce maximum capacities
+        $bin_counts = [];
+        foreach ($bin_ids as $btl_id => $bin_id) {
+          $btl_id = (int)$btl_id;
+          $bin_id = empty($bin_id) ? null : (int)$bin_id;
+          if (!in_array($btl_id, $pending_bottle_ids)) {
+            continue;
+          }
+          if ($bin_id === null || $bin_id <= 0) {
+            throw new Exception("Please assign a storage location for all bottles before accepting delivery.");
+          }
+          $bin_counts[$bin_id] = ($bin_counts[$bin_id] ?? 0) + 1;
+        }
+
+        foreach ($bin_counts as $b_id => $qty) {
+          $capCheck = checkStorageBinCapacity($conn, $b_id, $qty);
+          if (!$capCheck['allowed']) {
+            throw new Exception($capCheck['error']);
+          }
+        }
+
         // Prepare statements for bulk updating
         $up_bottle_sql = "UPDATE bottles SET storage_location = ?, arrival_date = ?, drink_from = ?, drink_through = ?, status = 'in cellar' WHERE bottle_id = ? AND order_id = ?";
         $stmt_up = $conn->prepare($up_bottle_sql);
@@ -525,8 +546,17 @@
                             <select id="bulk_location_order_<?php echo $order_id; ?>" style="flex: 1; padding: 6px; font-family: Georgia, serif; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
                               <option value="">-- Choose Bin --</option>
                               <?php foreach ($storage_locations as $bin): ?>
+                                <?php
+                                  $capText = '';
+                                  if (!empty($bin['max_capacity'])) {
+                                    $isFull = ((int)$bin['current_bottles'] >= (int)$bin['max_capacity']);
+                                    $capText = ' (' . (int)$bin['current_bottles'] . ' / ' . (int)$bin['max_capacity'] . ' btls' . ($isFull ? ' — Full' : '') . ')';
+                                  } elseif (isset($bin['current_bottles']) && (int)$bin['current_bottles'] > 0) {
+                                    $capText = ' (' . (int)$bin['current_bottles'] . ' btls)';
+                                  }
+                                ?>
                                 <option value="<?php echo $bin['bin_id']; ?>">
-                                  <?php echo htmlspecialchars($bin['cellar_name'] . " / " . $bin['bin_name'], ENT_QUOTES, 'UTF-8'); ?>
+                                  <?php echo htmlspecialchars($bin['cellar_name'] . " / " . $bin['bin_name'] . $capText, ENT_QUOTES, 'UTF-8'); ?>
                                 </option>
                               <?php endforeach; ?>
                             </select>
@@ -549,8 +579,17 @@
                                 <select name="bin_id[<?php echo $btl['bottle_id']; ?>]" required style="width: 100%; padding: 4px; font-size: xs-small; font-family: Georgia, serif; border: 1px solid #ccc; border-radius: 4px;">
                                   <option value="">-- Select Storage Location --</option>
                                   <?php foreach ($storage_locations as $bin): ?>
+                                    <?php
+                                      $capText = '';
+                                      if (!empty($bin['max_capacity'])) {
+                                        $isFull = ((int)$bin['current_bottles'] >= (int)$bin['max_capacity']);
+                                        $capText = ' (' . (int)$bin['current_bottles'] . ' / ' . (int)$bin['max_capacity'] . ' btls' . ($isFull ? ' — Full' : '') . ')';
+                                      } elseif (isset($bin['current_bottles']) && (int)$bin['current_bottles'] > 0) {
+                                        $capText = ' (' . (int)$bin['current_bottles'] . ' btls)';
+                                      }
+                                    ?>
                                     <option value="<?php echo $bin['bin_id']; ?>">
-                                      <?php echo htmlspecialchars($bin['cellar_name'] . " / " . $bin['bin_name'], ENT_QUOTES, 'UTF-8'); ?>
+                                      <?php echo htmlspecialchars($bin['cellar_name'] . " / " . $bin['bin_name'] . $capText, ENT_QUOTES, 'UTF-8'); ?>
                                     </option>
                                   <?php endforeach; ?>
                                 </select>

@@ -231,7 +231,7 @@
     <div class="admin-domains-grid">
 
       <!-- Cellar & Inventory Management -->
-      <?php if (hasPrivilege($conn, 'browse_bottles') || hasPrivilege($conn, 'add_bottle') || hasPrivilege($conn, 'edit_bottle') || hasPrivilege($conn, 'add_order') || hasPrivilege($conn, 'manage_orders')): ?>
+      <?php if (hasPrivilege($conn, 'browse_bottles') || hasPrivilege($conn, 'add_bottle') || hasPrivilege($conn, 'edit_bottle') || hasPrivilege($conn, 'add_order') || hasPrivilege($conn, 'manage_orders') || hasPrivilege($conn, 'manage_storage_bins')): ?>
         <div class="admin-domain-card">
           <h3><span>&#127870;</span> Cellar &amp; Inventory</h3>
           <ul class="admin-domain-links">
@@ -239,6 +239,12 @@
               <li>
                 <a href="browseBottles.php" title="Browse physical bottles in cellar">Browse all bottles</a>
                 <a href="browseBottles.php" class="link-action">Browse</a>
+              </li>
+            <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'manage_storage_bins') || hasPrivilege($conn, 'browse_bottles')): ?>
+              <li>
+                <a href="manageStorageBins.php" title="Configure cellars, storage bins, and maximum capacities">Manage storage bins</a>
+                <a href="manageStorageBins.php" class="link-action">Bins</a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'add_bottle')): ?>
@@ -457,7 +463,12 @@
     <div class="admin-storage-widget">
       <h3>
         <span>&#128452;&#65039; Storage Locations</span>
-        <a href="browseBottles.php" style="font-size:0.8rem; font-weight:normal; text-decoration:none;" title="View all physical bottles">Browse &rarr;</a>
+        <span>
+          <?php if (hasPrivilege($conn, 'manage_storage_bins') || hasPrivilege($conn, 'browse_bottles')): ?>
+            <a href="manageStorageBins.php" style="font-size:0.8rem; font-weight:normal; text-decoration:none; margin-right:8px;" title="Manage storage bins and capacities">Manage &rarr;</a>
+          <?php endif; ?>
+          <a href="browseBottles.php" style="font-size:0.8rem; font-weight:normal; text-decoration:none;" title="View all physical bottles">Browse &rarr;</a>
+        </span>
       </h3>
       <?php renderCellarStorageWidget(); ?>
     </div>
@@ -479,27 +490,34 @@
 
 <?php
 /**
- * Render the cellar storage breakdown widget using portable SQL grouping
+ * Render the cellar storage breakdown widget with optional capacity and percentage usage indicators.
  */
 function renderCellarStorageWidget()
 {
-  global $mysqli;
+  global $mysqli, $conn;
+
+  $showUsagePct = (getSiteSetting('show_storage_usage_pct', '1') === '1');
+  $hasCapacity = hasStorageBinsMaxCapacityColumn($mysqli);
 
   $rows = [];
   $cellarTotals = [];
+  $cellarCapacities = [];
+
+  $capSelect = $hasCapacity ? "sb.max_capacity," : "NULL AS max_capacity,";
 
   try {
     $result = $mysqli->query(
       "SELECT
-        COALESCE(cellars.cellar_name, 'Unassigned Cellar') AS cellar_name,
-        COALESCE(storageBins.bin_name, 'Unassigned Bin') AS bin_name,
-        COUNT(bottles.bottle_id) AS btls
-      FROM bottles
-        LEFT JOIN storageBins ON bottles.storage_location = storageBins.bin_id
-        LEFT JOIN cellars ON storageBins.cellar_id = cellars.cellar_id
-      WHERE bottles.status = 'in cellar'
-      GROUP BY cellars.cellar_name, storageBins.bin_name
-      ORDER BY cellars.cellar_name ASC, storageBins.bin_name ASC"
+        sb.bin_id,
+        sb.bin_name,
+        COALESCE(c.cellar_name, 'Unassigned Cellar') AS cellar_name,
+        " . $capSelect . "
+        COUNT(CASE WHEN bottles.status = 'in cellar' THEN 1 END) AS btls
+      FROM storageBins sb
+        LEFT JOIN cellars c ON sb.cellar_id = c.cellar_id
+        LEFT JOIN bottles ON sb.bin_id = bottles.storage_location
+      GROUP BY sb.bin_id, sb.bin_name, c.cellar_name" . ($hasCapacity ? ", sb.max_capacity" : "") . "
+      ORDER BY c.cellar_name ASC, sb.bin_name ASC"
     );
 
     if ($result) {
@@ -508,8 +526,12 @@ function renderCellarStorageWidget()
         $rows[] = $r;
         if (!isset($cellarTotals[$cName])) {
           $cellarTotals[$cName] = 0;
+          $cellarCapacities[$cName] = 0;
         }
         $cellarTotals[$cName] += (int)$r['btls'];
+        if ($r['max_capacity'] !== null) {
+          $cellarCapacities[$cName] += (int)$r['max_capacity'];
+        }
       }
       $result->free_result();
     }
@@ -517,8 +539,18 @@ function renderCellarStorageWidget()
     // Graceful fallback on database error
   }
 
-  if (empty($rows)) {
-    echo "<p style='color:#777; font-size:0.88rem; margin:0;'>No bottles currently placed in storage bins.</p>";
+  // Check for any unassigned bottles
+  $unassignedCount = 0;
+  try {
+    $uRes = $mysqli->query("SELECT count(bottle_id) as cnt FROM bottles WHERE status='in cellar' AND (storage_location IS NULL OR storage_location = 0)");
+    if ($uRes && $uRow = $uRes->fetch_assoc()) {
+      $unassignedCount = (int)$uRow['cnt'];
+      $uRes->free_result();
+    }
+  } catch (Throwable $e) {}
+
+  if (empty($rows) && $unassignedCount === 0) {
+    echo "<p style='color:#777; font-size:0.88rem; margin:0;'>No storage bins currently configured.</p>";
     return;
   }
 
@@ -534,22 +566,73 @@ function renderCellarStorageWidget()
       $prevCellar = $cName;
       $inCellarBlock = true;
       $cTotal = $cellarTotals[$cName] ?? (int)$storedBtls['btls'];
+      $cCap = $cellarCapacities[$cName] ?? 0;
+
+      $badgeText = (int)$cTotal . " btls";
+      if ($showUsagePct && $cCap > 0) {
+        $cPct = round(($cTotal / $cCap) * 100);
+        $badgeText = (int)$cTotal . " / " . (int)$cCap . " (" . $cPct . "%)";
+      }
+
       echo "<div class='admin-storage-cellar'>";
       echo "<div class='admin-storage-cellar-title'>";
       echo "<span>" . htmlspecialchars($cName, ENT_QUOTES, 'UTF-8') . "</span>";
-      echo "<span class='admin-storage-badge'>" . (int)$cTotal . " btls</span>";
+      echo "<span class='admin-storage-badge'>" . htmlspecialchars($badgeText, ENT_QUOTES, 'UTF-8') . "</span>";
       echo "</div>";
       echo "<div class='admin-storage-bins'>";
     }
     $binName = htmlspecialchars($storedBtls['bin_name'], ENT_QUOTES, 'UTF-8');
     $btlCount = (int)$storedBtls['btls'];
+    $maxCap = ($storedBtls['max_capacity'] !== null) ? (int)$storedBtls['max_capacity'] : null;
+
     echo "<div class='admin-storage-bin-row'>";
     echo "<a href='browseBottles.php?sort=location' title='View bottles in " . $binName . "'>Bin " . $binName . "</a>";
-    echo "<span style='color:#666; font-size:0.82rem;'>" . $btlCount . " btl" . ($btlCount === 1 ? '' : 's') . "</span>";
+
+    if ($maxCap !== null && $maxCap > 0) {
+      if ($showUsagePct) {
+        $pct = round(($btlCount / $maxCap) * 100);
+        $barClass = 'storage-bar-normal';
+        $pctColor = '#2e7d32';
+        if ($pct >= 100) {
+          $barClass = 'storage-bar-full';
+          $pctColor = '#d32f2f';
+        } elseif ($pct >= 80) {
+          $barClass = 'storage-bar-warning';
+          $pctColor = '#e65100';
+        }
+        echo "<div style='display:flex; align-items:center; gap:6px;'>";
+        echo "<span style='color:#666; font-size:0.82rem;'>" . $btlCount . " / " . $maxCap . "</span>";
+        echo "<div style='width:36px; height:6px; background:#eee; border-radius:3px; overflow:hidden;' title='" . $pct . "% utilised'>";
+        echo "<div class='" . $barClass . "' style='width:" . min(100, $pct) . "%; height:100%;'></div>";
+        echo "</div>";
+        echo "<span style='font-size:0.75rem; font-weight:600; color:" . $pctColor . "; min-width:28px; text-align:right;'>" . $pct . "%</span>";
+        echo "</div>";
+      } else {
+        echo "<span style='color:#666; font-size:0.82rem;'>" . $btlCount . " / " . $maxCap . " btls</span>";
+      }
+    } else {
+      echo "<span style='color:#666; font-size:0.82rem;'>" . $btlCount . " btl" . ($btlCount === 1 ? '' : 's') . "</span>";
+    }
+
     echo "</div>";
   }
 
   if ($inCellarBlock) {
+    echo "</div></div>";
+  }
+
+  // Display unassigned bottles section if any exist
+  if ($unassignedCount > 0) {
+    echo "<div class='admin-storage-cellar'>";
+    echo "<div class='admin-storage-cellar-title' style='color:#856404;'>";
+    echo "<span>&#9888;&#65039; Unassigned Storage</span>";
+    echo "<span class='admin-storage-badge' style='background:#fff3cd; color:#856404;'>" . $unassignedCount . " btls</span>";
+    echo "</div>";
+    echo "<div class='admin-storage-bins'>";
+    echo "<div class='admin-storage-bin-row'>";
+    echo "<a href='browseBottles.php?sort=location' style='color:#856404; font-style:italic;' title='View unassigned bottles'>Awaiting bin assignment</a>";
+    echo "<span style='color:#856404; font-size:0.82rem;'>" . $unassignedCount . " btl" . ($unassignedCount === 1 ? '' : 's') . "</span>";
+    echo "</div>";
     echo "</div></div>";
   }
 
@@ -562,9 +645,16 @@ function renderCellarStorageWidget()
     }
   } catch (Throwable $e) {}
 
+  $totalCappedCapacity = array_sum($cellarCapacities);
+  $totalSummary = $totalInCellar . " bottles";
+  if ($showUsagePct && $totalCappedCapacity > 0) {
+    $totPct = round(($totalInCellar / $totalCappedCapacity) * 100);
+    $totalSummary = $totalInCellar . " / " . $totalCappedCapacity . " (" . $totPct . "%)";
+  }
+
   echo "<div style='margin-top:14px; padding-top:10px; border-top:1px solid #eee; display:flex; justify-content:space-between; font-weight:bold; font-size:0.9rem;'>";
   echo "<span>Total in Cellar</span>";
-  echo "<span>" . $totalInCellar . " bottles</span>";
+  echo "<span>" . htmlspecialchars($totalSummary, ENT_QUOTES, 'UTF-8') . "</span>";
   echo "</div>";
 }
 ?>

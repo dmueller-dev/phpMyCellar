@@ -75,7 +75,9 @@ Individual physical bottles belong to a Wine Vintage and represent tangible cell
   - `3000ml` (Double magnum / Jéroboam)
   - `6000ml` (Impériale / Methuselah)
   - Large formats up to `18000ml` (Melchior)
-- **Storage Locations:** Assign bottles to specific cellars and bin locations (e.g. `Rack 1, Shelf B, Slot 4`).
+- **Storage Locations & Maximum Capacities:** Assign bottles to specific cellars and bin locations (e.g. `Rack 1, Shelf B, Slot 4`). Storage bins are configured via `Admin > Admin Hub > Cellar & Inventory > Manage storage bins` (`/backend/manageStorageBins.php`), where an optional maximum capacity (`max_capacity`) can be specified for each bin:
+  - **Capacity Enforcement:** Assigning bottles via `addBottle.php`, `editBottle.php`, or order delivery in `manageOrders.php` strictly verifies that available capacity is not exceeded, preventing overfilling.
+  - **Usage Indicators:** If capacity is configured, the Admin Hub storage widget displays visual progress bars and utilisation percentages (e.g. `10 / 12 btls (83%)`), with cellar-wide totals. This display can be toggled via Site Settings (`show_storage_usage_pct`).
 - **Drinking Window:** Set `Drink from (yyyy)` and `Drink through (yyyy)` to guide readiness calculations in the cellar and the *Carte des vins*. Bottles maturing prior to `Drink from` or past `Drink through` display status micro-icons on the wine menu.
 - **Restricted / Private Reserve:** Mark individual bottles as `restricted` to designate private reserves, rare allocations, or bottles held back from guest selection. Restricted bottles display a subtle padlock icon in `browseBottles.php` and on the Carte des vins.
 - **Bottle Statuses:**

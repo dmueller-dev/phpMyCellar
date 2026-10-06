@@ -1831,6 +1831,51 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   border-radius: 12px;
 }
 
+.storage-bar-normal {
+  background-color: #2e7d32;
+}
+
+.storage-bar-warning {
+  background-color: #e65100;
+}
+
+.storage-bar-full {
+  background-color: #d32f2f;
+}
+
+.storage-pct-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border-radius: 10px;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.storage-pct-warning {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.storage-pct-full {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.storage-progress-container {
+  background-color: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.admin-storage-manage-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
 .admin-system-card {
   background: white;
   border-radius: 8px;
@@ -1885,6 +1930,9 @@ li + li:has(> details:not(.vintage-menu-detail)) {
     justify-content: center;
   }
   .admin-domains-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-storage-manage-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -326,6 +326,7 @@ CREATE TABLE `storageBins` (
   `bin_id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT,
   `bin_name` varchar(10) NOT NULL,
   `cellar_id` smallint(3) UNSIGNED NOT NULL,
+  `max_capacity` int(10) UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`bin_id`),
   UNIQUE KEY `idxStorageBins` (`cellar_id`,`bin_name`),
   CONSTRAINT `fk_sb_cellar` FOREIGN KEY (`cellar_id`) REFERENCES `cellars` (`cellar_id`)

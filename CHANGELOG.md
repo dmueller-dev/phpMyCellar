@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Optional maximum capacity column (`max_capacity`) in table `storageBins` to configure bottle limits per storage bin.
+- Dedicated cellar and storage bin management interface (`backend/manageStorageBins.php`) to create and edit cellars, storage bins, and maximum capacities.
+- Cellar and storage bin capacity utilisation percentage indicators and progress bars in the Admin Hub storage widget (`backend/index.php`).
+- Optional site setting (`show_storage_usage_pct`) in Site Settings (`backend/settings.php`) to toggle cellar utilisation percentage indicators in the Admin Hub.
+- Dynamic storage location capacity annotations in bottle creation, editing, and order delivery dropdown menus.
+- Role-based privilege `manage_storage_bins` for configuring storage locations and capacities.
 - `restricted` boolean flag on the `bottles` table to mark private reserve or restricted-allocation bottles.
 - Bottle restriction selector (`Restricted / Private reserve?`) in bottle management forms (`backend/addBottle.php` and `backend/editBottle.php`).
 - Visual padlock indicator on `backend/browseBottles.php` for restricted inventory.
@@ -19,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AGENTS.md` coding directives and standards for agentic programming, including strict cookie minimisation directives restricting usage to anonymous session cookies for logged-in users.
 
 ### Changed
+- Enforced strict maximum capacity validation when adding bottles (`backend/addBottle.php`), editing bottle locations (`backend/editBottle.php`), and accepting order deliveries (`backend/manageOrders.php`).
+- Enhanced `getStorageLocations()` to query maximum capacities and active bottle counts per bin with backwards-compatible schema fallback.
 - Simplified Carte des vins status badges in storage popovers (`winemenu.php`): trimmed verbose "Drink soon · Past yyyy" to "Drink soon" and "Aging · From yyyy" to British English "Ageing", preserving full drinking window details in hover tooltips.
 - Refactored storage bin popover lists (`.vintage-menu-bins`) to use responsive flex wrapping on mobile viewports (&le; 720px) in `includes/styles.css`, preventing bottle count labels from overshooting card boundaries.
 - Standardised British English spelling from "aging" to "ageing" across UI strings, setting options, docblocks, and documentation.

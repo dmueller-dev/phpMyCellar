@@ -44,6 +44,7 @@ Privileges are defined at the granular operation level across eight functional c
 
 ### Cellar & Orders
 - `browse_bottles`: View bottles and storage locations in the backend (`browseBottles.php`).
+- `manage_storage_bins`: Manage cellars, storage bins, and maximum capacities (`manageStorageBins.php`).
 - `add_bottle`: Add new bottles to the cellar (`addBottle.php`).
 - `edit_bottle`: Update bottle details, drink windows, and statuses (`editBottle.php`).
 - `add_order`: Create wine purchasing orders (`addOrder.php`).

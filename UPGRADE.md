@@ -262,6 +262,36 @@ ON DUPLICATE KEY UPDATE `setting_value` = VALUES(`setting_value`);
 
 ---
 
+### 7. Storage Bin Maximum Capacity & Usage Indicators (`storageBins.max_capacity`, `show_storage_usage_pct`)
+
+Introduced optional maximum capacity for storage bins in table `storageBins`:
+* **Maximum Capacity (`storageBins.max_capacity`)**: Optional integer defining maximum physical bottle capacity (`NULL` denotes unlimited). Enforced strictly when inserting bottles, editing bottle locations, or accepting order deliveries.
+* **Usage Percentage Display (`show_storage_usage_pct`)**: Site setting (`1` or `0`, default `1`) controlling whether cellar and bin usage percentages and progress bars display in the Admin Hub.
+* **Privilege (`manage_storage_bins`)**: Grants access to manage cellars, storage bins, and capacities via `backend/manageStorageBins.php`.
+
+#### Manual Database Migration (for DBAs)
+```sql
+-- 1. Add max_capacity to storageBins table
+ALTER TABLE `storageBins` ADD COLUMN `max_capacity` INT(10) UNSIGNED DEFAULT NULL AFTER `cellar_id`;
+
+-- 2. Add show_storage_usage_pct setting to site_settings (defaults to 1 / enabled)
+INSERT INTO `site_settings` (`setting_key`, `setting_value`, `setting_group`)
+VALUES ('show_storage_usage_pct', '1', 'general')
+ON DUPLICATE KEY UPDATE `setting_value` = VALUES(`setting_value`);
+
+-- 3. Register manage_storage_bins privilege
+INSERT INTO `privileges` (`privilege_code`, `privilege_name`, `category`, `description`, `is_admin_only`, `sort_order`)
+VALUES ('manage_storage_bins', 'Manage Storage Bins', 'Cellar & Orders', 'Manage cellars, storage bins, and maximum capacities', 0, 145)
+ON DUPLICATE KEY UPDATE `privilege_name` = VALUES(`privilege_name`);
+
+-- 4. Assign manage_storage_bins privilege to admin role
+INSERT INTO `role_privileges` (`role_name`, `privilege_code`)
+VALUES ('admin', 'manage_storage_bins')
+ON DUPLICATE KEY UPDATE `privilege_code` = VALUES(`privilege_code`);
+```
+
+---
+
 ## Step-by-Step Version Upgrade Instructions
 
 ### Upgrading to 1.1.0

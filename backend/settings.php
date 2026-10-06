@@ -39,6 +39,10 @@
     if (!in_array($winemenu_include_unready, ['0', '1'], true)) {
       $winemenu_include_unready = '0';
     }
+    $show_storage_usage_pct = trim($_POST['show_storage_usage_pct'] ?? '1');
+    if (!in_array($show_storage_usage_pct, ['0', '1'], true)) {
+      $show_storage_usage_pct = '1';
+    }
     $theme_accent_color = trim($_POST['theme_accent_color'] ?? '#CD5C5C');
     $theme_accent_secondary = trim($_POST['theme_accent_secondary'] ?? '#B22222');
     $theme_accent_hover = trim($_POST['theme_accent_hover'] ?? '#8B0000');
@@ -64,6 +68,7 @@
       updateSiteSetting('wset_display_format', $wset_display_format, 'general');
       deleteSiteSetting('wset_enabled');
       updateSiteSetting('winemenu_include_unready', $winemenu_include_unready, 'general');
+      updateSiteSetting('show_storage_usage_pct', $show_storage_usage_pct, 'general');
       updateSiteSetting('meta_description', $meta_description, 'general');
       updateSiteSetting('theme_accent_color', $theme_accent_color, 'theme');
       updateSiteSetting('theme_accent_secondary', $theme_accent_secondary, 'theme');
@@ -85,6 +90,7 @@
   $wset_mode = getWsetSATMode();
   $wset_display_format = getWsetSATDisplayFormat();
   $winemenu_include_unready = getSiteSetting('winemenu_include_unready', '0');
+  $show_storage_usage_pct = getSiteSetting('show_storage_usage_pct', '1');
   $meta_description = getSiteSetting('meta_description', '');
   $theme_accent_color = getSiteSetting('theme_accent_color', '#CD5C5C');
   $theme_accent_secondary = getSiteSetting('theme_accent_secondary', '#B22222');
@@ -213,6 +219,15 @@
               <option value="1" <?php echo ($winemenu_include_unready === '1') ? 'selected' : ''; ?>>Include &mdash; Display unready wines on the wine menu with an ageing clock icon</option>
             </select>
             <br><small style="color:#666;">Controls whether wines whose minimum drinking window year (<em>Drink from</em>) is in the future appear on the public Carte des vins (<code>/winemenu.php</code>).</small>
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label for="show_storage_usage_pct"><strong>Cellar Capacity &amp; Usage Percentage in Admin Hub:</strong></label><br>
+            <select id="show_storage_usage_pct" name="show_storage_usage_pct" style="padding:8px;">
+              <option value="1" <?php echo ($show_storage_usage_pct === '1') ? 'selected' : ''; ?>>Enabled &mdash; Display percentage utilisation and progress indicators for cellars and bins (default)</option>
+              <option value="0" <?php echo ($show_storage_usage_pct === '0') ? 'selected' : ''; ?>>Disabled &mdash; Display plain bottle counts only</option>
+            </select>
+            <br><small style="color:#666;">Controls whether percentage utilisation is calculated and shown in the Admin Hub storage widget for bins with a maximum capacity.</small>
           </div>
 
           <hr style="margin:25px 0;">
