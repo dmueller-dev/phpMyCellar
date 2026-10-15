@@ -217,6 +217,9 @@ ul.submenu {
   left: 0;
   background-color: var(--primary-accent, indianred);
   min-width: 180px;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   z-index: 10;
   list-style-type: none;
   padding: 0;

@@ -47,3 +47,12 @@ Images uploaded for articles and tasting notes are stored under `uploads/img/`.
 - Authenticated readers with the `post_comments` privilege can participate in discussion threads beneath published stories.
 - **Thread Subscriptions:** Users can click **🔔 Subscribe to discussion** on any article or wine to receive instant notifications when new comments are posted.
 - **Notification Preferences:** Registered users can review and manage their active thread subscriptions and toggle email delivery from **My account > Settings** (`/accountSettings.php`).
+
+---
+
+## 5. Comment Moderation & Discussion Control
+
+Administrators and moderators can manage discussion threads across tasting notes, wines, and stories:
+- **Navigate to:** `Admin > Admin Hub > Tasting Notes & Editorial > Moderate comments` (`/backend/manageComments.php`) or `Contribute > Moderate comments`.
+- **Status Filtering:** Filter comments by moderation status: `approved` (visible to visitors), `pending` (awaiting review), or `rejected` (concealed).
+- **Inline Editing & Quick Actions:** Directly update comment body text, adjust moderation statuses, or delete abusive entries and spam in bulk. Deletion cleans up polymorphic association records (`x_comments_*`) automatically.

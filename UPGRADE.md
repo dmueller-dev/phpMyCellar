@@ -15,6 +15,8 @@ This guide provides instructions for upgrading **phpMyCellar** between releases,
    - [4. Helper Functions & API Query Result Keys](#4-helper-functions--api-query-result-keys)
    - [5. Blind Tasting Consolidation (`backend/blindTasting.php` → `backend/addTastingNote.php`)](#5-blind-tasting-consolidation-backendblindtastingphp--backendaddtastingnotephp)
    - [6. Bottle Restrictions & Wine Menu Visibility (`bottles.restricted`, `winemenu_include_unready`)](#6-bottle-restrictions--wine-menu-visibility-bottlesrestricted-winemenu_include_unready)
+   - [7. Storage Bin Maximum Capacity & Usage Indicators (`storageBins.max_capacity`, `show_storage_usage_pct`)](#7-storage-bin-maximum-capacity--usage-indicators-storagebinsmax_capacity-show_storage_usage_pct)
+   - [8. Full Administrative Entity Coverage & Granular Privileges](#8-full-administrative-entity-coverage--granular-privileges)
 4. [Step-by-Step Version Upgrade Instructions](#step-by-step-version-upgrade-instructions)
    - [Upgrading to 1.1.0](#upgrading-to-110)
    - [Upgrading to 1.0.1](#upgrading-to-101)
@@ -287,6 +289,52 @@ ON DUPLICATE KEY UPDATE `privilege_name` = VALUES(`privilege_name`);
 -- 4. Assign manage_storage_bins privilege to admin role
 INSERT INTO `role_privileges` (`role_name`, `privilege_code`)
 VALUES ('admin', 'manage_storage_bins')
+ON DUPLICATE KEY UPDATE `privilege_code` = VALUES(`privilege_code`);
+```
+
+---
+
+### 8. Full Administrative Entity Coverage & Granular Privileges
+
+To provide complete administrative CRUD and moderation coverage across all schema tables, seven dedicated management interfaces and corresponding fine-grained privileges were introduced:
+* **Wine Stores & Merchants (`backend/manageStores.php`, privilege `manage_stores`)**: Create, edit, and safely delete wine retailers, merchants, and auctioneers.
+* **Bottle Formats & Sizes (`backend/manageFormats.php`, privilege `manage_formats`)**: Manage bottle formats and liquid volumes in millilitres (`bottle_formats` and `sizes`).
+* **Grape Varieties (`backend/manageVarieties.php`, privilege `manage_varieties`)**: Maintain grape varieties (*c&eacute;pages*) with active wine count verification before deletion.
+* **Harvest Vintages & Regional Reports (`backend/manageVintages.php`, privilege `manage_vintages`)**: Manage vintage years (`vintages`) and regional vintage summaries/scores (`x_vintage_region`).
+* **Wine Styles & Attributes (`backend/manageWineAttributes.php`, privilege `manage_wine_attributes`)**: Manage wine styles (`styles`), colours (`colours`), and naming convention templates (`displayoptions`).
+* **Rating Scales & Assessment (`backend/manageRatingScales.php`, privilege `manage_rating_scales`)**: Customise qualitative score descriptors across 20-point (`scale_20`), 100-point (`scale_100`), and WSET qualitative criteria (`wsetpts`).
+* **Comment Moderation (`backend/manageComments.php`, privilege `moderate_comments`)**: Review, edit, approve, and delete reader discussions across tasting notes and stories (`comments` and association tables).
+
+#### Automatic Provisioning & RBAC Fallbacks
+The privilege middleware (`ensurePrivilegeTablesExist()`) automatically registers these privileges and assigns them to the `admin` role upon application load. Built-in permission fallbacks prevent lockouts for administrators who have not yet re-saved privilege matrices:
+- `manage_stores` falls back to `manage_orders`
+- `manage_formats` falls back to `add_bottle`
+- `manage_varieties` and `manage_wine_attributes` fall back to `edit_wine_master`
+- `manage_vintages` falls back to `edit_wine`
+- `manage_rating_scales` and `moderate_comments` fall back to `manage_privileges`
+
+#### Manual Database Migration (for DBAs)
+```sql
+-- Register new privileges
+INSERT INTO `privileges` (`privilege_code`, `privilege_name`, `category`, `description`, `is_admin_only`, `sort_order`) VALUES
+('manage_stores', 'Manage Stores', 'Cellar & Orders', 'Manage wine merchants, retailers, and order sources', 0, 148),
+('manage_formats', 'Manage Bottle Formats', 'Cellar & Orders', 'Manage bottle formats and liquid volumes', 0, 149),
+('manage_varieties', 'Manage Grape Varieties', 'Wines & Masters', 'Manage grape varieties and cépage profiles', 0, 185),
+('manage_vintages', 'Manage Harvest Vintages', 'Wines & Masters', 'Manage harvest vintages and regional character reports', 0, 186),
+('manage_wine_attributes', 'Manage Wine Attributes', 'Wines & Masters', 'Manage wine styles, colours, and display templates', 0, 187),
+('manage_rating_scales', 'Manage Rating Scales', 'Administration', 'Configure qualitative score descriptors for rating scales', 0, 240),
+('moderate_comments', 'Moderate Comments', 'Community', 'Review, edit, approve, and delete reader comments', 0, 125)
+ON DUPLICATE KEY UPDATE `privilege_name` = VALUES(`privilege_name`);
+
+-- Assign new privileges to admin role
+INSERT INTO `role_privileges` (`role_name`, `privilege_code`) VALUES
+('admin', 'manage_stores'),
+('admin', 'manage_formats'),
+('admin', 'manage_varieties'),
+('admin', 'manage_vintages'),
+('admin', 'manage_wine_attributes'),
+('admin', 'manage_rating_scales'),
+('admin', 'moderate_comments')
 ON DUPLICATE KEY UPDATE `privilege_code` = VALUES(`privilege_code`);
 ```
 

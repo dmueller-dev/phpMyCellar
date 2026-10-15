@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional maximum capacity column (`max_capacity`) in table `storageBins` to configure bottle limits per storage bin.
 - Dedicated cellar and storage bin management interface (`backend/manageStorageBins.php`) to create and edit cellars, storage bins, and maximum capacities.
 - Cellar and storage bin capacity utilisation percentage indicators and progress bars in the Admin Hub storage widget (`backend/index.php`).
+- Dedicated wine merchant and store management interface (`backend/manageStores.php`) with full CRUD operations, inventory usage tracking, and safe deletion checks.
+- Grape variety catalogue interface (`backend/manageVarieties.php`) supporting creation, editing, and deletion of c&eacute;pages with wine count verification.
+- Bottle format and standard volume management interface (`backend/manageFormats.php`) for managing bottle formats and capacities in millilitres.
+- Harvest vintage and regional character report management interface (`backend/manageVintages.php`) for managing vintage years, regional vintage descriptions, and tasting summaries across wine regions.
+- Wine attributes and classification management interface (`backend/manageWineAttributes.php`) for wine styles, colours, and display naming templates.
+- Rating scales management interface (`backend/manageRatingScales.php`) for customising qualitative evaluation descriptors across 20-point, 100-point, and WSET scoring methodologies.
+- Centralised comment moderation interface (`backend/manageComments.php`) for reviewing, editing, approving, and removing reader discussions across tasting notes and stories.
+- Cellar editing and safe deletion functionality with zero-bin validation in `backend/manageStorageBins.php`.
+- Seven new granular RBAC privileges: `manage_stores`, `manage_formats`, `manage_varieties`, `manage_vintages`, `manage_wine_attributes`, `manage_rating_scales`, and `moderate_comments`.
 - Optional site setting (`show_storage_usage_pct`) in Site Settings (`backend/settings.php`) to toggle cellar utilisation percentage indicators in the Admin Hub.
 - Dynamic storage location capacity annotations in bottle creation, editing, and order delivery dropdown menus.
 - Role-based privilege `manage_storage_bins` for configuring storage locations and capacities.

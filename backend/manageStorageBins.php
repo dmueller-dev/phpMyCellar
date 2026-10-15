@@ -25,6 +25,9 @@
   // Current user ID for ownership assignment
   $currentUserId = $_SESSION['user_id'] ?? 1;
 
+  // Fetch cellars early
+  $cellars = getCellars($conn);
+
   // Selected bin for editing
   $editBinId = filter_input(INPUT_GET, 'edit_bin', FILTER_VALIDATE_INT);
   $editingBin = null;
@@ -33,6 +36,22 @@
     if (!$editingBin) {
       $errors[] = "Storage bin not found.";
       $editBinId = null;
+    }
+  }
+
+  // Selected cellar for editing
+  $editCellarId = filter_input(INPUT_GET, 'edit_cellar', FILTER_VALIDATE_INT);
+  $editingCellar = null;
+  if ($editCellarId) {
+    foreach ($cellars as $c) {
+      if ((int)$c['cellar_id'] === $editCellarId) {
+        $editingCellar = $c;
+        break;
+      }
+    }
+    if (!$editingCellar) {
+      $errors[] = "Cellar not found.";
+      $editCellarId = null;
     }
   }
 
@@ -147,11 +166,56 @@
           $newCellarId = insertCellar($conn, $cellar_name, $currentUserId);
           if ($newCellarId) {
             $success_message = "Cellar '" . htmlspecialchars($cellar_name, ENT_QUOTES, 'UTF-8') . "' created successfully.";
+            $cellars = getCellars($conn); // Refresh cellars
           } else {
             $errors[] = "Failed to create cellar.";
           }
         } catch (Exception $e) {
           $errors[] = "Error creating cellar: " . $e->getMessage();
+        }
+      }
+    }
+
+    // Action: Edit Cellar
+    elseif ($action === 'edit_cellar') {
+      $cellar_id = filter_input(INPUT_POST, 'cellar_id', FILTER_VALIDATE_INT);
+      $cellar_name = sanitizeInput($_POST['cellar_name'] ?? '');
+      if (empty($cellar_id)) {
+        $errors[] = "Invalid cellar ID.";
+      }
+      if (empty($cellar_name)) {
+        $errors[] = "Cellar name is required.";
+      } elseif (mb_strlen($cellar_name, 'UTF-8') > 50) {
+        $errors[] = "Cellar name must not exceed 50 characters.";
+      }
+
+      if (empty($errors)) {
+        try {
+          if (updateCellar($conn, $cellar_id, $cellar_name)) {
+            $success_message = "Cellar updated successfully.";
+            $editCellarId = null;
+            $editingCellar = null;
+            $cellars = getCellars($conn); // Refresh cellars
+          }
+        } catch (Exception $e) {
+          $errors[] = $e->getMessage();
+        }
+      }
+    }
+
+    // Action: Delete Cellar
+    elseif ($action === 'delete_cellar') {
+      $cellar_id = filter_input(INPUT_POST, 'cellar_id', FILTER_VALIDATE_INT);
+      if (empty($cellar_id)) {
+        $errors[] = "Invalid cellar ID.";
+      } else {
+        try {
+          if (deleteCellar($conn, $cellar_id)) {
+            $success_message = "Cellar deleted successfully.";
+            $cellars = getCellars($conn); // Refresh cellars
+          }
+        } catch (Exception $e) {
+          $errors[] = $e->getMessage();
         }
       }
     }
@@ -416,27 +480,79 @@
             </form>
           </div>
 
-          <!-- Add Cellar Card -->
-          <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
+          <!-- Add / Edit Cellar Card -->
+          <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
             <h3 style="margin-top: 0; color: #444; border-bottom: 1px solid #eee; padding-bottom: 6px; font-size: 1rem;">
-              + Add Another Cellar
+              <?php echo $editingCellar ? 'Edit Cellar Location' : '+ Add Another Cellar'; ?>
             </h3>
 
             <form action="manageStorageBins.php" method="POST">
               <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-              <input type="hidden" name="action" value="add_cellar">
+              <input type="hidden" name="action" value="<?php echo $editingCellar ? 'edit_cellar' : 'add_cellar'; ?>">
+              <?php if ($editingCellar): ?>
+                <input type="hidden" name="cellar_id" value="<?php echo (int)$editingCellar['cellar_id']; ?>">
+              <?php endif; ?>
 
               <div style="margin-bottom: 12px;">
                 <label for="cellar_name" style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 4px;">Cellar Name:</label>
                 <input type="text" id="cellar_name" name="cellar_name" maxlength="50" required 
+                       value="<?php echo htmlspecialchars($editingCellar['cellar_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                        placeholder="e.g. Main Cellar, Wine Fridge" 
                        style="width: 100%; padding: 7px; font-size: 0.9rem; box-sizing: border-box;">
               </div>
 
-              <button type="submit" class="btn-action btn-secondary" style="width: 100%; padding: 7px 12px; font-size: 0.88rem;">
-                + Create Cellar
-              </button>
+              <div style="display: flex; gap: 8px;">
+                <button type="submit" class="btn-action btn-secondary" style="flex: 1; padding: 7px 12px; font-size: 0.88rem;">
+                  <?php echo $editingCellar ? 'Update Cellar' : '+ Create Cellar'; ?>
+                </button>
+                <?php if ($editingCellar): ?>
+                  <a href="manageStorageBins.php" class="btn-action btn-secondary" style="text-decoration: none; padding: 7px 12px; font-size: 0.88rem; text-align: center;">
+                    Cancel
+                  </a>
+                <?php endif; ?>
+              </div>
             </form>
+          </div>
+
+          <!-- Cellar Locations List -->
+          <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
+            <h3 style="margin-top: 0; color: #444; border-bottom: 1px solid #eee; padding-bottom: 6px; font-size: 0.95rem;">
+              Configured Cellars
+            </h3>
+            <?php
+              $cellarBinsCount = [];
+              foreach ($storageBins as $sb) {
+                $cid = (int)$sb['cellar_id'];
+                $cellarBinsCount[$cid] = ($cellarBinsCount[$cid] ?? 0) + 1;
+              }
+            ?>
+            <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.88rem;">
+              <?php foreach ($cellars as $c): ?>
+                <?php 
+                  $cid = (int)$c['cellar_id']; 
+                  $bCount = $cellarBinsCount[$cid] ?? 0;
+                ?>
+                <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee;">
+                  <div>
+                    <strong><?php echo htmlspecialchars($c['cellar_name'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                    <div style="color: #666; font-size: 0.78rem;"><?php echo $bCount; ?> bin<?php echo ($bCount === 1 ? '' : 's'); ?></div>
+                  </div>
+                  <div style="white-space: nowrap;">
+                    <a href="manageStorageBins.php?edit_cellar=<?php echo $cid; ?>" style="color: #1a73e8; font-size: 0.82rem; text-decoration: none; margin-right: 6px;">Edit</a>
+                    <?php if ($bCount === 0): ?>
+                      <form action="manageStorageBins.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete cellar \'<?php echo htmlspecialchars($c['cellar_name'], ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                        <input type="hidden" name="action" value="delete_cellar">
+                        <input type="hidden" name="cellar_id" value="<?php echo $cid; ?>">
+                        <button type="submit" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 0; font-size: 0.82rem; text-decoration: underline;">Delete</button>
+                      </form>
+                    <?php else: ?>
+                      <span style="color: #ccc; font-size: 0.82rem;" title="Cannot delete: Cellar contains bins">Delete</span>
+                    <?php endif; ?>
+                  </div>
+                </li>
+              <?php endforeach; ?>
+            </ul>
           </div>
 
         </div>

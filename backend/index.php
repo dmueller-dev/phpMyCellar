@@ -107,9 +107,10 @@
     'regions' => 0,
     'subregions' => 0,
     'countries' => 0,
+    'variety' => 0,
   ];
   try {
-    foreach (['producers', 'appellations', 'vineyards', 'regions', 'subregions', 'countries'] as $tbl) {
+    foreach (['producers', 'appellations', 'vineyards', 'regions', 'subregions', 'countries', 'variety'] as $tbl) {
       $r = $mysqli->query("SELECT count(*) as c FROM `{$tbl}`");
       if ($r && $row = $r->fetch_assoc()) {
         $terroir_counts[$tbl] = (int)$row['c'];
@@ -231,7 +232,7 @@
     <div class="admin-domains-grid">
 
       <!-- Cellar & Inventory Management -->
-      <?php if (hasPrivilege($conn, 'browse_bottles') || hasPrivilege($conn, 'add_bottle') || hasPrivilege($conn, 'edit_bottle') || hasPrivilege($conn, 'add_order') || hasPrivilege($conn, 'manage_orders') || hasPrivilege($conn, 'manage_storage_bins')): ?>
+      <?php if (hasPrivilege($conn, 'browse_bottles') || hasPrivilege($conn, 'add_bottle') || hasPrivilege($conn, 'edit_bottle') || hasPrivilege($conn, 'add_order') || hasPrivilege($conn, 'manage_orders') || hasPrivilege($conn, 'manage_storage_bins') || hasPrivilege($conn, 'manage_stores') || hasPrivilege($conn, 'manage_formats')): ?>
         <div class="admin-domain-card">
           <h3><span>&#127870;</span> Cellar &amp; Inventory</h3>
           <ul class="admin-domain-links">
@@ -271,12 +272,24 @@
                 <a href="manageOrders.php" class="link-action">Orders</a>
               </li>
             <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'manage_stores') || hasPrivilege($conn, 'manage_orders')): ?>
+              <li>
+                <a href="manageStores.php" title="Manage wine merchants, retailers, and order sources">Wine merchants &amp; stores</a>
+                <a href="manageStores.php" class="link-action">Stores</a>
+              </li>
+            <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'manage_formats') || hasPrivilege($conn, 'add_bottle')): ?>
+              <li>
+                <a href="manageFormats.php" title="Configure bottle formats and standard liquid volumes">Bottle formats &amp; sizes</a>
+                <a href="manageFormats.php" class="link-action">Formats</a>
+              </li>
+            <?php endif; ?>
           </ul>
         </div>
       <?php endif; ?>
 
       <!-- Wines & Masters Catalog -->
-      <?php if (hasPrivilege($conn, 'browse_wines') || hasPrivilege($conn, 'add_wine') || hasPrivilege($conn, 'edit_wine') || hasPrivilege($conn, 'add_wine_master') || hasPrivilege($conn, 'edit_wine_master')): ?>
+      <?php if (hasPrivilege($conn, 'browse_wines') || hasPrivilege($conn, 'add_wine') || hasPrivilege($conn, 'edit_wine') || hasPrivilege($conn, 'add_wine_master') || hasPrivilege($conn, 'edit_wine_master') || hasPrivilege($conn, 'manage_varieties') || hasPrivilege($conn, 'manage_vintages') || hasPrivilege($conn, 'manage_wine_attributes')): ?>
         <div class="admin-domain-card">
           <h3><span>&#127991;&#65039;</span> Wine Catalog &amp; Masters</h3>
           <ul class="admin-domain-links">
@@ -310,12 +323,30 @@
                 <a href="editWine.php" class="link-action">Edit</a>
               </li>
             <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'manage_varieties') || hasPrivilege($conn, 'edit_wine_master')): ?>
+              <li>
+                <a href="manageVarieties.php" title="Manage grape varieties and c&eacute;page classifications">Grape varieties</a>
+                <a href="manageVarieties.php" class="link-action">Varieties</a>
+              </li>
+            <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'manage_vintages') || hasPrivilege($conn, 'edit_wine')): ?>
+              <li>
+                <a href="manageVintages.php" title="Manage harvest vintage years and regional character reports">Harvest vintages &amp; reports</a>
+                <a href="manageVintages.php" class="link-action">Vintages</a>
+              </li>
+            <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'manage_wine_attributes') || hasPrivilege($conn, 'edit_wine_master')): ?>
+              <li>
+                <a href="manageWineAttributes.php" title="Manage wine classifications, styles, colours, and display options">Wine styles &amp; attributes</a>
+                <a href="manageWineAttributes.php" class="link-action">Attributes</a>
+              </li>
+            <?php endif; ?>
           </ul>
         </div>
       <?php endif; ?>
 
       <!-- Tasting Notes & Editorial -->
-      <?php if (hasPrivilege($conn, 'add_tasting_note') || hasPrivilege($conn, 'edit_tasting_note') || hasPrivilege($conn, 'edit_all_tasting_notes') || hasPrivilege($conn, 'add_blogpost') || hasPrivilege($conn, 'edit_blogpost') || hasPrivilege($conn, 'edit_all_blogposts')): ?>
+      <?php if (hasPrivilege($conn, 'add_tasting_note') || hasPrivilege($conn, 'edit_tasting_note') || hasPrivilege($conn, 'edit_all_tasting_notes') || hasPrivilege($conn, 'add_blogpost') || hasPrivilege($conn, 'edit_blogpost') || hasPrivilege($conn, 'edit_all_blogposts') || hasPrivilege($conn, 'moderate_comments')): ?>
         <div class="admin-domain-card">
           <h3><span>&#128221;</span> Tasting Notes &amp; Editorial</h3>
           <ul class="admin-domain-links">
@@ -347,12 +378,18 @@
                 <a href="editBlogpost.php" class="link-action">Edit</a>
               </li>
             <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'moderate_comments') || hasPrivilege($conn, 'manage_privileges')): ?>
+              <li>
+                <a href="manageComments.php" title="Moderate public tasting note comments and review approvals">Moderate comments</a>
+                <a href="manageComments.php" class="link-action">Comments</a>
+              </li>
+            <?php endif; ?>
           </ul>
         </div>
       <?php endif; ?>
 
       <!-- Terroir & Geography Matrix -->
-      <?php if (hasPrivilege($conn, 'manage_producers') || hasPrivilege($conn, 'manage_countries') || hasPrivilege($conn, 'manage_regions') || hasPrivilege($conn, 'manage_subregions') || hasPrivilege($conn, 'manage_appellations') || hasPrivilege($conn, 'manage_vineyards')): ?>
+      <?php if (hasPrivilege($conn, 'manage_producers') || hasPrivilege($conn, 'manage_countries') || hasPrivilege($conn, 'manage_regions') || hasPrivilege($conn, 'manage_subregions') || hasPrivilege($conn, 'manage_appellations') || hasPrivilege($conn, 'manage_vineyards') || hasPrivilege($conn, 'manage_varieties')): ?>
         <div class="admin-domain-card">
           <h3><span>&#127757;</span> Terroir &amp; Geography</h3>
           <table class="admin-terroir-table">
@@ -364,6 +401,15 @@
                   <td class="admin-terroir-actions">
                     <a href="addProducer.php" class="terroir-btn terroir-btn-add" title="Add producer">+ Add</a>
                     <a href="editProducer.php" class="terroir-btn terroir-btn-edit" title="Edit producer">Edit</a>
+                  </td>
+                </tr>
+              <?php endif; ?>
+              <?php if (hasPrivilege($conn, 'manage_varieties') || hasPrivilege($conn, 'edit_wine_master')): ?>
+                <tr>
+                  <td class="admin-terroir-name">Grape Varieties</td>
+                  <td class="admin-terroir-count"><?php echo number_format($terroir_counts['variety']); ?> recorded</td>
+                  <td class="admin-terroir-actions">
+                    <a href="manageVarieties.php" class="terroir-btn terroir-btn-edit" title="Manage grape varieties">Manage</a>
                   </td>
                 </tr>
               <?php endif; ?>
@@ -423,7 +469,7 @@
       <?php endif; ?>
 
       <!-- Site Settings & User Administration -->
-      <?php if (hasPrivilege($conn, 'manage_privileges') || hasPrivilege($conn, 'manage_users')): ?>
+      <?php if (hasPrivilege($conn, 'manage_privileges') || hasPrivilege($conn, 'manage_users') || hasPrivilege($conn, 'manage_rating_scales')): ?>
         <div class="admin-domain-card">
           <h3><span>&#9881;&#65039;</span> System &amp; Settings</h3>
           <ul class="admin-domain-links">
@@ -437,8 +483,14 @@
                 <a href="manageStaticPages.php" class="link-action">Pages</a>
               </li>
               <li>
-                <a href="managePrivileges.php" title="Configure 31 RBAC privileges and roles">User &amp; role privileges</a>
+                <a href="managePrivileges.php" title="Configure 38 RBAC privileges and roles">User &amp; role privileges</a>
                 <a href="managePrivileges.php" class="link-action">Roles</a>
+              </li>
+            <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'manage_rating_scales') || hasPrivilege($conn, 'manage_privileges')): ?>
+              <li>
+                <a href="manageRatingScales.php" title="Configure 20-point, 100-point, and WSET qualitative score descriptors">Rating scales &amp; assessment</a>
+                <a href="manageRatingScales.php" class="link-action">Scales</a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_users')): ?>

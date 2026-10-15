@@ -13,7 +13,7 @@ The system comes pre-configured with four standard roles:
 | **`public`** | Anonymous Visitor | Unauthenticated visitors to the website. Can browse published tasting notes, vintage reports, wine database records, public stories, and static pages. **Cannot access the cellar wine menu (*Carte des vins*) or the backend.** | `view_tnotes`, `view_stories` |
 | **`read`** | Reader / Member | Registered members. Can read notes and stories, view and post discussion comments, and access the private *Carte des vins* (`winemenu.php`). Cannot access the backend. | `view_tnotes`, `view_stories`, `view_comments`, `post_comments`, `view_cellar_menu` |
 | **`write`** | Contributor / Writer | Contributing authors and sommeliers. Inherits all member reading capabilities and can draft/edit tasting notes and stories via the `Contribute` menu. Cannot modify cellar inventory, create wines, or log orders. | All `read` privileges plus `add_tasting_note`, `edit_tasting_note`, `add_blogpost`, `edit_blogpost` |
-| **`admin`** | Administrator | Full access to backend inventory management, wine master definitions, purchase orders, site customisation, and user/privilege administration. Account ID 1 has immutable superuser access. | All 29 system privileges |
+| **`admin`** | Administrator | Full access to backend inventory management, wine master definitions, purchase orders, site customisation, and user/privilege administration. Account ID 1 has immutable superuser access. | All 38 system privileges |
 
 ---
 
@@ -29,6 +29,7 @@ Privileges are defined at the granular operation level across eight functional c
 
 ### Community
 - `post_comments`: Submit comments on tasting notes, stories, and wine pages.
+- `moderate_comments`: Review, edit, approve, and delete reader comments (`manageComments.php`).
 
 ### Tasting Notes
 - `add_tasting_note`: Create regular and blind tasting notes (`addTastingNote.php`).
@@ -45,6 +46,8 @@ Privileges are defined at the granular operation level across eight functional c
 ### Cellar & Orders
 - `browse_bottles`: View bottles and storage locations in the backend (`browseBottles.php`).
 - `manage_storage_bins`: Manage cellars, storage bins, and maximum capacities (`manageStorageBins.php`).
+- `manage_stores`: Manage wine merchants, retailers, and order sources (`manageStores.php`).
+- `manage_formats`: Manage bottle formats and standard liquid volumes (`manageFormats.php`).
 - `add_bottle`: Add new bottles to the cellar (`addBottle.php`).
 - `edit_bottle`: Update bottle details, drink windows, and statuses (`editBottle.php`).
 - `add_order`: Create wine purchasing orders (`addOrder.php`).
@@ -56,6 +59,9 @@ Privileges are defined at the granular operation level across eight functional c
 - `edit_wine`: Edit individual wine vintage details (`editWine.php`).
 - `add_wine_master`: Create new wine master profiles (`addWineMaster.php`).
 - `edit_wine_master`: Edit wine master profiles and naming conventions (`editWineMaster.php`).
+- `manage_varieties`: Manage grape varieties and c&eacute;page profiles (`manageVarieties.php`).
+- `manage_vintages`: Manage harvest vintages and regional character reports (`manageVintages.php`).
+- `manage_wine_attributes`: Manage wine styles, colours, and display templates (`manageWineAttributes.php`).
 
 ### Geography & Producers
 - `manage_producers`: Add and edit wine producers (`addProducer.php`, `editProducer.php`).
@@ -68,6 +74,7 @@ Privileges are defined at the granular operation level across eight functional c
 ### Administration
 - `manage_users`: Add and edit user accounts (`addUser.php`, `editUser.php`).
 - `manage_privileges`: Configure role permissions, custom roles, and user privilege overrides (`managePrivileges.php`).
+- `manage_rating_scales`: Configure qualitative score descriptors for rating scales (`manageRatingScales.php`).
 
 ---
 

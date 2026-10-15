@@ -2834,6 +2834,7 @@ function ensurePrivilegeTablesExist($conn) {
     ['view_cellar_menu', 'View Carte des vins', 'Viewing & Reading', 'Access the interactive cellar menu for friends', 0, 40],
     // Community
     ['post_comments', 'Post Comments', 'Community', 'Submit comments on tasting notes, stories, and wines', 0, 50],
+    ['moderate_comments', 'Moderate Comments', 'Community', 'Moderate, approve, edit, and remove user comments across the site', 0, 55],
     // Tasting Notes
     ['add_tasting_note', 'Write Tasting Notes', 'Tasting Notes', 'Create regular and blind tasting notes', 0, 60],
     ['edit_tasting_note', 'Edit Own Tasting Notes', 'Tasting Notes', 'Edit tasting notes created by yourself', 0, 70],
@@ -2846,16 +2847,22 @@ function ensurePrivilegeTablesExist($conn) {
     ['publish_blogpost', 'Publish Stories', 'Blog Stories', 'Publish stories directly (without forcing draft status)', 0, 130],
     // Cellar & Orders
     ['browse_bottles', 'Browse Bottles', 'Cellar & Orders', 'View bottles and storage locations in backend', 0, 140],
-    ['add_bottle', 'Add Bottle', 'Cellar & Orders', 'Add new bottles to the cellar', 0, 100],
+    ['manage_storage_bins', 'Manage Storage Bins', 'Cellar & Orders', 'Manage cellars, storage bins, and maximum capacities', 0, 145],
+    ['add_bottle', 'Add Bottle', 'Cellar & Orders', 'Add new bottles to the cellar', 0, 150],
     ['edit_bottle', 'Edit Bottle', 'Cellar & Orders', 'Update bottle details, drink windows, and status', 0, 160],
     ['add_order', 'Create Order', 'Cellar & Orders', 'Create wine purchasing orders', 0, 170],
     ['manage_orders', 'Manage Orders', 'Cellar & Orders', 'Manage open wine orders and accept deliveries', 0, 180],
+    ['manage_stores', 'Manage Stores & Merchants', 'Cellar & Orders', 'Add and edit wine merchants and purchase sources', 0, 185],
+    ['manage_formats', 'Manage Bottle Formats', 'Cellar & Orders', 'Configure physical bottle formats and volume sizes', 0, 188],
     // Wines & Masters
     ['browse_wines', 'Browse Wines', 'Wines & Masters', 'Search and view wines in the backend database', 0, 190],
     ['add_wine', 'Add Wine', 'Wines & Masters', 'Add new individual wine vintage entries', 0, 200],
     ['edit_wine', 'Edit Wine', 'Wines & Masters', 'Edit individual wine vintage details', 0, 210],
     ['add_wine_master', 'Add Wine Master', 'Wines & Masters', 'Create new wine master profiles', 0, 220],
     ['edit_wine_master', 'Edit Wine Master', 'Wines & Masters', 'Edit wine master profiles and naming conventions', 0, 230],
+    ['manage_varieties', 'Manage Grape Varieties', 'Wines & Masters', 'Catalog and manage grape varieties and descriptions', 0, 232],
+    ['manage_vintages', 'Manage Vintages & Reports', 'Wines & Masters', 'Manage harvest vintages and regional character evaluations', 0, 234],
+    ['manage_wine_attributes', 'Manage Wine Attributes', 'Wines & Masters', 'Configure wine colours, styles, and title naming conventions', 0, 236],
     // Geography & Producers
     ['manage_producers', 'Manage Producers', 'Geography & Producers', 'Add and edit wine producers', 0, 240],
     ['manage_countries', 'Manage Countries', 'Geography & Producers', 'Add and edit countries', 0, 250],
@@ -2865,6 +2872,7 @@ function ensurePrivilegeTablesExist($conn) {
     ['manage_vineyards', 'Manage Vineyards', 'Geography & Producers', 'Add and edit vineyards', 0, 290],
     // Administration
     ['manage_users', 'Manage Users', 'Administration', 'Add and edit user accounts', 1, 300],
+    ['manage_rating_scales', 'Manage Rating Scales', 'Administration', 'Configure scoring scale descriptors and WSET criteria', 1, 305],
     ['manage_privileges', 'Manage Privileges', 'Administration', 'Configure role permissions and user privilege overrides', 1, 310],
   ];
 
@@ -2876,6 +2884,9 @@ function ensurePrivilegeTablesExist($conn) {
     }
     $stmt_priv->close();
   }
+
+  // Ensure Administrator role inherently possesses all registered privileges
+  $conn->query("INSERT IGNORE INTO `role_privileges` (`role_name`, `privilege_code`) SELECT 'admin', `privilege_code` FROM `privileges`");
 
   // Seed default role privileges if empty
   $res = $conn->query("SELECT COUNT(*) AS c FROM `role_privileges`");
@@ -2909,39 +2920,47 @@ function ensurePrivilegeTablesExist($conn) {
  */
 function getPrivilegeScriptMap() {
   return [
-    'addTastingNote.php'   => 'add_tasting_note',
-    'blindTasting.php'     => 'add_tasting_note',
-    'editTastingNote.php'  => 'edit_tasting_note',
-    'addBlogpost.php'      => 'add_blogpost',
-    'editBlogpost.php'     => 'edit_blogpost',
-    'browseBottles.php'    => 'browse_bottles',
-    'addBottle.php'        => 'add_bottle',
-    'editBottle.php'       => 'edit_bottle',
-    'addOrder.php'         => 'add_order',
-    'manageOrders.php'     => 'manage_orders',
-    'browseWines.php'      => 'browse_wines',
-    'addWine.php'          => 'add_wine',
-    'editWine.php'         => 'edit_wine',
-    'addWineMaster.php'    => 'add_wine_master',
-    'editWineMaster.php'   => 'edit_wine_master',
-    'addProducer.php'      => 'manage_producers',
-    'editProducer.php'     => 'manage_producers',
-    'addCountry.php'       => 'manage_countries',
-    'editCountry.php'      => 'manage_countries',
-    'addRegion.php'        => 'manage_regions',
-    'editRegion.php'       => 'manage_regions',
-    'addSubregion.php'     => 'manage_subregions',
-    'editSubregion.php'    => 'manage_subregions',
-    'addAppellation.php'   => 'manage_appellations',
-    'editAppellation.php'  => 'manage_appellations',
-    'addVineyard.php'      => 'manage_vineyards',
-    'editVineyard.php'     => 'manage_vineyards',
-    'addUser.php'          => 'manage_users',
-    'editUser.php'         => 'manage_users',
-    'managePrivileges.php' => 'manage_privileges',
-    'settings.php'         => 'manage_privileges',
-    'manageStaticPages.php' => 'manage_privileges',
-    'editStaticPage.php'   => 'manage_privileges',
+    'addTastingNote.php'        => 'add_tasting_note',
+    'blindTasting.php'          => 'add_tasting_note',
+    'editTastingNote.php'       => 'edit_tasting_note',
+    'addBlogpost.php'           => 'add_blogpost',
+    'editBlogpost.php'          => 'edit_blogpost',
+    'browseBottles.php'         => 'browse_bottles',
+    'addBottle.php'             => 'add_bottle',
+    'editBottle.php'            => 'edit_bottle',
+    'addOrder.php'              => 'add_order',
+    'manageOrders.php'          => 'manage_orders',
+    'browseWines.php'           => 'browse_wines',
+    'addWine.php'               => 'add_wine',
+    'editWine.php'              => 'edit_wine',
+    'addWineMaster.php'         => 'add_wine_master',
+    'editWineMaster.php'        => 'edit_wine_master',
+    'addProducer.php'           => 'manage_producers',
+    'editProducer.php'          => 'manage_producers',
+    'addCountry.php'            => 'manage_countries',
+    'editCountry.php'           => 'manage_countries',
+    'addRegion.php'             => 'manage_regions',
+    'editRegion.php'            => 'manage_regions',
+    'addSubregion.php'          => 'manage_subregions',
+    'editSubregion.php'         => 'manage_subregions',
+    'addAppellation.php'        => 'manage_appellations',
+    'editAppellation.php'       => 'manage_appellations',
+    'addVineyard.php'           => 'manage_vineyards',
+    'editVineyard.php'          => 'manage_vineyards',
+    'addUser.php'               => 'manage_users',
+    'editUser.php'              => 'manage_users',
+    'managePrivileges.php'      => 'manage_privileges',
+    'settings.php'              => 'manage_privileges',
+    'manageStaticPages.php'     => 'manage_privileges',
+    'editStaticPage.php'        => 'manage_privileges',
+    'manageStorageBins.php'     => 'manage_storage_bins',
+    'manageStores.php'          => 'manage_stores',
+    'manageFormats.php'         => 'manage_formats',
+    'manageVarieties.php'       => 'manage_varieties',
+    'manageVintages.php'        => 'manage_vintages',
+    'manageWineAttributes.php'  => 'manage_wine_attributes',
+    'manageRatingScales.php'    => 'manage_rating_scales',
+    'manageComments.php'        => 'moderate_comments',
   ];
 }
 
@@ -5183,3 +5202,1771 @@ function getStorageBinsWithStats($conn): array {
 
   return $enriched;
 }
+
+/**
+ * Update the display name of a cellar location.
+ *
+ * Required privilege: 'manage_storage_bins'
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $cellar_id Unique cellar identifier.
+ * @param string $cellar_name Updated name for the cellar.
+ * @return bool True on success.
+ * @throws Exception If input validation fails or the query fails.
+ */
+function updateCellar($conn, $cellar_id, string $cellar_name): bool {
+  if (!($conn instanceof mysqli) || empty($cellar_id)) {
+    throw new Exception("Invalid database connection or cellar ID.");
+  }
+
+  $cellar_id = (int)$cellar_id;
+  $cellar_name = trim($cellar_name);
+
+  if ($cellar_name === '') {
+    throw new Exception("Cellar name cannot be empty.");
+  }
+  if (mb_strlen($cellar_name, 'UTF-8') > 50) {
+    throw new Exception("Cellar name must not exceed 50 characters.");
+  }
+
+  $stmt = $conn->prepare("UPDATE cellars SET cellar_name = ? WHERE cellar_id = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("si", $cellar_name, $cellar_id);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Delete a cellar location after verifying no storage bins belong to it.
+ *
+ * Required privilege: 'manage_storage_bins'
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $cellar_id Unique cellar identifier.
+ * @return bool True on success.
+ * @throws Exception If storage bins are still configured within the cellar.
+ */
+function deleteCellar($conn, $cellar_id): bool {
+  if (!($conn instanceof mysqli) || empty($cellar_id)) {
+    throw new Exception("Invalid database connection or cellar ID.");
+  }
+
+  $cellar_id = (int)$cellar_id;
+
+  $chk = $conn->prepare("SELECT COUNT(*) FROM storageBins WHERE cellar_id = ?");
+  if (!$chk) {
+    throw new Exception("Failed to check storage bin references: " . $conn->error);
+  }
+  $chk->bind_param("i", $cellar_id);
+  $chk->execute();
+  $chk->bind_result($bin_count);
+  $chk->fetch();
+  $chk->close();
+
+  if ($bin_count > 0) {
+    throw new Exception(sprintf("Cannot delete cellar: %d storage bin%s assigned to this cellar. Please reassign or delete the bins first.", $bin_count, ($bin_count === 1 ? ' is' : 's are')));
+  }
+
+  $stmt = $conn->prepare("DELETE FROM cellars WHERE cellar_id = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("i", $cellar_id);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all wine merchants and stores with associated order and bottle counts.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of stores with order and inventory statistics.
+ */
+function getStoresWithStats($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT 
+            s.store_id, 
+            s.store_name, 
+            s.country, 
+            s.address,
+            COUNT(DISTINCT o.order_id) AS total_orders,
+            COUNT(DISTINCT b.bottle_id) AS total_bottles
+          FROM stores s
+          LEFT JOIN orders o ON s.store_id = o.store_id
+          LEFT JOIN bottles b ON s.store_id = b.purchased_from
+          GROUP BY s.store_id, s.store_name, s.country, s.address
+          ORDER BY s.country ASC, s.store_name ASC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  $rows = method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+  return $rows;
+}
+
+/**
+ * Retrieve detailed information for a single wine store.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $store_id Store identifier.
+ * @return array|null Store record associative array, or null if not found.
+ */
+function getStoreDetails($conn, $store_id): ?array {
+  if (!($conn instanceof mysqli) || empty($store_id)) {
+    return null;
+  }
+
+  $stmt = $conn->prepare("SELECT store_id, store_name, country, address FROM stores WHERE store_id = ?");
+  if (!$stmt) {
+    return null;
+  }
+  $stmt->bind_param("i", $store_id);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $store = ($res && $row = $res->fetch_assoc()) ? $row : null;
+  $stmt->close();
+
+  return $store;
+}
+
+/**
+ * Insert a new wine merchant or retailer into the stores table.
+ *
+ * Required privilege: 'manage_stores' (or 'manage_orders')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $store_name Name of the store or merchant.
+ * @param string $country Country where the store is located.
+ * @param string|null $address Optional street address, contact info, or website.
+ * @return int Newly created store ID.
+ * @throws Exception If input is invalid or store already exists.
+ */
+function insertStore($conn, string $store_name, string $country, ?string $address = null): int {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $store_name = trim($store_name);
+  $country = trim($country);
+  $address = ($address !== null && trim($address) !== '') ? trim($address) : null;
+
+  if ($store_name === '') {
+    throw new Exception("Store name cannot be empty.");
+  }
+  if (mb_strlen($store_name, 'UTF-8') > 50) {
+    throw new Exception("Store name must not exceed 50 characters.");
+  }
+  if ($country === '') {
+    throw new Exception("Please select a valid country.");
+  }
+
+  $stmt = $conn->prepare("INSERT INTO stores (store_name, country, address) VALUES (?, ?, ?)");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("sss", $store_name, $country, $address);
+  if (!$stmt->execute()) {
+    $err = $stmt->error;
+    $stmt->close();
+    throw new Exception("Failed to insert store: " . $err);
+  }
+
+  $new_id = (int)$conn->insert_id;
+  $stmt->close();
+  return $new_id;
+}
+
+/**
+ * Update an existing wine store or merchant.
+ *
+ * Required privilege: 'manage_stores' (or 'manage_orders')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $store_id Unique store identifier.
+ * @param string $store_name Updated store name.
+ * @param string $country Updated country.
+ * @param string|null $address Updated street address or website.
+ * @return bool True on success.
+ * @throws Exception If inputs are invalid or the update fails.
+ */
+function updateStore($conn, $store_id, string $store_name, string $country, ?string $address = null): bool {
+  if (!($conn instanceof mysqli) || empty($store_id)) {
+    throw new Exception("Invalid database connection or store ID.");
+  }
+
+  $store_id = (int)$store_id;
+  $store_name = trim($store_name);
+  $country = trim($country);
+  $address = ($address !== null && trim($address) !== '') ? trim($address) : null;
+
+  if ($store_name === '') {
+    throw new Exception("Store name cannot be empty.");
+  }
+  if (mb_strlen($store_name, 'UTF-8') > 50) {
+    throw new Exception("Store name must not exceed 50 characters.");
+  }
+  if ($country === '') {
+    throw new Exception("Please select a valid country.");
+  }
+
+  $stmt = $conn->prepare("UPDATE stores SET store_name = ?, country = ?, address = ? WHERE store_id = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("sssi", $store_name, $country, $address, $store_id);
+  $res = $stmt->execute();
+  if (!$res) {
+    $err = $stmt->error;
+    $stmt->close();
+    throw new Exception("Failed to update store: " . $err);
+  }
+  $stmt->close();
+
+  return true;
+}
+
+/**
+ * Delete a wine store from the database after verifying no orders or bottles reference it.
+ *
+ * Required privilege: 'manage_stores' (or 'manage_orders')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $store_id Unique store identifier.
+ * @return bool True on success.
+ * @throws Exception If orders or bottles reference this store.
+ */
+function deleteStore($conn, $store_id): bool {
+  if (!($conn instanceof mysqli) || empty($store_id)) {
+    throw new Exception("Invalid database connection or store ID.");
+  }
+
+  $store_id = (int)$store_id;
+
+  // Check order references
+  $chkO = $conn->prepare("SELECT COUNT(*) FROM orders WHERE store_id = ?");
+  if ($chkO) {
+    $chkO->bind_param("i", $store_id);
+    $chkO->execute();
+    $chkO->bind_result($order_cnt);
+    $chkO->fetch();
+    $chkO->close();
+    if ($order_cnt > 0) {
+      throw new Exception(sprintf("Cannot delete merchant: %d purchase order%s linked to this store.", $order_cnt, ($order_cnt === 1 ? ' is' : 's are')));
+    }
+  }
+
+  // Check bottle references
+  $chkB = $conn->prepare("SELECT COUNT(*) FROM bottles WHERE purchased_from = ?");
+  if ($chkB) {
+    $chkB->bind_param("i", $store_id);
+    $chkB->execute();
+    $chkB->bind_result($btl_cnt);
+    $chkB->fetch();
+    $chkB->close();
+    if ($btl_cnt > 0) {
+      throw new Exception(sprintf("Cannot delete merchant: %d cellared bottle%s linked to this store.", $btl_cnt, ($btl_cnt === 1 ? ' is' : 's are')));
+    }
+  }
+
+  $stmt = $conn->prepare("DELETE FROM stores WHERE store_id = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("i", $store_id);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all grape varieties along with the count of master cuvées using each grape.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of grape varieties with usage statistics.
+ */
+function getVarietiesWithStats($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT 
+            v.grape, 
+            v.grape_desc, 
+            COUNT(wm.master_id) AS total_masters
+          FROM variety v
+          LEFT JOIN wines_master wm ON v.grape = wm.grape
+          GROUP BY v.grape, v.grape_desc
+          ORDER BY v.grape ASC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Retrieve details of a single grape variety.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $grape Grape variety name.
+ * @return array|null Grape record associative array, or null if not found.
+ */
+function getVarietyDetails($conn, string $grape): ?array {
+  if (!($conn instanceof mysqli) || trim($grape) === '') {
+    return null;
+  }
+
+  $stmt = $conn->prepare("SELECT grape, grape_desc FROM variety WHERE grape = ?");
+  if (!$stmt) {
+    return null;
+  }
+  $stmt->bind_param("s", $grape);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $row = ($res && $r = $res->fetch_assoc()) ? $r : null;
+  $stmt->close();
+
+  return $row;
+}
+
+/**
+ * Insert a new grape variety.
+ *
+ * Required privilege: 'manage_varieties' (or 'edit_wine_master')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $grape Grape variety name.
+ * @param string|null $grape_desc Optional viticultural description.
+ * @return bool True on success.
+ * @throws Exception If input is invalid or grape variety already exists.
+ */
+function insertVariety($conn, string $grape, ?string $grape_desc = null): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $grape = trim($grape);
+  $grape_desc = ($grape_desc !== null && trim($grape_desc) !== '') ? trim($grape_desc) : null;
+
+  if ($grape === '') {
+    throw new Exception("Grape variety name cannot be empty.");
+  }
+  if (mb_strlen($grape, 'UTF-8') > 255) {
+    throw new Exception("Grape variety name must not exceed 255 characters.");
+  }
+
+  $stmt = $conn->prepare("INSERT INTO variety (grape, grape_desc) VALUES (?, ?)");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("ss", $grape, $grape_desc);
+  if (!$stmt->execute()) {
+    $err = $stmt->error;
+    $stmt->close();
+    throw new Exception("Failed to insert grape variety: " . $err);
+  }
+  $stmt->close();
+
+  return true;
+}
+
+/**
+ * Update a grape variety name and description, cascading renames to wines_master.
+ *
+ * Required privilege: 'manage_varieties' (or 'edit_wine_master')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $old_grape Existing grape variety name.
+ * @param string $new_grape Updated grape variety name.
+ * @param string|null $grape_desc Updated description.
+ * @return bool True on success.
+ * @throws Exception If input validation or database update fails.
+ */
+function updateVariety($conn, string $old_grape, string $new_grape, ?string $grape_desc = null): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $old_grape = trim($old_grape);
+  $new_grape = trim($new_grape);
+  $grape_desc = ($grape_desc !== null && trim($grape_desc) !== '') ? trim($grape_desc) : null;
+
+  if ($new_grape === '') {
+    throw new Exception("Grape variety name cannot be empty.");
+  }
+  if (mb_strlen($new_grape, 'UTF-8') > 255) {
+    throw new Exception("Grape variety name must not exceed 255 characters.");
+  }
+
+  $conn->begin_transaction();
+  try {
+    if ($old_grape !== $new_grape) {
+      // Temporarily insert new grape so foreign keys can be updated
+      $ins = $conn->prepare("INSERT INTO variety (grape, grape_desc) VALUES (?, ?)");
+      if ($ins) {
+        $ins->bind_param("ss", $new_grape, $grape_desc);
+        $ins->execute();
+        $ins->close();
+      }
+
+      // Update references in wines_master
+      $upWm = $conn->prepare("UPDATE wines_master SET grape = ? WHERE grape = ?");
+      if ($upWm) {
+        $upWm->bind_param("ss", $new_grape, $old_grape);
+        $upWm->execute();
+        $upWm->close();
+      }
+
+      // Delete old grape
+      $del = $conn->prepare("DELETE FROM variety WHERE grape = ?");
+      if ($del) {
+        $del->bind_param("s", $old_grape);
+        $del->execute();
+        $del->close();
+      }
+    } else {
+      $stmt = $conn->prepare("UPDATE variety SET grape_desc = ? WHERE grape = ?");
+      if (!$stmt) {
+        throw new Exception("Failed to prepare statement: " . $conn->error);
+      }
+      $stmt->bind_param("ss", $grape_desc, $old_grape);
+      $stmt->execute();
+      $stmt->close();
+    }
+
+    $conn->commit();
+    return true;
+  } catch (Throwable $e) {
+    $conn->rollback();
+    throw new Exception("Failed to update grape variety: " . $e->getMessage());
+  }
+}
+
+/**
+ * Delete a grape variety from the database after verifying no master cuvées use it.
+ *
+ * Required privilege: 'manage_varieties' (or 'edit_wine_master')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $grape Grape variety name.
+ * @return bool True on success.
+ * @throws Exception If master cuvées reference this variety.
+ */
+function deleteVariety($conn, string $grape): bool {
+  if (!($conn instanceof mysqli) || trim($grape) === '') {
+    throw new Exception("Invalid database connection or grape name.");
+  }
+
+  $grape = trim($grape);
+
+  $chk = $conn->prepare("SELECT COUNT(*) FROM wines_master WHERE grape = ?");
+  if ($chk) {
+    $chk->bind_param("s", $grape);
+    $chk->execute();
+    $chk->bind_result($cnt);
+    $chk->fetch();
+    $chk->close();
+    if ($cnt > 0) {
+      throw new Exception(sprintf("Cannot delete grape variety: %d wine master cuvée%s currently linked to '%s'.", $cnt, ($cnt === 1 ? ' is' : 's are'), $grape));
+    }
+  }
+
+  $stmt = $conn->prepare("DELETE FROM variety WHERE grape = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("s", $grape);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all bottle formats with count of cellared bottles and purchase order items.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of bottle formats with inventory and order statistics.
+ */
+function getBottleFormatsWithStats($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT 
+            bf.format, 
+            bf.format_desc,
+            COUNT(DISTINCT b.bottle_id) AS total_bottles,
+            COUNT(DISTINCT oi.item_id) AS total_order_items
+          FROM bottle_formats bf
+          LEFT JOIN bottles b ON bf.format = b.format
+          LEFT JOIN order_items oi ON bf.format = oi.format
+          GROUP BY bf.format, bf.format_desc
+          ORDER BY CAST(REGEXP_REPLACE(bf.format, '[^0-9]', '') AS UNSIGNED) ASC, bf.format ASC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Insert a new bottle format and synchronise with the sizes table.
+ *
+ * Required privilege: 'manage_formats' (or 'manage_storage_bins')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $format Format code (e.g. '750ml', '1500ml', max 7 chars).
+ * @param string|null $format_desc Common name or description (e.g. 'standard bottle', 'magnum').
+ * @return bool True on success.
+ * @throws Exception If format code is invalid or already exists.
+ */
+function insertBottleFormat($conn, string $format, ?string $format_desc = null): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $format = trim($format);
+  $format_desc = ($format_desc !== null && trim($format_desc) !== '') ? trim($format_desc) : null;
+
+  if ($format === '') {
+    throw new Exception("Format code cannot be empty.");
+  }
+  if (mb_strlen($format, 'UTF-8') > 7) {
+    throw new Exception("Format code must not exceed 7 characters.");
+  }
+  if ($format_desc !== null && mb_strlen($format_desc, 'UTF-8') > 25) {
+    throw new Exception("Format description must not exceed 25 characters.");
+  }
+
+  $conn->begin_transaction();
+  try {
+    $stmt = $conn->prepare("INSERT INTO bottle_formats (format, format_desc) VALUES (?, ?)");
+    if (!$stmt) {
+      throw new Exception("Failed to prepare statement: " . $conn->error);
+    }
+    $stmt->bind_param("ss", $format, $format_desc);
+    if (!$stmt->execute()) {
+      $err = $stmt->error;
+      $stmt->close();
+      throw new Exception("Failed to insert bottle format: " . $err);
+    }
+    $stmt->close();
+
+    // Synchronise into sizes table
+    $stmtSize = $conn->prepare("INSERT IGNORE INTO sizes (size) VALUES (?)");
+    if ($stmtSize) {
+      $stmtSize->bind_param("s", $format);
+      $stmtSize->execute();
+      $stmtSize->close();
+    }
+
+    $conn->commit();
+    return true;
+  } catch (Throwable $e) {
+    $conn->rollback();
+    throw new Exception($e->getMessage());
+  }
+}
+
+/**
+ * Update an existing bottle format description.
+ *
+ * Required privilege: 'manage_formats' (or 'manage_storage_bins')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $format Format code.
+ * @param string|null $format_desc Updated description.
+ * @return bool True on success.
+ * @throws Exception If update fails.
+ */
+function updateBottleFormat($conn, string $format, ?string $format_desc = null): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $format = trim($format);
+  $format_desc = ($format_desc !== null && trim($format_desc) !== '') ? trim($format_desc) : null;
+
+  if ($format_desc !== null && mb_strlen($format_desc, 'UTF-8') > 25) {
+    throw new Exception("Format description must not exceed 25 characters.");
+  }
+
+  $stmt = $conn->prepare("UPDATE bottle_formats SET format_desc = ? WHERE format = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("ss", $format_desc, $format);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Delete a bottle format from the database after verifying no bottles or orders reference it.
+ *
+ * Required privilege: 'manage_formats' (or 'manage_storage_bins')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $format Format code.
+ * @return bool True on success.
+ * @throws Exception If bottles or orders reference this format.
+ */
+function deleteBottleFormat($conn, string $format): bool {
+  if (!($conn instanceof mysqli) || trim($format) === '') {
+    throw new Exception("Invalid database connection or format code.");
+  }
+
+  $format = trim($format);
+
+  // Check bottles
+  $chkB = $conn->prepare("SELECT COUNT(*) FROM bottles WHERE format = ?");
+  if ($chkB) {
+    $chkB->bind_param("s", $format);
+    $chkB->execute();
+    $chkB->bind_result($btl_cnt);
+    $chkB->fetch();
+    $chkB->close();
+    if ($btl_cnt > 0) {
+      throw new Exception(sprintf("Cannot delete format: %d cellared bottle%s assigned format '%s'.", $btl_cnt, ($btl_cnt === 1 ? ' is' : 's are'), $format));
+    }
+  }
+
+  // Check order items
+  $chkO = $conn->prepare("SELECT COUNT(*) FROM order_items WHERE format = ?");
+  if ($chkO) {
+    $chkO->bind_param("s", $format);
+    $chkO->execute();
+    $chkO->bind_result($oi_cnt);
+    $chkO->fetch();
+    $chkO->close();
+    if ($oi_cnt > 0) {
+      throw new Exception(sprintf("Cannot delete format: %d purchase order item%s assigned format '%s'.", $oi_cnt, ($oi_cnt === 1 ? ' is' : 's are'), $format));
+    }
+  }
+
+  $conn->begin_transaction();
+  try {
+    $stmt = $conn->prepare("DELETE FROM bottle_formats WHERE format = ?");
+    if (!$stmt) {
+      throw new Exception("Failed to prepare statement: " . $conn->error);
+    }
+    $stmt->bind_param("s", $format);
+    $stmt->execute();
+    $stmt->close();
+
+    // Also remove from sizes table
+    $stmtS = $conn->prepare("DELETE FROM sizes WHERE size = ?");
+    if ($stmtS) {
+      $stmtS->bind_param("s", $format);
+      $stmtS->execute();
+      $stmtS->close();
+    }
+
+    $conn->commit();
+    return true;
+  } catch (Throwable $e) {
+    $conn->rollback();
+    throw new Exception($e->getMessage());
+  }
+}
+
+/**
+ * Retrieve all harvest vintage years with wine count and tasting note counts.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of vintages ordered descending with statistics.
+ */
+function getVintagesWithStats($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT 
+            v.vintage, 
+            COUNT(DISTINCT w.wine_id) AS total_wines,
+            COUNT(DISTINCT tn.note_id) AS total_notes,
+            COUNT(DISTINCT xvr.region_id) AS regional_reports_count
+          FROM vintages v
+          LEFT JOIN wines w ON v.vintage = w.vintage
+          LEFT JOIN tnotes tn ON w.wine_id = tn.wine_id
+          LEFT JOIN x_vintage_region xvr ON v.vintage = xvr.vintage
+          GROUP BY v.vintage
+          ORDER BY v.vintage DESC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Insert a new harvest vintage year.
+ *
+ * Required privilege: 'manage_vintages' (or 'edit_wine')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $vintage Harvest year (e.g. 2025).
+ * @return bool True on success.
+ * @throws Exception If vintage is out of valid range or already exists.
+ */
+function insertVintageYear($conn, int $vintage): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  if ($vintage < 1750 || $vintage > 2100) {
+    throw new Exception("Please specify a valid harvest vintage year between 1750 and 2100.");
+  }
+
+  $stmt = $conn->prepare("INSERT INTO vintages (vintage) VALUES (?)");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("i", $vintage);
+  if (!$stmt->execute()) {
+    $err = $stmt->error;
+    $stmt->close();
+    throw new Exception("Failed to insert vintage: " . $err);
+  }
+  $stmt->close();
+
+  return true;
+}
+
+/**
+ * Delete a harvest vintage year after verifying no wines or regional reports link to it.
+ *
+ * Required privilege: 'manage_vintages' (or 'edit_wine')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $vintage Harvest year.
+ * @return bool True on success.
+ * @throws Exception If wines or regional reports reference this vintage.
+ */
+function deleteVintageYear($conn, int $vintage): bool {
+  if (!($conn instanceof mysqli) || empty($vintage)) {
+    throw new Exception("Invalid database connection or vintage year.");
+  }
+
+  $vintage = (int)$vintage;
+
+  $chkW = $conn->prepare("SELECT COUNT(*) FROM wines WHERE vintage = ?");
+  if ($chkW) {
+    $chkW->bind_param("i", $vintage);
+    $chkW->execute();
+    $chkW->bind_result($cnt);
+    $chkW->fetch();
+    $chkW->close();
+    if ($cnt > 0) {
+      throw new Exception(sprintf("Cannot delete vintage: %d wine%s recorded for vintage %d.", $cnt, ($cnt === 1 ? ' is' : 's are'), $vintage));
+    }
+  }
+
+  $chkR = $conn->prepare("SELECT COUNT(*) FROM x_vintage_region WHERE vintage = ?");
+  if ($chkR) {
+    $chkR->bind_param("i", $vintage);
+    $chkR->execute();
+    $chkR->bind_result($rcnt);
+    $chkR->fetch();
+    $chkR->close();
+    if ($rcnt > 0) {
+      throw new Exception(sprintf("Cannot delete vintage: %d regional vintage report%s linked to vintage %d. Please remove the regional reports first.", $rcnt, ($rcnt === 1 ? '' : 's'), $vintage));
+    }
+  }
+
+  $stmt = $conn->prepare("DELETE FROM vintages WHERE vintage = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("i", $vintage);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve regional vintage character reports from x_vintage_region.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int|null $vintage Optional vintage filter.
+ * @param int|null $region_id Optional region filter.
+ * @return array List of regional vintage evaluation reports.
+ */
+function getRegionalVintageReports($conn, ?int $vintage = null, ?int $region_id = null): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $where = [];
+  $params = [];
+  $types = '';
+
+  if ($vintage !== null && $vintage > 0) {
+    $where[] = "xvr.vintage = ?";
+    $params[] = $vintage;
+    $types .= 'i';
+  }
+  if ($region_id !== null && $region_id > 0) {
+    $where[] = "xvr.region_id = ?";
+    $params[] = $region_id;
+    $types .= 'i';
+  }
+
+  $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+  $sql = "SELECT 
+            xvr.vintage, 
+            xvr.region_id, 
+            xvr.vintage_desc,
+            r.region,
+            r.country
+          FROM x_vintage_region xvr
+          JOIN regions r ON xvr.region_id = r.region_id
+          {$whereClause}
+          ORDER BY xvr.vintage DESC, r.country ASC, r.region ASC";
+
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return [];
+  }
+  if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+  }
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+  $stmt->close();
+
+  return $rows;
+}
+
+/**
+ * Save or update a regional vintage character report.
+ *
+ * Required privilege: 'manage_vintages' (or 'edit_wine')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $vintage Harvest year.
+ * @param int $region_id Wine region identifier.
+ * @param string $vintage_desc Qualitative harvest and weather assessment.
+ * @return bool True on success.
+ * @throws Exception If input is invalid or database update fails.
+ */
+function saveRegionalVintageReport($conn, int $vintage, int $region_id, string $vintage_desc): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $vintage_desc = trim($vintage_desc);
+  if ($vintage < 1750 || $vintage > 2100) {
+    throw new Exception("Invalid vintage year.");
+  }
+  if ($region_id < 1) {
+    throw new Exception("Invalid region ID.");
+  }
+  if ($vintage_desc === '') {
+    throw new Exception("Vintage report description cannot be empty.");
+  }
+
+  $stmt = $conn->prepare("INSERT INTO x_vintage_region (vintage, region_id, vintage_desc) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE vintage_desc = VALUES(vintage_desc)");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("iis", $vintage, $region_id, $vintage_desc);
+  $res = $stmt->execute();
+  if (!$res) {
+    $err = $stmt->error;
+    $stmt->close();
+    throw new Exception("Failed to save regional vintage report: " . $err);
+  }
+  $stmt->close();
+
+  return true;
+}
+
+/**
+ * Delete a regional vintage character report.
+ *
+ * Required privilege: 'manage_vintages' (or 'edit_wine')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $vintage Harvest year.
+ * @param int $region_id Wine region identifier.
+ * @return bool True on success.
+ * @throws Exception If query fails.
+ */
+function deleteRegionalVintageReport($conn, int $vintage, int $region_id): bool {
+  if (!($conn instanceof mysqli) || empty($vintage) || empty($region_id)) {
+    throw new Exception("Invalid database connection, vintage, or region ID.");
+  }
+
+  $stmt = $conn->prepare("DELETE FROM x_vintage_region WHERE vintage = ? AND region_id = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("ii", $vintage, $region_id);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all wine styles with master cuvée counts.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of wine styles with statistics.
+ */
+function getStylesWithStats($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT 
+            s.style, 
+            s.style_desc,
+            COUNT(wm.master_id) AS total_masters
+          FROM styles s
+          LEFT JOIN wines_master wm ON s.style = wm.style
+          GROUP BY s.style, s.style_desc
+          ORDER BY s.style ASC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Insert a new wine style.
+ *
+ * Required privilege: 'manage_wine_attributes' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $style Style code/name.
+ * @param string|null $style_desc Optional descriptive definition.
+ * @return bool True on success.
+ * @throws Exception If style name is empty or already exists.
+ */
+function insertStyle($conn, string $style, ?string $style_desc = null): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $style = trim($style);
+  $style_desc = ($style_desc !== null && trim($style_desc) !== '') ? trim($style_desc) : null;
+
+  if ($style === '') {
+    throw new Exception("Style name cannot be empty.");
+  }
+  if (mb_strlen($style, 'UTF-8') > 32) {
+    throw new Exception("Style name must not exceed 32 characters.");
+  }
+
+  $stmt = $conn->prepare("INSERT INTO styles (style, style_desc) VALUES (?, ?)");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("ss", $style, $style_desc);
+  if (!$stmt->execute()) {
+    $err = $stmt->error;
+    $stmt->close();
+    throw new Exception("Failed to insert style: " . $err);
+  }
+  $stmt->close();
+
+  return true;
+}
+
+/**
+ * Update a wine style description.
+ *
+ * Required privilege: 'manage_wine_attributes' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $style Style code.
+ * @param string|null $style_desc Updated description.
+ * @return bool True on success.
+ * @throws Exception If update fails.
+ */
+function updateStyle($conn, string $style, ?string $style_desc = null): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $style = trim($style);
+  $style_desc = ($style_desc !== null && trim($style_desc) !== '') ? trim($style_desc) : null;
+
+  $stmt = $conn->prepare("UPDATE styles SET style_desc = ? WHERE style = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("ss", $style_desc, $style);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Delete a wine style from the database after verifying no master cuvées use it.
+ *
+ * Required privilege: 'manage_wine_attributes' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $style Style code.
+ * @return bool True on success.
+ * @throws Exception If master cuvées reference this style.
+ */
+function deleteStyle($conn, string $style): bool {
+  if (!($conn instanceof mysqli) || trim($style) === '') {
+    throw new Exception("Invalid database connection or style name.");
+  }
+
+  $style = trim($style);
+
+  $chk = $conn->prepare("SELECT COUNT(*) FROM wines_master WHERE style = ?");
+  if ($chk) {
+    $chk->bind_param("s", $style);
+    $chk->execute();
+    $chk->bind_result($cnt);
+    $chk->fetch();
+    $chk->close();
+    if ($cnt > 0) {
+      throw new Exception(sprintf("Cannot delete style: %d wine master cuvée%s currently linked to '%s'.", $cnt, ($cnt === 1 ? ' is' : 's are'), $style));
+    }
+  }
+
+  $stmt = $conn->prepare("DELETE FROM styles WHERE style = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("s", $style);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all wine colours with master cuvée counts.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of wine colours with statistics.
+ */
+function getColoursWithStats($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT 
+            c.colour, 
+            COUNT(wm.master_id) AS total_masters
+          FROM colours c
+          LEFT JOIN wines_master wm ON c.colour = wm.colour
+          GROUP BY c.colour
+          ORDER BY c.colour ASC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Insert a new wine colour classification.
+ *
+ * Required privilege: 'manage_wine_attributes' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $colour Colour name (e.g. 'orange', 'rosé').
+ * @return bool True on success.
+ * @throws Exception If colour name is empty or already exists.
+ */
+function insertColour($conn, string $colour): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $colour = trim($colour);
+  if ($colour === '') {
+    throw new Exception("Colour name cannot be empty.");
+  }
+  if (mb_strlen($colour, 'UTF-8') > 24) {
+    throw new Exception("Colour name must not exceed 24 characters.");
+  }
+
+  $stmt = $conn->prepare("INSERT INTO colours (colour) VALUES (?)");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("s", $colour);
+  if (!$stmt->execute()) {
+    $err = $stmt->error;
+    $stmt->close();
+    throw new Exception("Failed to insert colour: " . $err);
+  }
+  $stmt->close();
+
+  return true;
+}
+
+/**
+ * Delete a wine colour from the database after verifying no master cuvées use it.
+ *
+ * Required privilege: 'manage_wine_attributes' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $colour Colour name.
+ * @return bool True on success.
+ * @throws Exception If master cuvées reference this colour.
+ */
+function deleteColour($conn, string $colour): bool {
+  if (!($conn instanceof mysqli) || trim($colour) === '') {
+    throw new Exception("Invalid database connection or colour name.");
+  }
+
+  $colour = trim($colour);
+
+  $chk = $conn->prepare("SELECT COUNT(*) FROM wines_master WHERE colour = ?");
+  if ($chk) {
+    $chk->bind_param("s", $colour);
+    $chk->execute();
+    $chk->bind_result($cnt);
+    $chk->fetch();
+    $chk->close();
+    if ($cnt > 0) {
+      throw new Exception(sprintf("Cannot delete colour: %d wine master cuvée%s currently linked to '%s'.", $cnt, ($cnt === 1 ? ' is' : 's are'), $colour));
+    }
+  }
+
+  $stmt = $conn->prepare("DELETE FROM colours WHERE colour = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("s", $colour);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all wine title display naming conventions with master cuvée counts.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of display conventions with statistics.
+ */
+function getDisplayOptionsWithStats($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT 
+            d.nameconvention, 
+            d.description,
+            COUNT(wm.master_id) AS total_masters
+          FROM displayoptions d
+          LEFT JOIN wines_master wm ON d.nameconvention = wm.nameconvention
+          GROUP BY d.nameconvention, d.description
+          ORDER BY d.nameconvention ASC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Insert a new wine naming display convention.
+ *
+ * Required privilege: 'manage_wine_attributes' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $nameconvention Identifier string.
+ * @param string $description Explanatory example or description.
+ * @return bool True on success.
+ * @throws Exception If inputs are invalid or convention already exists.
+ */
+function insertDisplayOption($conn, string $nameconvention, string $description): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $nameconvention = trim($nameconvention);
+  $description = trim($description);
+
+  if ($nameconvention === '' || $description === '') {
+    throw new Exception("Naming convention code and description cannot be empty.");
+  }
+  if (mb_strlen($nameconvention, 'UTF-8') > 255 || mb_strlen($description, 'UTF-8') > 255) {
+    throw new Exception("Naming convention and description must not exceed 255 characters.");
+  }
+
+  $stmt = $conn->prepare("INSERT INTO displayoptions (nameconvention, description) VALUES (?, ?)");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("ss", $nameconvention, $description);
+  if (!$stmt->execute()) {
+    $err = $stmt->error;
+    $stmt->close();
+    throw new Exception("Failed to insert display option: " . $err);
+  }
+  $stmt->close();
+
+  return true;
+}
+
+/**
+ * Update a wine naming display convention description.
+ *
+ * Required privilege: 'manage_wine_attributes' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $nameconvention Identifier string.
+ * @param string $description Updated description.
+ * @return bool True on success.
+ * @throws Exception If update fails.
+ */
+function updateDisplayOption($conn, string $nameconvention, string $description): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $nameconvention = trim($nameconvention);
+  $description = trim($description);
+
+  if ($description === '') {
+    throw new Exception("Description cannot be empty.");
+  }
+
+  $stmt = $conn->prepare("UPDATE displayoptions SET description = ? WHERE nameconvention = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("ss", $description, $nameconvention);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Delete a wine naming convention after verifying no master cuvées use it.
+ *
+ * Required privilege: 'manage_wine_attributes' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string $nameconvention Identifier string.
+ * @return bool True on success.
+ * @throws Exception If master cuvées reference this naming convention.
+ */
+function deleteDisplayOption($conn, string $nameconvention): bool {
+  if (!($conn instanceof mysqli) || trim($nameconvention) === '') {
+    throw new Exception("Invalid database connection or naming convention.");
+  }
+
+  $nameconvention = trim($nameconvention);
+
+  $chk = $conn->prepare("SELECT COUNT(*) FROM wines_master WHERE nameconvention = ?");
+  if ($chk) {
+    $chk->bind_param("s", $nameconvention);
+    $chk->execute();
+    $chk->bind_result($cnt);
+    $chk->fetch();
+    $chk->close();
+    if ($cnt > 0) {
+      throw new Exception(sprintf("Cannot delete naming convention: %d wine master cuvée%s currently assigned '%s'.", $cnt, ($cnt === 1 ? ' is' : 's are'), $nameconvention));
+    }
+  }
+
+  $stmt = $conn->prepare("DELETE FROM displayoptions WHERE nameconvention = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("s", $nameconvention);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all 20-point rating scale tier descriptors with tasting note counts.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of 20-point scale definitions.
+ */
+function getAllScale20Details($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT 
+            s.pts, 
+            s.pts_desc, 
+            s.pts_class,
+            COUNT(tn.note_id) AS total_notes
+          FROM scale_20 s
+          LEFT JOIN tnotes tn ON s.pts = tn.pts_20
+          GROUP BY s.pts, s.pts_desc, s.pts_class
+          ORDER BY s.pts DESC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Update qualitative descriptor and class for a 20-point score tier.
+ *
+ * Required privilege: 'manage_rating_scales' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $pts Point tier (0 to 20).
+ * @param string $pts_desc Qualitative description.
+ * @param string $pts_class Rating CSS class (e.g. 'grand vin', 'excellent', 'good').
+ * @return bool True on success.
+ * @throws Exception If input is invalid or update fails.
+ */
+function updateScale20Descriptor($conn, int $pts, string $pts_desc, string $pts_class): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $pts_desc = trim($pts_desc);
+  $pts_class = trim($pts_class);
+
+  if ($pts < 0 || $pts > 20) {
+    throw new Exception("Score must be between 0 and 20.");
+  }
+  if ($pts_desc === '') {
+    throw new Exception("Score description cannot be empty.");
+  }
+  if ($pts_class === '') {
+    throw new Exception("Rating classification cannot be empty.");
+  }
+
+  $stmt = $conn->prepare("UPDATE scale_20 SET pts_desc = ?, pts_class = ? WHERE pts = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("ssi", $pts_desc, $pts_class, $pts);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all 100-point rating scale range tier definitions.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of 100-point scale tier definitions.
+ */
+function getAllScale100Details($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT min_pts, max_pts, pts_desc, pts_class FROM scale_100 ORDER BY min_pts DESC";
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Update qualitative descriptor and class for a 100-point rating band.
+ *
+ * Required privilege: 'manage_rating_scales' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $min_pts Minimum points for this tier.
+ * @param int $max_pts Maximum points for this tier.
+ * @param string $pts_desc Qualitative definition.
+ * @param string $pts_class Rating CSS class.
+ * @return bool True on success.
+ * @throws Exception If input is invalid or update fails.
+ */
+function updateScale100Descriptor($conn, int $min_pts, int $max_pts, string $pts_desc, string $pts_class): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $pts_desc = trim($pts_desc);
+  $pts_class = trim($pts_class);
+
+  if ($pts_desc === '') {
+    throw new Exception("Score description cannot be empty.");
+  }
+  if ($pts_class === '') {
+    throw new Exception("Rating classification cannot be empty.");
+  }
+
+  $stmt = $conn->prepare("UPDATE scale_100 SET pts_desc = ?, pts_class = ? WHERE min_pts = ? AND max_pts = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("ssii", $pts_desc, $pts_class, $min_pts, $max_pts);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve all WSET qualitative rating points with tasting note counts.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array List of WSET rating points and descriptors.
+ */
+function getAllWsetPtsDetails($conn): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $sql = "SELECT 
+            w.pts, 
+            w.wset_desc,
+            COUNT(tn.note_id) AS total_notes
+          FROM wsetpts w
+          LEFT JOIN tnotes tn ON w.pts = tn.wsetpts
+          GROUP BY w.pts, w.wset_desc
+          ORDER BY w.pts DESC";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    return [];
+  }
+
+  return method_exists($res, 'fetch_all') ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+/**
+ * Update descriptor for a WSET qualitative assessment rating point.
+ *
+ * Required privilege: 'manage_rating_scales' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param float $pts WSET assessment points (0.0 to 4.0).
+ * @param string $wset_desc Qualitative assessment definition.
+ * @return bool True on success.
+ * @throws Exception If input is invalid or update fails.
+ */
+function updateWsetPtsDescriptor($conn, float $pts, string $wset_desc): bool {
+  if (!($conn instanceof mysqli)) {
+    throw new Exception("Invalid database connection.");
+  }
+
+  $wset_desc = trim($wset_desc);
+  if ($wset_desc === '') {
+    throw new Exception("WSET description cannot be empty.");
+  }
+
+  $ptsFormatted = number_format($pts, 1, '.', '');
+
+  $stmt = $conn->prepare("UPDATE wsetpts SET wset_desc = ? WHERE pts = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("sd", $wset_desc, $ptsFormatted);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Retrieve site-wide user comments with target item metadata for administrative moderation.
+ *
+ * Required privilege: 'moderate_comments' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string|null $status Optional status filter ('approved', 'pending', 'spam').
+ * @param string|null $type Optional entity type filter ('blog', 'tnote', 'wine').
+ * @param string|null $search Optional keyword filter across comment body or username.
+ * @param int $limit Pagination limit.
+ * @param int $offset Pagination offset.
+ * @return array List of comment records with author and item context.
+ */
+function getBackendComments($conn, ?string $status = null, ?string $type = null, ?string $search = null, int $limit = 50, int $offset = 0): array {
+  if (!($conn instanceof mysqli)) {
+    return [];
+  }
+
+  $where = [];
+  $params = [];
+  $types = '';
+
+  if ($status !== null && $status !== '' && $status !== 'all') {
+    $where[] = "c.status = ?";
+    $params[] = $status;
+    $types .= 's';
+  }
+
+  if ($type === 'blog') {
+    $where[] = "xcb.blog_id IS NOT NULL";
+  } elseif ($type === 'tnote') {
+    $where[] = "xct.note_id IS NOT NULL";
+  } elseif ($type === 'wine') {
+    $where[] = "xcw.wine_id IS NOT NULL";
+  }
+
+  if ($search !== null && trim($search) !== '') {
+    $where[] = "(c.comment LIKE ? OR u.username LIKE ? OR u.displayname LIKE ?)";
+    $like = '%' . trim($search) . '%';
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $types .= 'sss';
+  }
+
+  $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+  $sql = "SELECT 
+            c.comment_id, 
+            c.user_id, 
+            c.comment_date, 
+            c.comment, 
+            c.status,
+            u.username,
+            u.displayname,
+            u.initials,
+            xcb.blog_id,
+            bp.title AS blog_title,
+            xct.note_id,
+            tn.wine_id AS tnote_wine_id,
+            tn.tasting_date,
+            xcw.wine_id,
+            wm.name AS wine_master_name,
+            w.vintage AS wine_vintage,
+            p.producer AS wine_producer
+          FROM comments c
+          LEFT JOIN users u ON c.user_id = u.user_id
+          LEFT JOIN x_comments_blogposts xcb ON c.comment_id = xcb.comment_id
+          LEFT JOIN blogposts bp ON xcb.blog_id = bp.blog_id
+          LEFT JOIN x_comments_tnotes xct ON c.comment_id = xct.comment_id
+          LEFT JOIN tnotes tn ON xct.note_id = tn.note_id
+          LEFT JOIN x_comments_wines xcw ON c.comment_id = xcw.comment_id
+          LEFT JOIN wines w ON COALESCE(xcw.wine_id, tn.wine_id) = w.wine_id
+          LEFT JOIN wines_master wm ON w.master_id = wm.master_id
+          LEFT JOIN producers p ON wm.producer_id = p.producer_id
+          {$whereClause}
+          ORDER BY c.comment_date DESC, c.comment_id DESC
+          LIMIT ? OFFSET ?";
+
+  $params[] = $limit;
+  $params[] = $offset;
+  $types .= 'ii';
+
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return [];
+  }
+  if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+  }
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+  $stmt->close();
+
+  return $rows;
+}
+
+/**
+ * Count total comments matching filter criteria for pagination.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string|null $status Optional status filter.
+ * @param string|null $type Optional entity type filter.
+ * @param string|null $search Optional keyword filter.
+ * @return int Total matching comment count.
+ */
+function getBackendCommentsCount($conn, ?string $status = null, ?string $type = null, ?string $search = null): int {
+  if (!($conn instanceof mysqli)) {
+    return 0;
+  }
+
+  $where = [];
+  $params = [];
+  $types = '';
+
+  if ($status !== null && $status !== '' && $status !== 'all') {
+    $where[] = "c.status = ?";
+    $params[] = $status;
+    $types .= 's';
+  }
+
+  if ($type === 'blog') {
+    $where[] = "xcb.blog_id IS NOT NULL";
+  } elseif ($type === 'tnote') {
+    $where[] = "xct.note_id IS NOT NULL";
+  } elseif ($type === 'wine') {
+    $where[] = "xcw.wine_id IS NOT NULL";
+  }
+
+  if ($search !== null && trim($search) !== '') {
+    $where[] = "(c.comment LIKE ? OR u.username LIKE ? OR u.displayname LIKE ?)";
+    $like = '%' . trim($search) . '%';
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $types .= 'sss';
+  }
+
+  $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+  $sql = "SELECT COUNT(DISTINCT c.comment_id) AS total_count
+          FROM comments c
+          LEFT JOIN users u ON c.user_id = u.user_id
+          LEFT JOIN x_comments_blogposts xcb ON c.comment_id = xcb.comment_id
+          LEFT JOIN x_comments_tnotes xct ON c.comment_id = xct.comment_id
+          LEFT JOIN x_comments_wines xcw ON c.comment_id = xcw.comment_id
+          {$whereClause}";
+
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return 0;
+  }
+  if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+  }
+  $stmt->execute();
+  $stmt->bind_result($total);
+  $stmt->fetch();
+  $stmt->close();
+
+  return (int)$total;
+}
+
+/**
+ * Update status of a comment (e.g. 'approved', 'pending', 'spam').
+ *
+ * Required privilege: 'moderate_comments' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $comment_id Comment identifier.
+ * @param string $status New status value.
+ * @return bool True on success.
+ * @throws Exception If input is invalid or update fails.
+ */
+function updateCommentStatus($conn, int $comment_id, string $status): bool {
+  if (!($conn instanceof mysqli) || $comment_id < 1) {
+    throw new Exception("Invalid database connection or comment ID.");
+  }
+
+  $status = trim($status);
+  if (!in_array($status, ['approved', 'pending', 'spam'], true)) {
+    throw new Exception("Invalid comment status. Must be 'approved', 'pending', or 'spam'.");
+  }
+
+  $stmt = $conn->prepare("UPDATE comments SET status = ? WHERE comment_id = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("si", $status, $comment_id);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Update the text body of a comment during moderation.
+ *
+ * Required privilege: 'moderate_comments' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $comment_id Comment identifier.
+ * @param string $comment_text Updated comment text.
+ * @return bool True on success.
+ * @throws Exception If input is invalid or update fails.
+ */
+function updateCommentText($conn, int $comment_id, string $comment_text): bool {
+  if (!($conn instanceof mysqli) || $comment_id < 1) {
+    throw new Exception("Invalid database connection or comment ID.");
+  }
+
+  $comment_text = trim($comment_text);
+  if ($comment_text === '') {
+    throw new Exception("Comment text cannot be empty.");
+  }
+
+  $stmt = $conn->prepare("UPDATE comments SET comment = ? WHERE comment_id = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("si", $comment_text, $comment_id);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+
+/**
+ * Delete a user comment permanently, cascading to junction rows and notifications.
+ *
+ * Required privilege: 'moderate_comments' (or 'manage_privileges')
+ *
+ * @param mysqli $conn Active database connection.
+ * @param int $comment_id Comment identifier.
+ * @return bool True on success.
+ * @throws Exception If query fails.
+ */
+function deleteComment($conn, int $comment_id): bool {
+  if (!($conn instanceof mysqli) || $comment_id < 1) {
+    throw new Exception("Invalid database connection or comment ID.");
+  }
+
+  // Explicitly remove junction and notification rows first to guarantee cleanup even if foreign key cascade is disabled
+  $conn->query("DELETE FROM notifications WHERE comment_id = " . (int)$comment_id);
+  $conn->query("DELETE FROM x_comments_blogposts WHERE comment_id = " . (int)$comment_id);
+  $conn->query("DELETE FROM x_comments_tnotes WHERE comment_id = " . (int)$comment_id);
+  $conn->query("DELETE FROM x_comments_wines WHERE comment_id = " . (int)$comment_id);
+
+  $stmt = $conn->prepare("DELETE FROM comments WHERE comment_id = ?");
+  if (!$stmt) {
+    throw new Exception("Failed to prepare statement: " . $conn->error);
+  }
+  $stmt->bind_param("i", $comment_id);
+  $res = $stmt->execute();
+  $stmt->close();
+
+  return (bool)$res;
+}
+

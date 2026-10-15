@@ -196,7 +196,8 @@
             'blindTasting.php',
             'editTastingNote.php',
             'addBlogpost.php',
-            'editBlogpost.php'
+            'editBlogpost.php',
+            'manageComments.php'
           ]);
           $isAdminActive = (strpos($currentPath, '/backend/') !== false && !$isContributeActive);
 
@@ -207,8 +208,16 @@
           $canBrowseWines = hasPrivilege($conn, 'browse_wines');
           $canAddWine = hasPrivilege($conn, 'add_wine');
           $canManageOrders = hasPrivilege($conn, 'manage_orders') || hasPrivilege($conn, 'add_order');
+          $canManageStorageBins = hasPrivilege($conn, 'manage_storage_bins');
+          $canManageStores = hasPrivilege($conn, 'manage_stores') || hasPrivilege($conn, 'manage_orders');
+          $canManageFormats = hasPrivilege($conn, 'manage_formats') || hasPrivilege($conn, 'add_bottle');
+          $canManageVarieties = hasPrivilege($conn, 'manage_varieties') || hasPrivilege($conn, 'edit_wine_master');
+          $canManageVintages = hasPrivilege($conn, 'manage_vintages') || hasPrivilege($conn, 'edit_wine');
+          $canManageWineAttributes = hasPrivilege($conn, 'manage_wine_attributes') || hasPrivilege($conn, 'edit_wine_master');
+          $canManageRatingScales = hasPrivilege($conn, 'manage_rating_scales') || $canManagePrivileges;
+          $canModerateComments = hasPrivilege($conn, 'moderate_comments') || $canManagePrivileges;
 
-          $hasAdminMenuItems = $canManagePrivileges || $canManageUsers || $canBrowseBottles || $canAddBottle || $canBrowseWines || $canAddWine || $canManageOrders;
+          $hasAdminMenuItems = $canManagePrivileges || $canManageUsers || $canBrowseBottles || $canAddBottle || $canBrowseWines || $canAddWine || $canManageOrders || $canManageStorageBins || $canManageStores || $canManageFormats || $canManageVarieties || $canManageVintages || $canManageWineAttributes || $canManageRatingScales;
 
           if ($hasAdminMenuItems) {
             echo "<li class='dropdown right'>" .
@@ -218,27 +227,56 @@
               "<ul class='submenu'>" .
               "<li><a class='" . (($currentPath == '/backend/index.php') ? 'active' : '') . "' href='/backend/index.php' title='Admin Hub'><strong>Admin Hub</strong></a></li>";
 
-            $hasInventoryItems = $canBrowseBottles || $canAddBottle || $canManageOrders;
+            $hasInventoryItems = $canBrowseBottles || $canAddBottle || $canManageStorageBins || $canManageOrders || $canManageStores || $canManageFormats;
             if ($hasInventoryItems) {
-              echo "<li class='submenu-header'>Cellar &amp; Catalog</li>";
+              echo "<li class='submenu-header'>Cellar &amp; Inventory</li>";
               if ($canBrowseBottles) {
                 echo "<li><a class='" . (($currentPath == '/backend/browseBottles.php') ? 'active' : '') . "' href='/backend/browseBottles.php' title='Browse all bottles'>Browse bottles</a></li>";
               }
               if ($canAddBottle) {
                 echo "<li><a class='" . (($currentPath == '/backend/addBottle.php') ? 'active' : '') . "' href='/backend/addBottle.php' title='Add bottle'>Add bottle</a></li>";
               }
+              if ($canManageStorageBins) {
+                echo "<li><a class='" . (($currentPath == '/backend/manageStorageBins.php') ? 'active' : '') . "' href='/backend/manageStorageBins.php' title='Manage storage bins'>Storage bins</a></li>";
+              }
               if ($canManageOrders) {
                 echo "<li><a class='" . (($currentPath == '/backend/manageOrders.php') ? 'active' : '') . "' href='/backend/manageOrders.php' title='Manage open orders'>Orders</a></li>";
               }
+              if ($canManageStores) {
+                echo "<li><a class='" . (($currentPath == '/backend/manageStores.php') ? 'active' : '') . "' href='/backend/manageStores.php' title='Manage wine merchants & stores'>Wine stores</a></li>";
+              }
+              if ($canManageFormats) {
+                echo "<li><a class='" . (($currentPath == '/backend/manageFormats.php') ? 'active' : '') . "' href='/backend/manageFormats.php' title='Manage bottle formats & sizes'>Bottle formats</a></li>";
+              }
             }
 
-            $hasConfigItems = $canManagePrivileges || $canManageUsers;
+            $hasCatalogItems = $canBrowseWines || $canManageVarieties || $canManageVintages || $canManageWineAttributes;
+            if ($hasCatalogItems) {
+              echo "<li class='submenu-header'>Wine Catalog</li>";
+              if ($canBrowseWines) {
+                echo "<li><a class='" . (($currentPath == '/backend/browseWines.php') ? 'active' : '') . "' href='/backend/browseWines.php' title='Browse wine catalog'>Browse catalog</a></li>";
+              }
+              if ($canManageVarieties) {
+                echo "<li><a class='" . (($currentPath == '/backend/manageVarieties.php') ? 'active' : '') . "' href='/backend/manageVarieties.php' title='Manage grape varieties'>Grape varieties</a></li>";
+              }
+              if ($canManageVintages) {
+                echo "<li><a class='" . (($currentPath == '/backend/manageVintages.php') ? 'active' : '') . "' href='/backend/manageVintages.php' title='Manage vintages & regional reports'>Harvest vintages</a></li>";
+              }
+              if ($canManageWineAttributes) {
+                echo "<li><a class='" . (($currentPath == '/backend/manageWineAttributes.php') ? 'active' : '') . "' href='/backend/manageWineAttributes.php' title='Manage wine classifications and styles'>Wine attributes</a></li>";
+              }
+            }
+
+            $hasConfigItems = $canManagePrivileges || $canManageUsers || $canManageRatingScales;
             if ($hasConfigItems) {
               echo "<li class='submenu-header'>Administration</li>";
               if ($canManagePrivileges) {
                 echo "<li><a class='" . (($currentPath == '/backend/settings.php') ? 'active' : '') . "' href='/backend/settings.php' title='Site settings & branding'>Site settings</a></li>";
                 echo "<li><a class='" . (($currentPath == '/backend/manageStaticPages.php' || $currentPath == '/backend/editStaticPage.php') ? 'active' : '') . "' href='/backend/manageStaticPages.php' title='Manage static pages'>Static pages</a></li>";
                 echo "<li><a class='" . (($currentPath == '/backend/managePrivileges.php') ? 'active' : '') . "' href='/backend/managePrivileges.php' title='User & role privileges'>User &amp; role privileges</a></li>";
+              }
+              if ($canManageRatingScales) {
+                echo "<li><a class='" . (($currentPath == '/backend/manageRatingScales.php') ? 'active' : '') . "' href='/backend/manageRatingScales.php' title='Configure rating scales & descriptors'>Rating scales</a></li>";
               }
               if ($canManageUsers) {
                 $isUserActive = ($currentPath == '/backend/editUser.php' || $currentPath == '/backend/addUser.php');
@@ -253,7 +291,7 @@
           $canAddBlog = hasPrivilege($conn, 'add_blogpost');
           $canEditBlog = hasPrivilege($conn, 'edit_blogpost') || hasPrivilege($conn, 'edit_all_blogposts');
 
-          $hasContributeMenuItems = $canAddNote || $canEditNote || $canAddBlog || $canEditBlog;
+          $hasContributeMenuItems = $canAddNote || $canEditNote || $canAddBlog || $canEditBlog || $canModerateComments;
 
           if ($hasContributeMenuItems) {
             echo "<li class='dropdown right'>" .
@@ -275,6 +313,9 @@
             }
             if ($canEditBlog) {
               echo "<li><a class='" . (($currentPath == '/backend/editBlogpost.php') ? 'active' : '') . "' href='/backend/editBlogpost.php' title='Edit a blogpost'>Edit story</a></li>";
+            }
+            if ($canModerateComments) {
+              echo "<li><a class='" . (($currentPath == '/backend/manageComments.php') ? 'active' : '') . "' href='/backend/manageComments.php' title='Moderate tasting note comments'>Moderate comments</a></li>";
             }
             echo "</ul></li>";
           }

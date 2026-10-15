@@ -34,7 +34,7 @@ phpMyCellar supports configurable rating methodologies with flexible dual-scale 
 | **100-Point Scale** | Modern international standard (Parker / Wine Spectator standard). | 50 – 100 points (integers, e.g. `94 / 100`) |
 | **WSET SAT (Optional)** | Wine & Spirit Education Trust Systematic Approach to Tasting (Poor, Acceptable, Good, Very Good, Outstanding). | Qualitative Assessment (configurable modes: Public, Logged In, Backend Only, or Disabled) |
 
-*Tip: You can select your collection's active primary scale (20-point vs 100-point) and configure WSET SAT visibility mode (`Public`, `Logged In`, `Backend Only`, or `Disabled`) as well as display detail (Standard vs. Detailed BLIC breakdown) in `Admin > Site Settings`.*
+*Tip: You can select your collection's active primary scale (20-point vs 100-point) and configure WSET SAT visibility mode (`Public`, `Logged In`, `Backend Only`, or `Disabled`) as well as display detail (Standard vs. Detailed BLIC breakdown) in `Admin > Site Settings`. Qualitative score descriptors for all three scales can be customised via `Admin > Admin Hub > System & Settings > Rating scales & assessment` (`/backend/manageRatingScales.php`).*
 
 ---
 
@@ -59,7 +59,16 @@ Every tasting note allows you to establish or refine forecasted drinking windows
 
 ---
 
-## 5. SEO & Social Sharing
+## 5. Harvest Vintages & Regional Character Reports
+
+Maintain vintage years and regional vintage assessments that populate public vintage charts (`/vintages.php`):
+- **Navigate to:** `Admin > Admin Hub > Wine Catalog & Masters > Harvest vintages & reports` (`/backend/manageVintages.php`).
+- **Harvest Vintages:** Add new harvest vintage years or remove obsolete years that have no associated wines.
+- **Regional Character Reports:** Record regional vintage summaries, overall scores (0–20), and qualitative character descriptions per wine region to guide drinking decisions.
+
+---
+
+## 6. SEO & Social Sharing
 
 Public tasting notes automatically generate:
 - **Canonical URLs** for search engines.
