@@ -52,7 +52,9 @@ Images uploaded for articles and tasting notes are stored under `uploads/img/`.
 
 ## 5. Comment Moderation & Discussion Control
 
-Administrators and moderators can manage discussion threads across tasting notes, wines, and stories:
+phpMyCellar operates on a **post-moderation** model for reader interactions:
+- **Immediate Publication:** Comments submitted by registered members possessing the `post_comments` privilege publish live immediately with `approved` status. Anonymous visitors cannot post comments.
+- **Retrospective Moderation:** Administrators and moderators (requiring the `moderate_comments` privilege) review, edit, or remove comments after publication.
 - **Navigate to:** `Admin > Admin Hub > Tasting Notes & Editorial > Moderate comments` (`/backend/manageComments.php`) or `Contribute > Moderate comments`.
-- **Status Filtering:** Filter comments by moderation status: `approved` (visible to visitors), `pending` (awaiting review), or `rejected` (concealed).
-- **Inline Editing & Quick Actions:** Directly update comment body text, adjust moderation statuses, or delete abusive entries and spam in bulk. Deletion cleans up polymorphic association records (`x_comments_*`) automatically.
+- **Status Filtering:** Filter comments by moderation status: `approved` (live and visible), `pending` (awaiting manual review), or `spam` (flagged as abusive or unwanted).
+- **Inline Editing & Quick Actions:** Directly update comment text to fix typographical errors or inappropriate language, change moderation statuses, or permanently delete spam entries. Deletion automatically cleans up polymorphic association records (`x_comments_*`).

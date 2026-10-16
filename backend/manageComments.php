@@ -10,6 +10,14 @@
   /**
    * Site-wide comment moderation, status management, and spam control.
    *
+   * Post-Moderation Architecture:
+   * phpMyCellar employs a post-moderation model. Comments submitted by authenticated
+   * members with the 'post_comments' privilege publish immediately with status 'approved'
+   * (the database schema default). This interface serves as a retrospective moderation
+   * dashboard enabling administrators and moderators to review live discussion threads,
+   * correct typographical or inappropriate content, flag spam, or permanently delete
+   * comments across stories, tasting notes, and wines.
+   *
    * Required privilege: 'moderate_comments'
    * Note: Fallback to 'manage_privileges' is deprecated in 1.1.0 and scheduled for removal in v2.0.0.
    */
@@ -146,6 +154,10 @@
           &#128172; Comment Moderation &amp; Management
         </h2>
       </div>
+
+      <p style="color: #666; font-size: 0.88rem; margin-top: 0; margin-bottom: 20px; line-height: 1.4;">
+        phpMyCellar operates on a <strong>post-moderation</strong> model: comments submitted by registered members publish immediately. Use this dashboard to retrospectively review discussions, edit inappropriate wording, flag spam, or remove comments across tasting notes, stories, and wines.
+      </p>
 
       <?php if (!empty($errors)): ?>
         <div style="background-color: #ffdddd; border-left: 5px solid #f44336; padding: 10px 15px; margin-bottom: 20px;">

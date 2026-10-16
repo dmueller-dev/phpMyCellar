@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standardised British English spelling from "aging" to "ageing" across UI strings, setting options, docblocks, and documentation.
 - Harmonised Carte des vins Legend card vertical margin and internal top/bottom spacing with the site-wide card standard.
 - Harmonised typography and font sizing on vintage charts and reports (`vintages.php`) with site-wide Georgia serif standards, eliminating sub-12px text, aligning card introductions with site styling, and standardising sidebar rating scale presentation.
+- Clarified post-moderation policy and workflow across user manual (`manual/05-blog-and-stories.md`), `README.md`, and comment moderation dashboard (`backend/manageComments.php`).
 
 ### Deprecated
 - Helper function `getCommentsTableMetadata()` and transitional runtime database schema fallbacks for legacy `comments` table columns (`comment` vs `content`, `comment_date` vs `pub_time`, missing `status` column); scheduled for permanent removal in version 2.0.0 when schema standardisation is enforced.
