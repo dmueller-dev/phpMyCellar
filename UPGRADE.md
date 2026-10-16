@@ -56,6 +56,9 @@ The following table summarizes all components deprecated in the `1.x` series tha
 | `avg_dmpts` (view column) | SQL View Alias | `1.0.1` | `2.0.0` | Use `avg_pts_20` or `avg_score` in `view_vintage_region_colour_stats` |
 | `$_POST['dmpts']` | Form Input | `1.0.1` | `2.0.0` | Submit rating using `$_POST['pts_20']` in tasting note forms |
 | `$row['dmpts']` / `$row['avg_dmpts']` | Array Keys | `1.0.1` | `2.0.0` | Update custom themes or scripts to use `$row['pts_20']` / `$row['avg_score']` |
+| `getCommentsTableMetadata()` | PHP Function | `1.1.0` | `2.0.0` | Removed; `comments` table schema is strictly standardised (`pub_time`, `content`, `status`) |
+| Dynamic `comments` column fallbacks | DB Schema Fallback | `1.1.0` | `2.0.0` | Ensure `comments` table has `pub_time`, `content`, and `status` columns per `install/schema.sql` |
+| Transitional RBAC permission fallbacks | RBAC Fallback | `1.1.0` | `2.0.0` | Explicit role privileges required in `role_privileges`; fallbacks to parent privileges will be removed |
 
 ---
 
@@ -312,6 +315,11 @@ The privilege middleware (`ensurePrivilegeTablesExist()`) automatically register
 - `manage_varieties` and `manage_wine_attributes` fall back to `edit_wine_master`
 - `manage_vintages` falls back to `edit_wine`
 - `manage_rating_scales` and `moderate_comments` fall back to `manage_privileges`
+
+#### Comments Schema Introspection & Scheduled Removal in v2.0.0
+To support legacy databases without downtime during the 1.x lifecycle:
+- **Comments Schema Introspection (`getCommentsTableMetadata()`)**: Detects legacy column names (`content` vs `comment`, `pub_time` vs `comment_date`) and automatically provides fallback to virtual `'approved'` status if the `status` column has not yet been added.
+- **Scheduled Removal in v2.0.0**: In version **2.0.0**, backward-compatibility fallbacks, dynamic column resolution, and `getCommentsTableMetadata()` will be permanently removed. The `comments` table schema will be strictly required to match `install/schema.sql` (`comment_id`, `user_id`, `pub_time`, `content`, `status`). Likewise, transitional RBAC fallbacks to `manage_privileges` will be removed in favour of explicit granular role privileges in `role_privileges`.
 
 #### Manual Database Migration (for DBAs)
 ```sql

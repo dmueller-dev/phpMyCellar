@@ -3092,6 +3092,7 @@ function getUserEffectivePrivileges($conn, $user_id) {
   } catch (Throwable $e) {}
 
   // Built-in privilege fallbacks for administrative continuity
+  // Deprecated: Transitional compatibility layer for 1.x; scheduled for removal in v2.0.0 in favour of explicit role privilege assignments.
   if (empty($effective['manage_stores']) && !empty($effective['manage_orders'])) {
     $effective['manage_stores'] = true;
   }
@@ -6738,6 +6739,9 @@ function updateWsetPtsDescriptor($conn, float $pts, string $wset_desc): bool {
  *
  * Checks for the presence of content ('content' vs 'comment'), publication timestamp
  * ('pub_time' vs 'comment_date'), and moderation status ('status') columns.
+ *
+ * @deprecated 1.1.0 Scheduled for removal in v2.0.0 once comments table schema is strictly standardised.
+ * @see install/schema.sql
  *
  * @param mysqli $conn Active database connection.
  * @return array Associative array with keys 'content_col', 'date_col', 'has_status'.

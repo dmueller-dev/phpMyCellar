@@ -69,6 +69,7 @@
       $scriptMap = getPrivilegeScriptMap();
       if (isset($scriptMap[$currentScript])) {
         $requiredPriv = $scriptMap[$currentScript];
+        // Deprecated: Fallback to 'manage_privileges' is scheduled for removal in v2.0.0 in favour of strict granular role assignments.
         if (!hasPrivilege($mysqli, $requiredPriv, $_SESSION['user_id']) && !hasPrivilege($mysqli, 'manage_privileges', $_SESSION['user_id'])) {
           header("Location: /backend/index.php");
           exit();

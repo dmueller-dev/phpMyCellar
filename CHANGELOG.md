@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Harmonised Carte des vins Legend card vertical margin and internal top/bottom spacing with the site-wide card standard.
 - Harmonised typography and font sizing on vintage charts and reports (`vintages.php`) with site-wide Georgia serif standards, eliminating sub-12px text, aligning card introductions with site styling, and standardising sidebar rating scale presentation.
 
+### Deprecated
+- Helper function `getCommentsTableMetadata()` and transitional runtime database schema fallbacks for legacy `comments` table columns (`comment` vs `content`, `comment_date` vs `pub_time`, missing `status` column); scheduled for permanent removal in version 2.0.0 when schema standardisation is enforced.
+- Transitional RBAC permission fallbacks (e.g. `manage_privileges` falling back to `moderate_comments` or `manage_rating_scales`) in `includes/init.php` and `getUserEffectivePrivileges()`; scheduled for removal in v2.0.0 in favour of strict granular role assignments.
+
 ### Fixed
 - Fixed HTTP 500 error when accessing comment moderation (`backend/manageComments.php`):
   - Added schema introspection helper `getCommentsTableMetadata()` with dynamic column aliasing and automatic fallback between historic schema (`pub_time`, `content`) and modern moderation schema (`pub_time`, `content`, `status`).

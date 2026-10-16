@@ -10,7 +10,8 @@
   /**
    * Site-wide comment moderation, status management, and spam control.
    *
-   * Required privilege: 'moderate_comments' (or 'manage_privileges')
+   * Required privilege: 'moderate_comments'
+   * Note: Fallback to 'manage_privileges' is deprecated in 1.1.0 and scheduled for removal in v2.0.0.
    */
   if (!hasPrivilege($conn, 'moderate_comments') && !hasPrivilege($conn, 'manage_privileges')) {
     header("Location: /backend/index.php");
@@ -46,6 +47,7 @@
   $editingComment = null;
   if ($editCommentId) {
     try {
+      // Transitional schema introspection fallback for 1.x; scheduled for removal in v2.0.0.
       $meta = getCommentsTableMetadata($conn);
       $contentCol = $meta['content_col'];
       $statusSelect = $meta['has_status'] ? "status" : "'approved' AS status";
