@@ -315,7 +315,10 @@ The privilege middleware (`ensurePrivilegeTablesExist()`) automatically register
 
 #### Manual Database Migration (for DBAs)
 ```sql
--- Register new privileges
+-- 1. Add moderation status column to comments table
+ALTER TABLE `comments` ADD COLUMN `status` VARCHAR(10) NOT NULL DEFAULT 'approved';
+
+-- 2. Register new privileges
 INSERT INTO `privileges` (`privilege_code`, `privilege_name`, `category`, `description`, `is_admin_only`, `sort_order`) VALUES
 ('manage_stores', 'Manage Stores', 'Cellar & Orders', 'Manage wine merchants, retailers, and order sources', 0, 148),
 ('manage_formats', 'Manage Bottle Formats', 'Cellar & Orders', 'Manage bottle formats and liquid volumes', 0, 149),

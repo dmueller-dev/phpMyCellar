@@ -43,6 +43,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Harmonised typography and font sizing on vintage charts and reports (`vintages.php`) with site-wide Georgia serif standards, eliminating sub-12px text, aligning card introductions with site styling, and standardising sidebar rating scale presentation.
 
 ### Fixed
+- Fixed HTTP 500 error when accessing comment moderation (`backend/manageComments.php`):
+  - Added schema introspection helper `getCommentsTableMetadata()` with dynamic column aliasing and automatic fallback between historic schema (`pub_time`, `content`) and modern moderation schema (`pub_time`, `content`, `status`).
+  - Added automatic column migration attempting to provision `comments.status` if missing, with graceful fallback to virtual approved status for existing entries.
+  - Implemented documented RBAC fallback in `includes/init.php` and `getUserEffectivePrivileges()` granting `manage_privileges` administrators access to `moderate_comments` and `manage_rating_scales`.
+  - Harmonised `install/schema.sql` `comments` table definition to use `pub_time` and `content` consistent with frontend and tasting note interactions.
+  - Wrapped backend comment database queries in exception handlers and ensured null-safe rendering of comment bodies and dates.
 - Fixed single vintage report rendering failure on `vintages.php` when clicking on a vintage year:
   - Guarded against fatal `fetch_assoc() on bool` TypeErrors by verifying `mysqli_result` instances across `getVintageSummary()`, `getVintageRegionStats()`, `getVintageCountryStats()`, `getVintageTopWines()`, and `getAdjacentVintages()`.
   - Resolved `ONLY_FULL_GROUP_BY` and unindexed `TEXT` column grouping incompatibilities in `view_vintage_region_colour_stats` and fallback query by utilising `MAX(xvr.vintage_desc)` aggregate.

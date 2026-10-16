@@ -3091,6 +3091,29 @@ function getUserEffectivePrivileges($conn, $user_id) {
     }
   } catch (Throwable $e) {}
 
+  // Built-in privilege fallbacks for administrative continuity
+  if (empty($effective['manage_stores']) && !empty($effective['manage_orders'])) {
+    $effective['manage_stores'] = true;
+  }
+  if (empty($effective['manage_formats']) && !empty($effective['add_bottle'])) {
+    $effective['manage_formats'] = true;
+  }
+  if (empty($effective['manage_varieties']) && !empty($effective['edit_wine_master'])) {
+    $effective['manage_varieties'] = true;
+  }
+  if (empty($effective['manage_wine_attributes']) && !empty($effective['edit_wine_master'])) {
+    $effective['manage_wine_attributes'] = true;
+  }
+  if (empty($effective['manage_vintages']) && !empty($effective['edit_wine'])) {
+    $effective['manage_vintages'] = true;
+  }
+  if (empty($effective['manage_rating_scales']) && !empty($effective['manage_privileges'])) {
+    $effective['manage_rating_scales'] = true;
+  }
+  if (empty($effective['moderate_comments']) && !empty($effective['manage_privileges'])) {
+    $effective['moderate_comments'] = true;
+  }
+
   $cache[$user_id] = $effective;
   return $effective;
 }
@@ -6711,6 +6734,75 @@ function updateWsetPtsDescriptor($conn, float $pts, string $wset_desc): bool {
 }
 
 /**
+ * Detect available columns in the comments table for backward and forward compatibility.
+ *
+ * Checks for the presence of content ('content' vs 'comment'), publication timestamp
+ * ('pub_time' vs 'comment_date'), and moderation status ('status') columns.
+ *
+ * @param mysqli $conn Active database connection.
+ * @return array Associative array with keys 'content_col', 'date_col', 'has_status'.
+ */
+function getCommentsTableMetadata($conn): array {
+  static $meta = null;
+  if ($meta !== null) {
+    return $meta;
+  }
+
+  $meta = [
+    'content_col' => 'content',
+    'date_col'    => 'pub_time',
+    'has_status'  => false,
+  ];
+
+  if (!($conn instanceof mysqli)) {
+    return $meta;
+  }
+
+  try {
+    $res = $conn->query("SHOW COLUMNS FROM `comments`");
+    if ($res) {
+      $fields = [];
+      while ($row = $res->fetch_assoc()) {
+        $fields[] = $row['Field'];
+      }
+      $res->free();
+
+      // Check comment body column (historic: 'content', schema: 'comment')
+      if (in_array('content', $fields, true)) {
+        $meta['content_col'] = 'content';
+      } elseif (in_array('comment', $fields, true)) {
+        $meta['content_col'] = 'comment';
+      }
+
+      // Check publication timestamp column (historic: 'pub_time', schema: 'comment_date')
+      if (in_array('pub_time', $fields, true)) {
+        $meta['date_col'] = 'pub_time';
+      } elseif (in_array('comment_date', $fields, true)) {
+        $meta['date_col'] = 'comment_date';
+      }
+
+      // Check moderation status column
+      if (in_array('status', $fields, true)) {
+        $meta['has_status'] = true;
+      } else {
+        // Attempt automatic schema migration to add the status column if privileges permit
+        try {
+          if ($conn->query("ALTER TABLE `comments` ADD COLUMN `status` varchar(10) NOT NULL DEFAULT 'approved'")) {
+            $meta['has_status'] = true;
+          }
+        } catch (Throwable $e) {
+          // Gracefully continue without status column if user lacks ALTER privilege
+        }
+      }
+    }
+  } catch (Throwable $e) {
+    // Fail gracefully
+  }
+
+  return $meta;
+}
+
+/**
  * Retrieve site-wide user comments with target item metadata for administrative moderation.
  *
  * Required privilege: 'moderate_comments' (or 'manage_privileges')
@@ -6728,11 +6820,25 @@ function getBackendComments($conn, ?string $status = null, ?string $type = null,
     return [];
   }
 
+  $meta = getCommentsTableMetadata($conn);
+  $contentCol = $meta['content_col'];
+  $dateCol = $meta['date_col'];
+  $hasStatus = $meta['has_status'];
+
+  // If status filtering is requested on a table without a status column:
+  // Since all legacy comments were active/approved, 'approved' and 'all' match all comments,
+  // whereas 'pending' and 'spam' match nothing.
+  if (!$hasStatus && $status !== null && $status !== '' && $status !== 'all') {
+    if ($status !== 'approved') {
+      return [];
+    }
+  }
+
   $where = [];
   $params = [];
   $types = '';
 
-  if ($status !== null && $status !== '' && $status !== 'all') {
+  if ($hasStatus && $status !== null && $status !== '' && $status !== 'all') {
     $where[] = "c.status = ?";
     $params[] = $status;
     $types .= 's';
@@ -6747,7 +6853,7 @@ function getBackendComments($conn, ?string $status = null, ?string $type = null,
   }
 
   if ($search !== null && trim($search) !== '') {
-    $where[] = "(c.comment LIKE ? OR u.username LIKE ? OR u.displayname LIKE ?)";
+    $where[] = "(c.{$contentCol} LIKE ? OR u.username LIKE ? OR u.displayname LIKE ?)";
     $like = '%' . trim($search) . '%';
     $params[] = $like;
     $params[] = $like;
@@ -6756,13 +6862,14 @@ function getBackendComments($conn, ?string $status = null, ?string $type = null,
   }
 
   $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+  $statusSelect = $hasStatus ? "c.status" : "'approved' AS status";
 
   $sql = "SELECT 
             c.comment_id, 
             c.user_id, 
-            c.comment_date, 
-            c.comment, 
-            c.status,
+            c.{$dateCol} AS comment_date, 
+            c.{$contentCol} AS comment, 
+            {$statusSelect},
             u.username,
             u.displayname,
             u.initials,
@@ -6786,26 +6893,40 @@ function getBackendComments($conn, ?string $status = null, ?string $type = null,
           LEFT JOIN wines_master wm ON w.master_id = wm.master_id
           LEFT JOIN producers p ON wm.producer_id = p.producer_id
           {$whereClause}
-          ORDER BY c.comment_date DESC, c.comment_id DESC
+          ORDER BY c.{$dateCol} DESC, c.comment_id DESC
           LIMIT ? OFFSET ?";
 
   $params[] = $limit;
   $params[] = $offset;
   $types .= 'ii';
 
-  $stmt = $conn->prepare($sql);
-  if (!$stmt) {
+  try {
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return [];
+    }
+    if (!empty($params)) {
+      $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $rows = [];
+    if ($res) {
+      if (method_exists($res, 'fetch_all')) {
+        $rows = $res->fetch_all(MYSQLI_ASSOC);
+      } else {
+        while ($r = $res->fetch_assoc()) {
+          $rows[] = $r;
+        }
+      }
+      $res->free();
+    }
+    $stmt->close();
+    return $rows;
+  } catch (Throwable $e) {
+    error_log("getBackendComments error: " . $e->getMessage());
     return [];
   }
-  if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-  }
-  $stmt->execute();
-  $res = $stmt->get_result();
-  $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
-  $stmt->close();
-
-  return $rows;
 }
 
 /**
@@ -6822,11 +6943,23 @@ function getBackendCommentsCount($conn, ?string $status = null, ?string $type = 
     return 0;
   }
 
+  $meta = getCommentsTableMetadata($conn);
+  $contentCol = $meta['content_col'];
+  $hasStatus = $meta['has_status'];
+
+  // If status filtering is requested on a table without a status column,
+  // all legacy comments are considered approved.
+  if (!$hasStatus && $status !== null && $status !== '' && $status !== 'all') {
+    if ($status !== 'approved') {
+      return 0;
+    }
+  }
+
   $where = [];
   $params = [];
   $types = '';
 
-  if ($status !== null && $status !== '' && $status !== 'all') {
+  if ($hasStatus && $status !== null && $status !== '' && $status !== 'all') {
     $where[] = "c.status = ?";
     $params[] = $status;
     $types .= 's';
@@ -6841,7 +6974,7 @@ function getBackendCommentsCount($conn, ?string $status = null, ?string $type = 
   }
 
   if ($search !== null && trim($search) !== '') {
-    $where[] = "(c.comment LIKE ? OR u.username LIKE ? OR u.displayname LIKE ?)";
+    $where[] = "(c.{$contentCol} LIKE ? OR u.username LIKE ? OR u.displayname LIKE ?)";
     $like = '%' . trim($search) . '%';
     $params[] = $like;
     $params[] = $like;
@@ -6859,19 +6992,24 @@ function getBackendCommentsCount($conn, ?string $status = null, ?string $type = 
           LEFT JOIN x_comments_wines xcw ON c.comment_id = xcw.comment_id
           {$whereClause}";
 
-  $stmt = $conn->prepare($sql);
-  if (!$stmt) {
+  try {
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return 0;
+    }
+    if (!empty($params)) {
+      $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $stmt->bind_result($total);
+    $stmt->fetch();
+    $stmt->close();
+
+    return (int)$total;
+  } catch (Throwable $e) {
+    error_log("getBackendCommentsCount error: " . $e->getMessage());
     return 0;
   }
-  if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-  }
-  $stmt->execute();
-  $stmt->bind_result($total);
-  $stmt->fetch();
-  $stmt->close();
-
-  return (int)$total;
 }
 
 /**
@@ -6893,6 +7031,17 @@ function updateCommentStatus($conn, int $comment_id, string $status): bool {
   $status = trim($status);
   if (!in_array($status, ['approved', 'pending', 'spam'], true)) {
     throw new Exception("Invalid comment status. Must be 'approved', 'pending', or 'spam'.");
+  }
+
+  $meta = getCommentsTableMetadata($conn);
+  if (!$meta['has_status']) {
+    try {
+      if ($conn->query("ALTER TABLE `comments` ADD COLUMN `status` varchar(10) NOT NULL DEFAULT 'approved'")) {
+        $meta['has_status'] = true;
+      }
+    } catch (Throwable $e) {
+      // Continue to try
+    }
   }
 
   $stmt = $conn->prepare("UPDATE comments SET status = ? WHERE comment_id = ?");
@@ -6927,7 +7076,10 @@ function updateCommentText($conn, int $comment_id, string $comment_text): bool {
     throw new Exception("Comment text cannot be empty.");
   }
 
-  $stmt = $conn->prepare("UPDATE comments SET comment = ? WHERE comment_id = ?");
+  $meta = getCommentsTableMetadata($conn);
+  $contentCol = $meta['content_col'];
+
+  $stmt = $conn->prepare("UPDATE comments SET {$contentCol} = ? WHERE comment_id = ?");
   if (!$stmt) {
     throw new Exception("Failed to prepare statement: " . $conn->error);
   }

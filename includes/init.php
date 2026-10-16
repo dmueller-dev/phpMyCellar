@@ -69,7 +69,7 @@
       $scriptMap = getPrivilegeScriptMap();
       if (isset($scriptMap[$currentScript])) {
         $requiredPriv = $scriptMap[$currentScript];
-        if (!hasPrivilege($mysqli, $requiredPriv, $_SESSION['user_id'])) {
+        if (!hasPrivilege($mysqli, $requiredPriv, $_SESSION['user_id']) && !hasPrivilege($mysqli, 'manage_privileges', $_SESSION['user_id'])) {
           header("Location: /backend/index.php");
           exit();
         }

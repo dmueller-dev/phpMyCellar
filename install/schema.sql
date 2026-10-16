@@ -487,8 +487,8 @@ DROP TABLE IF EXISTS `comments`;
 CREATE TABLE `comments` (
   `comment_id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` smallint(5) UNSIGNED NOT NULL,
-  `comment_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `comment` text NOT NULL,
+  `pub_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `content` text NOT NULL,
   `status` varchar(10) NOT NULL DEFAULT 'approved',
   PRIMARY KEY (`comment_id`),
   KEY `idx_com_user` (`user_id`),

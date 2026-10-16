@@ -45,13 +45,20 @@
   $editCommentId = filter_input(INPUT_GET, 'edit_comment', FILTER_VALIDATE_INT);
   $editingComment = null;
   if ($editCommentId) {
-    $chk = $conn->prepare("SELECT comment_id, comment, status FROM comments WHERE comment_id = ?");
-    if ($chk) {
-      $chk->bind_param("i", $editCommentId);
-      $chk->execute();
-      $res = $chk->get_result();
-      $editingComment = ($res && $r = $res->fetch_assoc()) ? $r : null;
-      $chk->close();
+    try {
+      $meta = getCommentsTableMetadata($conn);
+      $contentCol = $meta['content_col'];
+      $statusSelect = $meta['has_status'] ? "status" : "'approved' AS status";
+      $chk = $conn->prepare("SELECT comment_id, {$contentCol} AS comment, {$statusSelect} FROM comments WHERE comment_id = ?");
+      if ($chk) {
+        $chk->bind_param("i", $editCommentId);
+        $chk->execute();
+        $res = $chk->get_result();
+        $editingComment = ($res && $r = $res->fetch_assoc()) ? $r : null;
+        $chk->close();
+      }
+    } catch (Throwable $e) {
+      error_log("manageComments edit lookup error: " . $e->getMessage());
     }
     if (!$editingComment) {
       $errors[] = "Comment not found.";
@@ -308,13 +315,13 @@
                     $targetLabel = 'Story: ' . htmlspecialchars($com['blog_title'] ?? ('Story #' . $com['blog_id']), ENT_QUOTES, 'UTF-8');
                   } elseif (!empty($com['note_id'])) {
                     $targetUrl = '/tnote.php?id=' . (int)$com['note_id'];
-                    $vintage = $com['wine_vintage'] ? $com['wine_vintage'] . ' ' : '';
-                    $producer = $com['wine_producer'] ? $com['wine_producer'] . ' ' : '';
+                    $vintage = !empty($com['wine_vintage']) ? $com['wine_vintage'] . ' ' : '';
+                    $producer = !empty($com['wine_producer']) ? $com['wine_producer'] . ' ' : '';
                     $cuvee = $com['wine_master_name'] ?? ('Note #' . $com['note_id']);
                     $targetLabel = 'Tasting Note: ' . htmlspecialchars($vintage . $producer . $cuvee, ENT_QUOTES, 'UTF-8');
                   } elseif (!empty($com['wine_id'])) {
                     $targetUrl = '/wine.php?id=' . (int)$com['wine_id'];
-                    $vintage = $com['wine_vintage'] ? $com['wine_vintage'] . ' ' : '';
+                    $vintage = !empty($com['wine_vintage']) ? $com['wine_vintage'] . ' ' : '';
                     $cuvee = $com['wine_master_name'] ?? ('Wine #' . $com['wine_id']);
                     $targetLabel = 'Wine: ' . htmlspecialchars($vintage . $cuvee, ENT_QUOTES, 'UTF-8');
                   }
@@ -325,7 +332,7 @@
                   </td>
                   <td style="padding: 8px 10px;">
                     <strong><?php echo htmlspecialchars($author, ENT_QUOTES, 'UTF-8'); ?></strong>
-                    <div style="color: #666; font-size: 0.78rem;"><?php echo date('M j, Y H:i', strtotime($com['comment_date'])); ?></div>
+                    <div style="color: #666; font-size: 0.78rem;"><?php echo !empty($com['comment_date']) ? date('M j, Y H:i', strtotime($com['comment_date'])) : 'Unknown date'; ?></div>
                   </td>
                   <td style="padding: 8px 10px; font-size: 0.85rem;">
                     <a href="<?php echo htmlspecialchars($targetUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" style="text-decoration: none; color: #1a73e8; font-weight: 500;" title="View discussion on page">
@@ -333,7 +340,7 @@
                     </a>
                   </td>
                   <td style="padding: 8px 10px; color: #333; font-size: 0.88rem;">
-                    <?php echo nl2br(htmlspecialchars($com['comment'], ENT_QUOTES, 'UTF-8')); ?>
+                    <?php echo nl2br(htmlspecialchars($com['comment'] ?? '', ENT_QUOTES, 'UTF-8')); ?>
                   </td>
                   <td style="padding: 8px 10px; text-align: center;">
                     <?php if ($status === 'approved'): ?>
