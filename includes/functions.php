@@ -2873,6 +2873,7 @@ function ensurePrivilegeTablesExist($conn) {
     // Administration
     ['manage_users', 'Manage Users', 'Administration', 'Add and edit user accounts', 1, 300],
     ['manage_rating_scales', 'Manage Rating Scales', 'Administration', 'Configure scoring scale descriptors and WSET criteria', 1, 305],
+    ['manage_static_pages', 'Manage Static Content', 'Administration', 'Edit site copy, legal notices, homepage welcome blocks, and section sidebars', 0, 308],
     ['manage_privileges', 'Manage Privileges', 'Administration', 'Configure role permissions and user privilege overrides', 1, 310],
   ];
 
@@ -2920,6 +2921,34 @@ function ensurePrivilegeTablesExist($conn) {
  */
 function getPrivilegeScriptMap() {
   return [
+    // Unified management scripts
+    'manageBottles.php'         => ['add_bottle', 'edit_bottle'],
+    'manageOrders.php'          => ['manage_orders', 'add_order'],
+    'manageWineMasters.php'     => ['add_wine_master', 'edit_wine_master'],
+    'manageWines.php'           => ['add_wine', 'edit_wine'],
+    'manageTastingNotes.php'    => ['add_tasting_note', 'edit_tasting_note'],
+    'manageBlogposts.php'       => ['add_blogpost', 'edit_blogpost'],
+    'manageStories.php'         => ['add_blogpost', 'edit_blogpost'],
+    'manageProducers.php'       => 'manage_producers',
+    'manageCountries.php'       => 'manage_countries',
+    'manageRegions.php'         => 'manage_regions',
+    'manageSubregions.php'      => 'manage_subregions',
+    'manageAppellations.php'    => 'manage_appellations',
+    'manageVineyards.php'       => 'manage_vineyards',
+    'manageUsers.php'           => 'manage_users',
+    'managePrivileges.php'      => 'manage_privileges',
+    'settings.php'              => 'manage_privileges',
+    'manageStaticPages.php'     => 'manage_static_pages',
+    'manageStorageBins.php'     => 'manage_storage_bins',
+    'manageStores.php'          => 'manage_stores',
+    'manageFormats.php'         => 'manage_formats',
+    'manageVarieties.php'       => 'manage_varieties',
+    'manageVintages.php'        => 'manage_vintages',
+    'manageWineAttributes.php'  => 'manage_wine_attributes',
+    'manageRatingScales.php'    => 'manage_rating_scales',
+    'manageComments.php'        => 'moderate_comments',
+
+    // Legacy scripts and redirect shims (deprecated in 1.1.0, removal in 2.0.0)
     'addTastingNote.php'        => 'add_tasting_note',
     'blindTasting.php'          => 'add_tasting_note',
     'editTastingNote.php'       => 'edit_tasting_note',
@@ -2929,7 +2958,6 @@ function getPrivilegeScriptMap() {
     'addBottle.php'             => 'add_bottle',
     'editBottle.php'            => 'edit_bottle',
     'addOrder.php'              => 'add_order',
-    'manageOrders.php'          => 'manage_orders',
     'browseWines.php'           => 'browse_wines',
     'addWine.php'               => 'add_wine',
     'editWine.php'              => 'edit_wine',
@@ -2949,18 +2977,7 @@ function getPrivilegeScriptMap() {
     'editVineyard.php'          => 'manage_vineyards',
     'addUser.php'               => 'manage_users',
     'editUser.php'              => 'manage_users',
-    'managePrivileges.php'      => 'manage_privileges',
-    'settings.php'              => 'manage_privileges',
-    'manageStaticPages.php'     => 'manage_privileges',
-    'editStaticPage.php'        => 'manage_privileges',
-    'manageStorageBins.php'     => 'manage_storage_bins',
-    'manageStores.php'          => 'manage_stores',
-    'manageFormats.php'         => 'manage_formats',
-    'manageVarieties.php'       => 'manage_varieties',
-    'manageVintages.php'        => 'manage_vintages',
-    'manageWineAttributes.php'  => 'manage_wine_attributes',
-    'manageRatingScales.php'    => 'manage_rating_scales',
-    'manageComments.php'        => 'moderate_comments',
+    'editStaticPage.php'        => 'manage_static_pages',
   ];
 }
 

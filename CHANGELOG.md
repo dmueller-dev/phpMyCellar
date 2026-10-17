@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Unified administrative dashboards in `/backend/` with cross-device responsive design, horizontal table scroll containment, touch-friendly targets, and dual Add/Edit modes:
+  - `backend/manageBottles.php` (consolidates `addBottle.php` and `editBottle.php` with batch 1–12 bottle additions, bin capacity validation, and quick inventory ledger).
+  - `backend/manageWines.php` (consolidates `addWine.php` and `editWine.php` with harvest vintage management and CellarTracker ID linking).
+  - `backend/manageWineMasters.php` (consolidates `addWineMaster.php` and `editWineMaster.php` with live naming convention preview).
+  - `backend/manageTastingNotes.php` (consolidates `addTastingNote.php`, `blindTasting.php`, and `editTastingNote.php` with standard and blind tasting modes, WSET SAT BLIC evaluation, bottle consumption prompts, and notes journal).
+  - `backend/manageBlogposts.php` (consolidates `addBlogpost.php` and `editBlogpost.php` with editorial story authoring and wine/tasting note associations; aliased by `backend/manageStories.php`).
+  - `backend/manageUsers.php` (consolidates `addUser.php` and `editUser.php` with user account creation, password reset generator, and RBAC role assignments).
+  - `backend/manageCountries.php`, `backend/manageRegions.php`, `backend/manageSubregions.php`, `backend/manageAppellations.php`, `backend/manageVineyards.php`, and `backend/manageProducers.php` (terroir and geography management).
+- Interactive client-side search filter boxes for selector dropdowns across administrative forms in `/backend/manage*.php` (including wine master selection when adding vintages, wine cuvée selection when editing bottles, user accounts, editorial stories, tasting notes, and terroir region and appellation dropdowns).
+- Interactive WSET SAT Systematic Approach to Tasting rating recommendation card in `backend/manageTastingNotes.php`, calculating composite BLIC scores (0.0 to 4.0), mapping qualitative assessment tiers, offering suggested 100-point and 20-point scoring ranges, and providing an instant score population button.
+- Absorbed purchase order creation, line-item calculator, and invoice uploads directly into `backend/manageOrders.php` (consolidates `addOrder.php`).
+- Absorbed in-page static text editing directly into `backend/manageStaticPages.php` (consolidates `editStaticPage.php`).
+- Responsive admin layout utility classes in `includes/styles.css` (`.admin-dual-manage-grid`, `.form-row-2col`, `.form-row-3col`, `.admin-table-container`, `.admin-mode-tabs`).
+- Array privilege mapping support in `includes/init.php` script gatekeeper for granular RBAC across unified dual-mode scripts.
 - Optional maximum capacity column (`max_capacity`) in table `storageBins` to configure bottle limits per storage bin.
 - Dedicated cellar and storage bin management interface (`backend/manageStorageBins.php`) to create and edit cellars, storage bins, and maximum capacities.
 - Cellar and storage bin capacity utilisation percentage indicators and progress bars in the Admin Hub storage widget (`backend/index.php`).
@@ -21,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rating scales management interface (`backend/manageRatingScales.php`) for customising qualitative evaluation descriptors across 20-point, 100-point, and WSET scoring methodologies.
 - Centralised comment moderation interface (`backend/manageComments.php`) for reviewing, editing, approving, and removing reader discussions across tasting notes and stories.
 - Cellar editing and safe deletion functionality with zero-bin validation in `backend/manageStorageBins.php`.
-- Seven new granular RBAC privileges: `manage_stores`, `manage_formats`, `manage_varieties`, `manage_vintages`, `manage_wine_attributes`, `manage_rating_scales`, and `moderate_comments`.
+- Eight new granular RBAC privileges: `manage_stores`, `manage_formats`, `manage_varieties`, `manage_vintages`, `manage_wine_attributes`, `manage_rating_scales`, `manage_static_pages`, and `moderate_comments`.
 - Optional site setting (`show_storage_usage_pct`) in Site Settings (`backend/settings.php`) to toggle cellar utilisation percentage indicators in the Admin Hub.
 - Dynamic storage location capacity annotations in bottle creation, editing, and order delivery dropdown menus.
 - Role-based privilege `manage_storage_bins` for configuring storage locations and capacities.
@@ -34,7 +48,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AGENTS.md` coding directives and standards for agentic programming, including strict cookie minimisation directives restricting usage to anonymous session cookies for logged-in users.
 
 ### Changed
-- Enforced strict maximum capacity validation when adding bottles (`backend/addBottle.php`), editing bottle locations (`backend/editBottle.php`), and accepting order deliveries (`backend/manageOrders.php`).
+- Streamlined the top navigation 'Admin' dropdown menu (`includes/header.php`) to focus strictly on essential, high-frequency actions (Browse bottles, Manage bottles, Manage orders; Browse wines, Add wine, Add wine master; Site settings, Manage users) grouped into clear semantic sections.
+- Deduplicated all links across the Admin Hub (`backend/index.php`) domain cards and Terroir table, wrapping each entry in a single full-row anchor element with unambiguous naming and distinct destination URLs.
+- Converted all 27 legacy standalone `add*.php` and `edit*.php` files in `/backend/` into backwards-compatible HTTP 301 redirect shims with query parameter preservation.
+- Updated all internal links across navigation drawers, Admin Hub cards, quick actions bar, browse screens, and manage dashboards to point directly to unified `manage*.php` scripts.
+- Enforced strict maximum capacity validation when adding bottles (`backend/manageBottles.php`), editing bottle locations, and accepting order deliveries (`backend/manageOrders.php`).
 - Enhanced `getStorageLocations()` to query maximum capacities and active bottle counts per bin with backwards-compatible schema fallback.
 - Simplified Carte des vins status badges in storage popovers (`winemenu.php`): trimmed verbose "Drink soon · Past yyyy" to "Drink soon" and "Aging · From yyyy" to British English "Ageing", preserving full drinking window details in hover tooltips.
 - Refactored storage bin popover lists (`.vintage-menu-bins`) to use responsive flex wrapping on mobile viewports (&le; 720px) in `includes/styles.css`, preventing bottle count labels from overshooting card boundaries.
@@ -44,10 +62,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clarified post-moderation policy and workflow across user manual (`manual/05-blog-and-stories.md`), `README.md`, and comment moderation dashboard (`backend/manageComments.php`).
 
 ### Deprecated
+- Twenty-seven legacy backend scripts deprecated in favour of unified `manage*.php` scripts; scheduled for permanent removal in version 2.0.0:
+  `addBottle.php`, `editBottle.php`, `addOrder.php`, `addWine.php`, `editWine.php`, `addWineMaster.php`, `editWineMaster.php`, `addTastingNote.php`, `editTastingNote.php`, `blindTasting.php`, `addBlogpost.php`, `editBlogpost.php`, `addUser.php`, `editUser.php`, `editStaticPage.php`, `addCountry.php`, `editCountry.php`, `addRegion.php`, `editRegion.php`, `addSubregion.php`, `editSubregion.php`, `addAppellation.php`, `editAppellation.php`, `addVineyard.php`, `editVineyard.php`, `addProducer.php`, `editProducer.php`.
 - Helper function `getCommentsTableMetadata()` and transitional runtime database schema fallbacks for legacy `comments` table columns (`comment` vs `content`, `comment_date` vs `pub_time`, missing `status` column); scheduled for permanent removal in version 2.0.0 when schema standardisation is enforced.
 - Transitional RBAC permission fallbacks (e.g. `manage_privileges` falling back to `moderate_comments` or `manage_rating_scales`) in `includes/init.php` and `getUserEffectivePrivileges()`; scheduled for removal in v2.0.0 in favour of strict granular role assignments.
 
 ### Fixed
+- Restored missing search filter inputs on form dropdowns across unified `manage*.php` scripts that were lost during CRUD consolidation (including wine master selection when adding vintages, wine cuvée selection when editing bottles, user selection, story selection, tasting note and wine selection, and terroir region and appellation dropdowns).
+- Restored discrete BLIC score inputs and dynamic WSET score recommendation logic in `backend/manageTastingNotes.php`, including suggested 100-point and 20-point ranges and an instant score population button.
+- Replaced double-escaped HTML dash entities (`&mdash;`) in backend dropdown options and item labels across `manageBottles.php`, `manageWineMasters.php`, `manageWines.php`, `manageTastingNotes.php`, `manageBlogposts.php`, `manageStaticPages.php`, and `settings.php` with native UTF-8 em dashes (`—`), preventing literal `&mdash;` strings from displaying in dropdown lists.
+- Resolved immediate redirects to `/backend/index.php` in `manageWines.php`, `manageWineMasters.php`, `manageStaticPages.php`, `manageUsers.php`, and `manageOrders.php` caused by non-canonical privilege checks:
+  - Replaced non-existent `manage_wines` check with dual granular `add_wine` and `edit_wine` verification in `manageWines.php`.
+  - Replaced non-existent `manage_master` check with dual granular `add_wine_master` and `edit_wine_master` verification in `manageWineMasters.php`.
+  - Replaced non-existent `add_user` and `edit_user` checks with canonical `manage_users` check in `manageUsers.php`.
+  - Added dual check for `manage_orders` and `add_order` in `manageOrders.php`, allowing order creators to enter the dashboard.
+  - Protected `manageStaticPages.php` with dedicated `manage_static_pages` privilege and transitional `manage_privileges` fallback.
 - Fixed HTTP 500 error when accessing comment moderation (`backend/manageComments.php`):
   - Added schema introspection helper `getCommentsTableMetadata()` with dynamic column aliasing and automatic fallback between historic schema (`pub_time`, `content`) and modern moderation schema (`pub_time`, `content`, `status`).
   - Added automatic column migration attempting to provision `comments.status` if missing, with graceful fallback to virtual approved status for existing entries.

@@ -126,7 +126,7 @@
             </a>
           <?php endif; ?>
           <?php if (hasPrivilege($conn, 'add_bottle')): ?>
-            <a href="addBottle.php" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
+            <a href="manageBottles.php?mode=add" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
               + Add Bottle
             </a>
           <?php endif; ?>

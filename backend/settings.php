@@ -195,10 +195,10 @@
           <div style="margin-bottom:15px;">
             <label for="wset_mode"><strong>WSET SAT Evaluation (0.0 to 4.0):</strong></label><br>
             <select id="wset_mode" name="wset_mode" style="padding:8px;" onchange="toggleWsetDisplayFormat(this.value)">
-              <option value="public" <?php echo ($wset_mode === 'public') ? 'selected' : ''; ?>>Public &mdash; Enter in backend, show publicly on tasting notes</option>
-              <option value="logged_in" <?php echo ($wset_mode === 'logged_in') ? 'selected' : ''; ?>>Members Only &mdash; Enter in backend, visible only to logged-in users</option>
-              <option value="backend_only" <?php echo ($wset_mode === 'backend_only') ? 'selected' : ''; ?>>Backend Only &mdash; Enter in backend for cellar tracking, hide from public site</option>
-              <option value="disabled" <?php echo ($wset_mode === 'disabled') ? 'selected' : ''; ?>>Disabled &mdash; Completely turned off across the site</option>
+              <option value="public" <?php echo ($wset_mode === 'public') ? 'selected' : ''; ?>>Public — Enter in backend, show publicly on tasting notes</option>
+              <option value="logged_in" <?php echo ($wset_mode === 'logged_in') ? 'selected' : ''; ?>>Members Only — Enter in backend, visible only to logged-in users</option>
+              <option value="backend_only" <?php echo ($wset_mode === 'backend_only') ? 'selected' : ''; ?>>Backend Only — Enter in backend for cellar tracking, hide from public site</option>
+              <option value="disabled" <?php echo ($wset_mode === 'disabled') ? 'selected' : ''; ?>>Disabled — Completely turned off across the site</option>
             </select>
             <br><small style="color:#666;">Controls whether WSET Systematic Approach to Tasting (Balance, Length, Intensity, Complexity) is enabled and who can view the ratings.</small>
           </div>
@@ -206,17 +206,17 @@
           <div id="wset_format_container" style="margin-bottom:15px; <?php echo ($wset_mode === 'backend_only' || $wset_mode === 'disabled') ? 'display:none;' : ''; ?>">
             <label for="wset_display_format"><strong>WSET Display Format:</strong></label><br>
             <select id="wset_display_format" name="wset_display_format" style="padding:8px;">
-              <option value="standard" <?php echo ($wset_display_format === 'standard') ? 'selected' : ''; ?>>Standard &mdash; Total score &amp; qualitative assessment (e.g. 3.5 / 4.0 &quot;Very Good&quot;)</option>
-              <option value="detailed" <?php echo ($wset_display_format === 'detailed') ? 'selected' : ''; ?>>Detailed &mdash; Total score plus BLIC breakdown (Balance, Length, Intensity, Complexity)</option>
+              <option value="standard" <?php echo ($wset_display_format === 'standard') ? 'selected' : ''; ?>>Standard — Total score &amp; qualitative assessment (e.g. 3.5 / 4.0 &quot;Very Good&quot;)</option>
+              <option value="detailed" <?php echo ($wset_display_format === 'detailed') ? 'selected' : ''; ?>>Detailed — Total score plus BLIC breakdown (Balance, Length, Intensity, Complexity)</option>
             </select>
             <br><small style="color:#666;">Choose whether to show the overall score or additionally show the 4 individual BLIC criteria values on public tasting notes.</small>
           </div>
 
           <div style="margin-bottom:15px;">
-            <label for="winemenu_include_unready"><strong>Carte des Vins &mdash; Unready Wines Visibility:</strong></label><br>
+            <label for="winemenu_include_unready"><strong>Carte des Vins — Unready Wines Visibility:</strong></label><br>
             <select id="winemenu_include_unready" name="winemenu_include_unready" style="padding:8px;">
-              <option value="0" <?php echo ($winemenu_include_unready === '0') ? 'selected' : ''; ?>>Exclude &mdash; Hide wines that have not yet reached their minimum drinking window year (default)</option>
-              <option value="1" <?php echo ($winemenu_include_unready === '1') ? 'selected' : ''; ?>>Include &mdash; Display unready wines on the wine menu with an ageing clock icon</option>
+              <option value="0" <?php echo ($winemenu_include_unready === '0') ? 'selected' : ''; ?>>Exclude — Hide wines that have not yet reached their minimum drinking window year (default)</option>
+              <option value="1" <?php echo ($winemenu_include_unready === '1') ? 'selected' : ''; ?>>Include — Display unready wines on the wine menu with an ageing clock icon</option>
             </select>
             <br><small style="color:#666;">Controls whether wines whose minimum drinking window year (<em>Drink from</em>) is in the future appear on the public Carte des vins (<code>/winemenu.php</code>).</small>
           </div>
@@ -224,8 +224,8 @@
           <div style="margin-bottom:15px;">
             <label for="show_storage_usage_pct"><strong>Cellar Capacity &amp; Usage Percentage in Admin Hub:</strong></label><br>
             <select id="show_storage_usage_pct" name="show_storage_usage_pct" style="padding:8px;">
-              <option value="1" <?php echo ($show_storage_usage_pct === '1') ? 'selected' : ''; ?>>Enabled &mdash; Display percentage utilisation and progress indicators for cellars and bins (default)</option>
-              <option value="0" <?php echo ($show_storage_usage_pct === '0') ? 'selected' : ''; ?>>Disabled &mdash; Display plain bottle counts only</option>
+              <option value="1" <?php echo ($show_storage_usage_pct === '1') ? 'selected' : ''; ?>>Enabled — Display percentage utilisation and progress indicators for cellars and bins (default)</option>
+              <option value="0" <?php echo ($show_storage_usage_pct === '0') ? 'selected' : ''; ?>>Disabled — Display plain bottle counts only</option>
             </select>
             <br><small style="color:#666;">Controls whether percentage utilisation is calculated and shown in the Admin Hub storage widget for bins with a maximum capacity.</small>
           </div>

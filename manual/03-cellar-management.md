@@ -24,7 +24,7 @@ To accurately represent wine collections, phpMyCellar structures records into a 
 
 Producers represent wineries, domaines, estates, châteaux, or bodegas.
 
-- **Navigate to:** `Admin > Admin Hub` (`/backend/index.php`) > **Terroir & Geography > Producers > + Add** (`addProducer.php`) or edit existing producers (`editProducer.php`). Alternatively, click the *Edit producer* shortcut directly when viewing wines grouped by producer in `browseWines.php` or `browseBottles.php`.
+- **Navigate to:** `Admin > Admin Hub` (`/backend/index.php`) > **Terroir & Geography > Producers** (`manageProducers.php`). Alternatively, click the *Edit producer* shortcut directly when viewing wines grouped by producer in `browseWines.php` or `browseBottles.php`.
 - **Key Attributes:**
   - **Producer Name:** Full estate name (e.g. *Domaine Leflaive*).
   - **Country & Region:** Geographic origin (e.g. *France > Burgundy > Côte de Beaune*).
@@ -36,7 +36,7 @@ Producers represent wineries, domaines, estates, châteaux, or bodegas.
 
 A **Wine Master** establishes the overarching identity and classification of a wine before assigning individual harvest vintages.
 
-- **Navigate to:** `Admin > Admin Hub` (`/backend/index.php`) > **Wine Catalog & Masters > + Master** (`addWineMaster.php`) or edit via `editWineMaster.php`.
+- **Navigate to:** `Admin > Admin Hub` (`/backend/index.php`) > **Wine Catalogue & Masters > Wine master profiles** (`manageWineMasters.php`) or top navigation `Admin > Add wine master`.
 - **Key Attributes:**
   - **Producer:** Winery or estate crafting the cuvée.
   - **Wine Name:** Specific cuvée designation (e.g. *Les Pucelles*).
@@ -52,7 +52,7 @@ A **Wine Master** establishes the overarching identity and classification of a w
 
 Once a Wine Master is created, individual harvest years are added as **Wine Vintages**.
 
-- **Navigate to:** Top navigation `Admin > Add wine` (`/backend/addWine.php`) or `Admin > Admin Hub > Wine Catalog & Masters > + Vintage`.
+- **Navigate to:** Top navigation `Admin > Add wine` (`/backend/manageWines.php`) or `Admin > Admin Hub > Wine Catalogue & Masters > Wine harvest vintages`.
 - **Key Attributes:**
   - **Wine Master:** Select the base wine profile.
   - **Vintage Year:** Harvest year (or `NV` for Non-Vintage champagnes and fortified wines).
@@ -65,7 +65,7 @@ Once a Wine Master is created, individual harvest years are added as **Wine Vint
 
 Individual physical bottles belong to a Wine Vintage and represent tangible cellar stock.
 
-- **Navigate to:** Top navigation `Admin > Add bottle` (`/backend/addBottle.php`) or via purchase order delivery.
+- **Navigate to:** Top navigation `Admin > Manage bottles` (`/backend/manageBottles.php`), `Admin > Admin Hub > Cellar & Inventory > Manage bottle inventory`, or via purchase order delivery.
 - **Bottle Formats Supported:**
   - `375ml` (Half bottle)
   - `500ml` (Half-litre bottle)
@@ -75,9 +75,9 @@ Individual physical bottles belong to a Wine Vintage and represent tangible cell
   - `3000ml` (Double magnum / Jéroboam)
   - `6000ml` (Impériale / Methuselah)
   - Large formats up to `18000ml` (Melchior)
-- **Storage Locations & Maximum Capacities:** Assign bottles to specific cellars and bin locations (e.g. `Rack 1, Shelf B, Slot 4`). Cellars and storage bins are configured via `Admin > Admin Hub > Cellar & Inventory > Manage storage bins` (`/backend/manageStorageBins.php`):
+- **Storage Locations & Maximum Capacities:** Assign bottles to specific cellars and bin locations (e.g. `Rack 1, Shelf B, Slot 4`). Cellars and storage bins are configured via `Admin > Admin Hub > Cellar & Inventory > Cellar storage bins` (`/backend/manageStorageBins.php`):
   - **Cellar Operations:** Create named cellars, edit cellar labels, and safely delete empty cellars (deletion is prevented if bins exist within the cellar).
-  - **Storage Bins & Capacity Enforcement:** Configure bin names and optional maximum capacities (`max_capacity`). Assigning bottles via `addBottle.php`, `editBottle.php`, or order delivery in `manageOrders.php` strictly verifies that available capacity is not exceeded, preventing overfilling.
+  - **Storage Bins & Capacity Enforcement:** Configure bin names and optional maximum capacities (`max_capacity`). Assigning bottles via `manageBottles.php` or order delivery in `manageOrders.php` strictly verifies that available capacity is not exceeded, preventing overfilling.
   - **Usage Indicators:** If capacity is configured, the Admin Hub storage widget displays visual progress bars and utilisation percentages (e.g. `10 / 12 btls (83%)`), with cellar-wide totals. This display can be toggled via Site Settings (`show_storage_usage_pct`).
 - **Drinking Window:** Set `Drink from (yyyy)` and `Drink through (yyyy)` to guide readiness calculations in the cellar and the *Carte des vins*. Bottles maturing prior to `Drink from` or past `Drink through` display status micro-icons on the wine menu.
 - **Restricted / Private Reserve:** Mark individual bottles as `restricted` to designate private reserves, rare allocations, or bottles held back from guest selection. Restricted bottles display a subtle padlock icon in `browseBottles.php` and on the Carte des vins.
@@ -102,7 +102,7 @@ Configure the liquid volumes and formats available when adding bottles or creati
 phpMyCellar lets you record purchasing transactions to calculate your cellar valuation, average bottle costs, and track merchant deliveries.
 
 - **Managing Merchants & Stores:** Manage your directory of wine retailers, merchants, and auction houses via `Admin > Admin Hub > Cellar & Inventory > Wine merchants & stores` (`/backend/manageStores.php`). Track merchant names, physical/online addresses, website URLs, and order histories. Merchants with associated orders cannot be deleted.
-- **Creating Orders:** Navigate to `Admin > Admin Hub > Cellar & Inventory > Create purchase order` (`addOrder.php`) and `Manage open orders` (`manageOrders.php`).
+- **Creating Orders:** Navigate to Top navigation `Admin > Manage orders` (`/backend/manageOrders.php`) or `Admin > Admin Hub > Cellar & Inventory > Purchase orders & delivery`.
 - **Key Attributes:**
   - **Merchant / Store:** Retailer, auctioneer, or direct domaine purchase.
   - **Order Reference & Date:** Purchase order reference and acquisition date.

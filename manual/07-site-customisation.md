@@ -28,7 +28,7 @@ Administrators can adjust branding elements in real time without editing source 
 
 phpMyCellar stores core static pages and section sidebar notices directly in the database (`static_pages` table) with full WYSIWYG editing capabilities.
 
-- **Navigate to:** Top navigation `Admin > Static pages` (`/backend/manageStaticPages.php`) or `Admin > Admin Hub > System & Settings > Static content pages`.
+- **Navigate to:** `Admin > Admin Hub > System & Settings > Static content pages` (`/backend/manageStaticPages.php`).
 - **Editable Content Areas:**
   - **Full Informational Pages:**
     - **Impressum (`impressum`):** Mandatory legal notice, operator details, postal address, and contact information (`/impressum.php`).
@@ -52,18 +52,18 @@ phpMyCellar stores core static pages and section sidebar notices directly in the
 
 ## 3. Wine Styles, Colours & Display Naming Templates
 
-Customise the core taxonomic attributes that classify your wine catalog:
-- **Navigate to:** `Admin > Admin Hub > Wine Catalog & Masters > Wine styles & attributes` (`/backend/manageWineAttributes.php`) or top navigation `Admin > Wine attributes`.
+Customise the core taxonomic attributes that classify your wine catalogue:
+- **Navigate to:** `Admin > Admin Hub > Wine Catalogue & Masters > Wine styles & attributes` (`/backend/manageWineAttributes.php`).
 - **Wine Styles (`styles`):** Manage styles (e.g. `still (dry)`, `still (sweet)`, `sparkling`, `fortified`). Safe deletion checks prevent deleting styles currently assigned to active wine masters.
 - **Wine Colours (`colours`):** Manage wine colours (`red`, `white`, `ros&eacute;`, `orange`). Active colour assignments are protected against deletion.
-- **Display Options (`displayoptions`):** Configure wine title assembly templates used across navigation, catalog indexes, and headings (e.g. `[Vintage] [Producer] [Vineyard] [Name]`).
+- **Display Options (`displayoptions`):** Configure wine title assembly templates used across navigation, catalogue indexes, and headings (e.g. `[Vintage] [Producer] [Vineyard] [Name]`).
 
 ---
 
 ## 4. Rating Scales & Qualitative Assessment Descriptors
 
 Tailor the descriptive language and qualitative score tiers used in tasting notes and vintage charts:
-- **Navigate to:** `Admin > Admin Hub > System & Settings > Rating scales & assessment` (`/backend/manageRatingScales.php`) or top navigation `Admin > Rating scales`.
+- **Navigate to:** `Admin > Admin Hub > System & Settings > Rating scales & assessment` (`/backend/manageRatingScales.php`).
 - **20-Point Scale Descriptors (`scale_20`):** Edit qualitative labels for each point integer (0–20) on the European scale (e.g. *19–20: Outstanding, legendary wine*).
 - **100-Point Scale Descriptors (`scale_100`):** Customise score ranges and qualitative summaries on the 100-point American/international scale (e.g. *95–100: Classic: a great wine*).
 - **WSET Qualitative Criteria (`wsetpts`):** Customise criteria definitions for the WSET Systematic Approach to Tasting levels (*Poor*, *Acceptable*, *Good*, *Very Good*, *Outstanding*).

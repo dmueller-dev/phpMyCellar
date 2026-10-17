@@ -60,7 +60,7 @@
       $vintage = filter_input(INPUT_POST, 'vintage', FILTER_VALIDATE_INT);
       try {
         if ($vintage && insertVintageYear($conn, $vintage)) {
-          $success_message = "Vintage year " . (int)$vintage . " added to catalog successfully.";
+          $success_message = "Vintage year " . (int)$vintage . " added to catalogue successfully.";
         } else {
           $errors[] = "Please specify a valid harvest vintage year.";
         }
@@ -132,7 +132,7 @@
   $totalReports = count(getRegionalVintageReports($conn));
 
   $csrf_token = generateCSRFToken();
-  $page_title = 'Manage Vintages & Reports - Catalog Administration';
+  $page_title = 'Manage Vintages & Reports - Catalogue Administration';
   require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -155,7 +155,7 @@
             View Public Reports &rarr;
           </a>
           <?php if (hasPrivilege($conn, 'add_wine')): ?>
-            <a href="addWine.php" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
+            <a href="manageWines.php" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
               + Add Wine Vintage
             </a>
           <?php endif; ?>

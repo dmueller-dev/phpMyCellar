@@ -123,7 +123,7 @@
 <div class="admin-hero">
   <div class="admin-hero-content">
     <h1>Admin Hub</h1>
-    <p class="admin-hero-sub">Cellar administration, cuv&eacute;e catalog &amp; inventory control center</p>
+    <p class="admin-hero-sub">Cellar administration, cuv&eacute;e catalogue &amp; inventory control centre</p>
   </div>
   <div class="admin-user-badge">
     <span>&#128100; <strong><?php echo $displayUsername; ?></strong> (<?php echo $displayRole; ?>)</span>
@@ -163,10 +163,10 @@
       <span class="kpi-val"><?php echo number_format($kpi_wines); ?></span>
       <span class="kpi-icon">&#127991;&#65039;</span>
     </div>
-    <div class="kpi-label">Wine Catalog</div>
+    <div class="kpi-label">Wine Catalogue</div>
     <div class="kpi-sub">
       <span><?php echo number_format($kpi_masters); ?> masters / cuv&eacute;es</span>
-      <span>Catalog &rarr;</span>
+      <span>Catalogue &rarr;</span>
     </div>
   </a>
 
@@ -200,28 +200,28 @@
 <!-- Quick Action Shortcuts Bar -->
 <div class="admin-actions-bar">
   <?php if (hasPrivilege($conn, 'add_tasting_note')): ?>
-    <a href="addTastingNote.php" class="btn-quick-action" title="Write a standard tasting note">
+    <a href="manageTastingNotes.php" class="btn-quick-action" title="Write a standard tasting note">
       <span>&#9997;&#65039;</span> Write Note
     </a>
-    <a href="addTastingNote.php?mode=blind" class="btn-quick-action btn-secondary" title="Conduct a blind tasting and take notes">
+    <a href="manageTastingNotes.php?mode=blind" class="btn-quick-action btn-secondary" title="Conduct a blind tasting and take notes">
       <span>&#128065;&#65039;</span> Blind Tasting
     </a>
   <?php endif; ?>
 
   <?php if (hasPrivilege($conn, 'add_bottle')): ?>
-    <a href="addBottle.php" class="btn-quick-action" title="Add a new physical bottle to cellar inventory">
+    <a href="manageBottles.php?mode=add" class="btn-quick-action" title="Add a new physical bottle to cellar inventory">
       <span>&#127870;</span> Add Bottle
     </a>
   <?php endif; ?>
 
   <?php if (hasPrivilege($conn, 'add_wine')): ?>
-    <a href="addWine.php" class="btn-quick-action" title="Add a new harvest vintage to the catalog">
+    <a href="manageWines.php" class="btn-quick-action" title="Add a new harvest vintage to the catalogue">
       <span>&#127815;</span> Add Wine Vintage
     </a>
   <?php endif; ?>
 
   <?php if (hasPrivilege($conn, 'add_order')): ?>
-    <a href="addOrder.php" class="btn-quick-action btn-secondary" title="Create a new wine purchase order">
+    <a href="manageOrders.php?action=create" class="btn-quick-action btn-secondary" title="Create a new wine purchase order">
       <span>&#128230;</span> New Order
     </a>
   <?php endif; ?>
@@ -238,107 +238,107 @@
           <ul class="admin-domain-links">
             <?php if (hasPrivilege($conn, 'browse_bottles')): ?>
               <li>
-                <a href="browseBottles.php" title="Browse physical bottles in cellar">Browse all bottles</a>
-                <a href="browseBottles.php" class="link-action">Browse</a>
+                <a href="browseBottles.php" title="Browse physical bottles in cellar">
+                  <span>Browse all bottles</span>
+                  <span class="link-action">Browse &rarr;</span>
+                </a>
+              </li>
+            <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'add_bottle') || hasPrivilege($conn, 'edit_bottle')): ?>
+              <li>
+                <a href="manageBottles.php" title="Add, edit, and manage bottle inventory and drinking windows">
+                  <span>Manage bottle inventory</span>
+                  <span class="link-action">Manage &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_storage_bins') || hasPrivilege($conn, 'browse_bottles')): ?>
               <li>
-                <a href="manageStorageBins.php" title="Configure cellars, storage bins, and maximum capacities">Manage storage bins</a>
-                <a href="manageStorageBins.php" class="link-action">Bins</a>
+                <a href="manageStorageBins.php" title="Configure cellars, storage bins, and maximum capacities">
+                  <span>Cellar storage bins</span>
+                  <span class="link-action">Bins &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'add_bottle')): ?>
+            <?php if (hasPrivilege($conn, 'manage_orders') || hasPrivilege($conn, 'add_order')): ?>
               <li>
-                <a href="addBottle.php" title="Add a new bottle of wine to storage">Add bottle to inventory</a>
-                <a href="addBottle.php" class="link-action">+ Add</a>
-              </li>
-            <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'edit_bottle')): ?>
-              <li>
-                <a href="editBottle.php" title="Edit bottles and drinking windows">Edit bottle details</a>
-                <a href="editBottle.php" class="link-action">Edit</a>
-              </li>
-            <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'add_order')): ?>
-              <li>
-                <a href="addOrder.php" title="Create a new wine order">Create purchase order</a>
-                <a href="addOrder.php" class="link-action">+ Order</a>
-              </li>
-            <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'manage_orders')): ?>
-              <li>
-                <a href="manageOrders.php" title="Manage pending orders and accept delivery">Manage open orders</a>
-                <a href="manageOrders.php" class="link-action">Orders</a>
+                <a href="manageOrders.php" title="Create purchase orders and accept deliveries">
+                  <span>Purchase orders &amp; delivery</span>
+                  <span class="link-action">Orders &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_stores') || hasPrivilege($conn, 'manage_orders')): ?>
               <li>
-                <a href="manageStores.php" title="Manage wine merchants, retailers, and order sources">Wine merchants &amp; stores</a>
-                <a href="manageStores.php" class="link-action">Stores</a>
+                <a href="manageStores.php" title="Manage wine merchants, retailers, and order sources">
+                  <span>Wine merchants &amp; stores</span>
+                  <span class="link-action">Stores &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_formats') || hasPrivilege($conn, 'add_bottle')): ?>
               <li>
-                <a href="manageFormats.php" title="Configure bottle formats and standard liquid volumes">Bottle formats &amp; sizes</a>
-                <a href="manageFormats.php" class="link-action">Formats</a>
+                <a href="manageFormats.php" title="Configure bottle formats and standard liquid volumes">
+                  <span>Bottle formats &amp; sizes</span>
+                  <span class="link-action">Formats &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
           </ul>
         </div>
       <?php endif; ?>
 
-      <!-- Wines & Masters Catalog -->
+      <!-- Wines & Masters Catalogue -->
       <?php if (hasPrivilege($conn, 'browse_wines') || hasPrivilege($conn, 'add_wine') || hasPrivilege($conn, 'edit_wine') || hasPrivilege($conn, 'add_wine_master') || hasPrivilege($conn, 'edit_wine_master') || hasPrivilege($conn, 'manage_varieties') || hasPrivilege($conn, 'manage_vintages') || hasPrivilege($conn, 'manage_wine_attributes')): ?>
         <div class="admin-domain-card">
-          <h3><span>&#127991;&#65039;</span> Wine Catalog &amp; Masters</h3>
+          <h3><span>&#127991;&#65039;</span> Wine Catalogue &amp; Masters</h3>
           <ul class="admin-domain-links">
             <?php if (hasPrivilege($conn, 'browse_wines')): ?>
               <li>
-                <a href="browseWines.php" title="Browse wine database">Browse wine catalog</a>
-                <a href="browseWines.php" class="link-action">Browse</a>
+                <a href="browseWines.php" title="Browse all catalogued wines and masters">
+                  <span>Browse wine catalogue</span>
+                  <span class="link-action">Browse &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'add_wine_master')): ?>
+            <?php if (hasPrivilege($conn, 'add_wine_master') || hasPrivilege($conn, 'edit_wine_master')): ?>
               <li>
-                <a href="addWineMaster.php" title="Add a master cuv&eacute;e profile">Add wine master profile</a>
-                <a href="addWineMaster.php" class="link-action">+ Master</a>
+                <a href="manageWineMasters.php" title="Add, edit, or configure master cuv&eacute;e profiles and grape c&eacute;pages">
+                  <span>Wine master profiles</span>
+                  <span class="link-action">Masters &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'add_wine')): ?>
+            <?php if (hasPrivilege($conn, 'add_wine') || hasPrivilege($conn, 'edit_wine')): ?>
               <li>
-                <a href="addWine.php" title="Add a specific harvest vintage">Add wine harvest vintage</a>
-                <a href="addWine.php" class="link-action">+ Vintage</a>
-              </li>
-            <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'edit_wine_master')): ?>
-              <li>
-                <a href="editWineMaster.php" title="Edit master profiles">Edit wine master</a>
-                <a href="editWineMaster.php" class="link-action">Edit</a>
-              </li>
-            <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'edit_wine')): ?>
-              <li>
-                <a href="editWine.php" title="Edit harvest vintages and tasting parameters">Edit wine vintages</a>
-                <a href="editWine.php" class="link-action">Edit</a>
+                <a href="manageWines.php" title="Add, edit, or configure specific harvest vintages and tasting parameters">
+                  <span>Wine harvest vintages</span>
+                  <span class="link-action">Vintages &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_varieties') || hasPrivilege($conn, 'edit_wine_master')): ?>
               <li>
-                <a href="manageVarieties.php" title="Manage grape varieties and c&eacute;page classifications">Grape varieties</a>
-                <a href="manageVarieties.php" class="link-action">Varieties</a>
+                <a href="manageVarieties.php" title="Manage grape varieties and c&eacute;page classifications">
+                  <span>Grape varieties &amp; c&eacute;pages</span>
+                  <span class="link-action">Varieties &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_vintages') || hasPrivilege($conn, 'edit_wine')): ?>
               <li>
-                <a href="manageVintages.php" title="Manage harvest vintage years and regional character reports">Harvest vintages &amp; reports</a>
-                <a href="manageVintages.php" class="link-action">Vintages</a>
+                <a href="manageVintages.php" title="Manage harvest vintage years and regional character reports">
+                  <span>Vintage reports &amp; charts</span>
+                  <span class="link-action">Reports &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_wine_attributes') || hasPrivilege($conn, 'edit_wine_master')): ?>
               <li>
-                <a href="manageWineAttributes.php" title="Manage wine classifications, styles, colours, and display options">Wine styles &amp; attributes</a>
-                <a href="manageWineAttributes.php" class="link-action">Attributes</a>
+                <a href="manageWineAttributes.php" title="Manage wine classifications, styles, colours, and display options">
+                  <span>Wine styles &amp; attributes</span>
+                  <span class="link-action">Attributes &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
           </ul>
@@ -350,38 +350,36 @@
         <div class="admin-domain-card">
           <h3><span>&#128221;</span> Tasting Notes &amp; Editorial</h3>
           <ul class="admin-domain-links">
+            <?php if (hasPrivilege($conn, 'add_tasting_note') || hasPrivilege($conn, 'edit_tasting_note') || hasPrivilege($conn, 'edit_all_tasting_notes')): ?>
+              <li>
+                <a href="manageTastingNotes.php" title="Write, edit, and review standard tasting notes">
+                  <span>Tasting notes journal</span>
+                  <span class="link-action">Journal &rarr;</span>
+                </a>
+              </li>
+            <?php endif; ?>
             <?php if (hasPrivilege($conn, 'add_tasting_note')): ?>
               <li>
-                <a href="addTastingNote.php" title="Write a standard tasting note">Write tasting note</a>
-                <a href="addTastingNote.php" class="link-action">+ Note</a>
-              </li>
-              <li>
-                <a href="addTastingNote.php?mode=blind" title="Write a blind tasting note">Write blind tasting note</a>
-                <a href="addTastingNote.php?mode=blind" class="link-action">+ Blind</a>
+                <a href="manageTastingNotes.php?mode=blind" title="Conduct a blind tasting assessment">
+                  <span>Blind tasting session</span>
+                  <span class="link-action">Blind &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'edit_tasting_note') || hasPrivilege($conn, 'edit_all_tasting_notes')): ?>
+            <?php if (hasPrivilege($conn, 'add_blogpost') || hasPrivilege($conn, 'edit_blogpost') || hasPrivilege($conn, 'edit_all_blogposts')): ?>
               <li>
-                <a href="editTastingNote.php" title="Edit tasting notes">Edit tasting notes</a>
-                <a href="editTastingNote.php" class="link-action">Edit</a>
-              </li>
-            <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'add_blogpost')): ?>
-              <li>
-                <a href="addBlogpost.php" title="Write a new cellar story">Write new story</a>
-                <a href="addBlogpost.php" class="link-action">+ Story</a>
-              </li>
-            <?php endif; ?>
-            <?php if (hasPrivilege($conn, 'edit_blogpost') || hasPrivilege($conn, 'edit_all_blogposts')): ?>
-              <li>
-                <a href="editBlogpost.php" title="Edit published stories">Edit stories</a>
-                <a href="editBlogpost.php" class="link-action">Edit</a>
+                <a href="manageBlogposts.php" title="Compose, publish, and edit cellar stories and news articles">
+                  <span>Cellar stories &amp; articles</span>
+                  <span class="link-action">Stories &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'moderate_comments') || hasPrivilege($conn, 'manage_privileges')): ?>
               <li>
-                <a href="manageComments.php" title="Moderate public tasting note comments and review approvals">Moderate comments</a>
-                <a href="manageComments.php" class="link-action">Comments</a>
+                <a href="manageComments.php" title="Moderate public tasting note comments and review approvals">
+                  <span>Reader comments &amp; moderation</span>
+                  <span class="link-action">Comments &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
           </ul>
@@ -399,8 +397,7 @@
                   <td class="admin-terroir-name">Producers</td>
                   <td class="admin-terroir-count"><?php echo number_format($terroir_counts['producers']); ?> recorded</td>
                   <td class="admin-terroir-actions">
-                    <a href="addProducer.php" class="terroir-btn terroir-btn-add" title="Add producer">+ Add</a>
-                    <a href="editProducer.php" class="terroir-btn terroir-btn-edit" title="Edit producer">Edit</a>
+                    <a href="manageProducers.php" class="terroir-btn terroir-btn-manage" title="Add and manage wine producers">Manage &rarr;</a>
                   </td>
                 </tr>
               <?php endif; ?>
@@ -409,7 +406,7 @@
                   <td class="admin-terroir-name">Grape Varieties</td>
                   <td class="admin-terroir-count"><?php echo number_format($terroir_counts['variety']); ?> recorded</td>
                   <td class="admin-terroir-actions">
-                    <a href="manageVarieties.php" class="terroir-btn terroir-btn-edit" title="Manage grape varieties">Manage</a>
+                    <a href="manageVarieties.php" class="terroir-btn terroir-btn-manage" title="Add and manage grape varieties">Manage &rarr;</a>
                   </td>
                 </tr>
               <?php endif; ?>
@@ -418,8 +415,7 @@
                   <td class="admin-terroir-name">Appellations</td>
                   <td class="admin-terroir-count"><?php echo number_format($terroir_counts['appellations']); ?> recorded</td>
                   <td class="admin-terroir-actions">
-                    <a href="addAppellation.php" class="terroir-btn terroir-btn-add" title="Add appellation">+ Add</a>
-                    <a href="editAppellation.php" class="terroir-btn terroir-btn-edit" title="Edit appellation">Edit</a>
+                    <a href="manageAppellations.php" class="terroir-btn terroir-btn-manage" title="Add and manage appellations">Manage &rarr;</a>
                   </td>
                 </tr>
               <?php endif; ?>
@@ -428,8 +424,7 @@
                   <td class="admin-terroir-name">Vineyards</td>
                   <td class="admin-terroir-count"><?php echo number_format($terroir_counts['vineyards']); ?> recorded</td>
                   <td class="admin-terroir-actions">
-                    <a href="addVineyard.php" class="terroir-btn terroir-btn-add" title="Add vineyard">+ Add</a>
-                    <a href="editVineyard.php" class="terroir-btn terroir-btn-edit" title="Edit vineyard">Edit</a>
+                    <a href="manageVineyards.php" class="terroir-btn terroir-btn-manage" title="Add and manage vineyards">Manage &rarr;</a>
                   </td>
                 </tr>
               <?php endif; ?>
@@ -438,8 +433,7 @@
                   <td class="admin-terroir-name">Regions</td>
                   <td class="admin-terroir-count"><?php echo number_format($terroir_counts['regions']); ?> recorded</td>
                   <td class="admin-terroir-actions">
-                    <a href="addRegion.php" class="terroir-btn terroir-btn-add" title="Add region">+ Add</a>
-                    <a href="editRegion.php" class="terroir-btn terroir-btn-edit" title="Edit region">Edit</a>
+                    <a href="manageRegions.php" class="terroir-btn terroir-btn-manage" title="Add and manage regions">Manage &rarr;</a>
                   </td>
                 </tr>
               <?php endif; ?>
@@ -448,8 +442,7 @@
                   <td class="admin-terroir-name">Subregions</td>
                   <td class="admin-terroir-count"><?php echo number_format($terroir_counts['subregions']); ?> recorded</td>
                   <td class="admin-terroir-actions">
-                    <a href="addSubregion.php" class="terroir-btn terroir-btn-add" title="Add subregion">+ Add</a>
-                    <a href="editSubregion.php" class="terroir-btn terroir-btn-edit" title="Edit subregion">Edit</a>
+                    <a href="manageSubregions.php" class="terroir-btn terroir-btn-manage" title="Add and manage subregions">Manage &rarr;</a>
                   </td>
                 </tr>
               <?php endif; ?>
@@ -458,8 +451,7 @@
                   <td class="admin-terroir-name">Countries</td>
                   <td class="admin-terroir-count"><?php echo number_format($terroir_counts['countries']); ?> recorded</td>
                   <td class="admin-terroir-actions">
-                    <a href="addCountry.php" class="terroir-btn terroir-btn-add" title="Add country">+ Add</a>
-                    <a href="editCountry.php" class="terroir-btn terroir-btn-edit" title="Edit country">Edit</a>
+                    <a href="manageCountries.php" class="terroir-btn terroir-btn-manage" title="Add and manage countries">Manage &rarr;</a>
                   </td>
                 </tr>
               <?php endif; ?>
@@ -469,38 +461,48 @@
       <?php endif; ?>
 
       <!-- Site Settings & User Administration -->
-      <?php if (hasPrivilege($conn, 'manage_privileges') || hasPrivilege($conn, 'manage_users') || hasPrivilege($conn, 'manage_rating_scales')): ?>
+      <?php if (hasPrivilege($conn, 'manage_privileges') || hasPrivilege($conn, 'manage_users') || hasPrivilege($conn, 'manage_rating_scales') || hasPrivilege($conn, 'manage_static_pages')): ?>
         <div class="admin-domain-card">
           <h3><span>&#9881;&#65039;</span> System &amp; Settings</h3>
           <ul class="admin-domain-links">
             <?php if (hasPrivilege($conn, 'manage_privileges')): ?>
               <li>
-                <a href="settings.php" title="Branding, accent colors, scoring system">Site settings &amp; branding</a>
-                <a href="settings.php" class="link-action">Settings</a>
+                <a href="settings.php" title="Branding, accent colours, scoring system">
+                  <span>Site settings &amp; branding</span>
+                  <span class="link-action">Settings &rarr;</span>
+                </a>
               </li>
+            <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'manage_static_pages') || hasPrivilege($conn, 'manage_privileges')): ?>
               <li>
-                <a href="manageStaticPages.php" title="Custom static text, sidebar notices, about content">Static content pages</a>
-                <a href="manageStaticPages.php" class="link-action">Pages</a>
+                <a href="manageStaticPages.php" title="Custom static text, sidebar notices, about content">
+                  <span>Static content pages</span>
+                  <span class="link-action">Pages &rarr;</span>
+                </a>
               </li>
+            <?php endif; ?>
+            <?php if (hasPrivilege($conn, 'manage_privileges')): ?>
               <li>
-                <a href="managePrivileges.php" title="Configure 38 RBAC privileges and roles">User &amp; role privileges</a>
-                <a href="managePrivileges.php" class="link-action">Roles</a>
+                <a href="managePrivileges.php" title="Configure role permissions and user privilege overrides">
+                  <span>User &amp; role privileges</span>
+                  <span class="link-action">Roles &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_rating_scales') || hasPrivilege($conn, 'manage_privileges')): ?>
               <li>
-                <a href="manageRatingScales.php" title="Configure 20-point, 100-point, and WSET qualitative score descriptors">Rating scales &amp; assessment</a>
-                <a href="manageRatingScales.php" class="link-action">Scales</a>
+                <a href="manageRatingScales.php" title="Configure 20-point, 100-point, and WSET qualitative score descriptors">
+                  <span>Rating scales &amp; assessment</span>
+                  <span class="link-action">Scales &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
             <?php if (hasPrivilege($conn, 'manage_users')): ?>
               <li>
-                <a href="addUser.php" title="Create a new user account">Add new user</a>
-                <a href="addUser.php" class="link-action">+ User</a>
-              </li>
-              <li>
-                <a href="editUser.php" title="Edit accounts and reset passwords">Edit user accounts</a>
-                <a href="editUser.php" class="link-action">Edit</a>
+                <a href="manageUsers.php" title="Add, edit, and manage user accounts and passwords">
+                  <span>User accounts &amp; security</span>
+                  <span class="link-action">Users &rarr;</span>
+                </a>
               </li>
             <?php endif; ?>
           </ul>
@@ -532,7 +534,7 @@
         <li><span>PHP Runtime</span> <strong>v<?php echo PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION; ?></strong></li>
         <li><span>Database</span> <strong>Connected (MySQL)</strong></li>
         <li><span>Total Inventory</span> <strong><?php echo number_format($kpi_bottles); ?> bottles</strong></li>
-        <li><span>Wine Catalog</span> <strong><?php echo number_format($kpi_wines); ?> vintages</strong></li>
+        <li><span>Wine Catalogue</span> <strong><?php echo number_format($kpi_wines); ?> vintages</strong></li>
       </ul>
     </div>
   </div>

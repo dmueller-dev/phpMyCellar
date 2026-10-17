@@ -92,6 +92,7 @@ INSERT INTO `privileges` (`privilege_code`, `privilege_name`, `category`, `descr
 ('manage_vineyards', 'Manage Vineyards', 'Geography & Producers', 'Add and edit vineyards', 0, 290),
 ('manage_users', 'Manage Users', 'Administration', 'Add and edit user accounts', 1, 300),
 ('manage_rating_scales', 'Manage Rating Scales', 'Administration', 'Configure scoring scale descriptors and WSET criteria', 1, 305),
+('manage_static_pages', 'Manage Static Content', 'Administration', 'Edit site copy, legal notices, homepage welcome blocks, and section sidebars', 0, 308),
 ('manage_privileges', 'Manage Privileges', 'Administration', 'Configure role permissions and user privilege overrides', 1, 310);
 
 INSERT INTO `role_privileges` (`role_name`, `privilege_code`) VALUES
@@ -118,6 +119,7 @@ INSERT INTO `role_privileges` (`role_name`, `privilege_code`) VALUES
 ('admin', 'manage_producers'),
 ('admin', 'manage_rating_scales'),
 ('admin', 'manage_regions'),
+('admin', 'manage_static_pages'),
 ('admin', 'manage_storage_bins'),
 ('admin', 'manage_stores'),
 ('admin', 'manage_subregions'),

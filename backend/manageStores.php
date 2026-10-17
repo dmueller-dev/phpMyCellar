@@ -129,7 +129,7 @@
             <a href="manageOrders.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px; margin-right: 8px;">
               Manage Orders &rarr;
             </a>
-            <a href="addOrder.php" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
+            <a href="manageOrders.php?action=create" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
               + New Order
             </a>
           <?php endif; ?>

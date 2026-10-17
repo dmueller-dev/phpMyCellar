@@ -37,7 +37,7 @@
       $stmt->close();
     }
 
-    // Initialize error and success messages
+    // Initialise error and success messages
     $error = "";
     $success = "";
 
@@ -131,7 +131,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3 style="margin: 0;">Tasting notes on this wine</h3>
         <?php if ($has_contribution_rights): ?>
-          <a class="filter-nav" href="/backend/addTastingNote.php?wine_id=<?php echo $wine['wine_id']; ?>" title="Add a tasting note" style="margin: 0;">+ Add tasting note</a>
+          <a class="filter-nav" href="/backend/manageTastingNotes.php?wine_id=<?php echo $wine['wine_id']; ?>" title="Add a tasting note" style="margin: 0;">+ Add tasting note</a>
         <?php endif; ?>
       </div>
       <p><ul style="list-style-type:none;padding:0;margin:0;">
@@ -824,7 +824,7 @@
       }
 
       if ($has_contribution_rights) {
-        echo "<a class='chip-action' href='/backend/addTastingNote.php?wine_id=" . $v["wine_id"] . "' title='Add tasting note for " . $v_display . "'>+</a>";
+        echo "<a class='chip-action' href='/backend/manageTastingNotes.php?wine_id=" . $v["wine_id"] . "' title='Add tasting note for " . $v_display . "'>+</a>";
       }
 
       echo "</div>";

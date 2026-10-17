@@ -17,6 +17,7 @@ This guide provides instructions for upgrading **phpMyCellar** between releases,
    - [6. Bottle Restrictions & Wine Menu Visibility (`bottles.restricted`, `winemenu_include_unready`)](#6-bottle-restrictions--wine-menu-visibility-bottlesrestricted-winemenu_include_unready)
    - [7. Storage Bin Maximum Capacity & Usage Indicators (`storageBins.max_capacity`, `show_storage_usage_pct`)](#7-storage-bin-maximum-capacity--usage-indicators-storagebinsmax_capacity-show_storage_usage_pct)
    - [8. Full Administrative Entity Coverage & Granular Privileges](#8-full-administrative-entity-coverage--granular-privileges)
+   - [9. Unified Backend Dashboards (`add*.php` & `edit*.php` → `manage*.php`)](#9-unified-backend-dashboards-addphp--editphp--managephp)
 4. [Step-by-Step Version Upgrade Instructions](#step-by-step-version-upgrade-instructions)
    - [Upgrading to 1.1.0](#upgrading-to-110)
    - [Upgrading to 1.0.1](#upgrading-to-101)
@@ -51,7 +52,7 @@ The following table summarizes all components deprecated in the `1.x` series tha
 | `tnote.php` | Page / File | `1.0.0` | `2.0.0` | Use `tnotes.php` directly; configure web server rewrite if external links exist |
 | `wine.php` | Page / File | `1.0.0` | `2.0.0` | Use `wines.php` directly; configure web server rewrite if external links exist |
 | `blogpost.php` | Page / File | `1.0.0` | `2.0.0` | Use `blog.php` directly; configure web server rewrite if external links exist |
-| `backend/blindTasting.php` | Page / File | `1.1.0` | `2.0.0` | Merged into `/backend/addTastingNote.php?mode=blind`; access `addTastingNote.php` directly |
+| 27 legacy `backend/add*.php` & `backend/edit*.php` scripts | Page / File | `1.1.0` | `2.0.0` | Consolidated into unified `/backend/manage*.php` dashboards with HTTP 301 shims |
 | `dmpts` (view column) | SQL View Alias | `1.0.1` | `2.0.0` | Use `pts_20` column in `view_vintage_top_wines` and query results |
 | `avg_dmpts` (view column) | SQL View Alias | `1.0.1` | `2.0.0` | Use `avg_pts_20` or `avg_score` in `view_vintage_region_colour_stats` |
 | `$_POST['dmpts']` | Form Input | `1.0.1` | `2.0.0` | Submit rating using `$_POST['pts_20']` in tasting note forms |
@@ -297,15 +298,16 @@ ON DUPLICATE KEY UPDATE `privilege_code` = VALUES(`privilege_code`);
 
 ---
 
-### 8. Full Administrative Entity Coverage & Granular Privileges
+#### 8. Full Administrative Entity Coverage & Granular Privileges
 
-To provide complete administrative CRUD and moderation coverage across all schema tables, seven dedicated management interfaces and corresponding fine-grained privileges were introduced:
+To provide complete administrative CRUD and moderation coverage across all schema tables, eight dedicated management interfaces and corresponding fine-grained privileges were introduced:
 * **Wine Stores & Merchants (`backend/manageStores.php`, privilege `manage_stores`)**: Create, edit, and safely delete wine retailers, merchants, and auctioneers.
 * **Bottle Formats & Sizes (`backend/manageFormats.php`, privilege `manage_formats`)**: Manage bottle formats and liquid volumes in millilitres (`bottle_formats` and `sizes`).
 * **Grape Varieties (`backend/manageVarieties.php`, privilege `manage_varieties`)**: Maintain grape varieties (*c&eacute;pages*) with active wine count verification before deletion.
 * **Harvest Vintages & Regional Reports (`backend/manageVintages.php`, privilege `manage_vintages`)**: Manage vintage years (`vintages`) and regional vintage summaries/scores (`x_vintage_region`).
 * **Wine Styles & Attributes (`backend/manageWineAttributes.php`, privilege `manage_wine_attributes`)**: Manage wine styles (`styles`), colours (`colours`), and naming convention templates (`displayoptions`).
 * **Rating Scales & Assessment (`backend/manageRatingScales.php`, privilege `manage_rating_scales`)**: Customise qualitative score descriptors across 20-point (`scale_20`), 100-point (`scale_100`), and WSET qualitative criteria (`wsetpts`).
+* **Static Content & Copy (`backend/manageStaticPages.php`, privilege `manage_static_pages`)**: Edit site copy, legal notices, homepage welcome blocks, and section sidebars (`static_pages`).
 * **Comment Moderation (`backend/manageComments.php`, privilege `moderate_comments`)**: Review, edit, approve, and delete reader discussions across tasting notes and stories (`comments` and association tables).
 
 #### Automatic Provisioning & RBAC Fallbacks
@@ -314,7 +316,7 @@ The privilege middleware (`ensurePrivilegeTablesExist()`) automatically register
 - `manage_formats` falls back to `add_bottle`
 - `manage_varieties` and `manage_wine_attributes` fall back to `edit_wine_master`
 - `manage_vintages` falls back to `edit_wine`
-- `manage_rating_scales` and `moderate_comments` fall back to `manage_privileges`
+- `manage_static_pages`, `manage_rating_scales`, and `moderate_comments` fall back to `manage_privileges`
 
 #### Comments Schema Introspection & Scheduled Removal in v2.0.0
 To support legacy databases without downtime during the 1.x lifecycle:
@@ -334,6 +336,7 @@ INSERT INTO `privileges` (`privilege_code`, `privilege_name`, `category`, `descr
 ('manage_vintages', 'Manage Harvest Vintages', 'Wines & Masters', 'Manage harvest vintages and regional character reports', 0, 186),
 ('manage_wine_attributes', 'Manage Wine Attributes', 'Wines & Masters', 'Manage wine styles, colours, and display templates', 0, 187),
 ('manage_rating_scales', 'Manage Rating Scales', 'Administration', 'Configure qualitative score descriptors for rating scales', 0, 240),
+('manage_static_pages', 'Manage Static Content', 'Administration', 'Edit site copy, legal notices, homepage welcome blocks, and section sidebars', 0, 308),
 ('moderate_comments', 'Moderate Comments', 'Community', 'Review, edit, approve, and delete reader comments', 0, 125)
 ON DUPLICATE KEY UPDATE `privilege_name` = VALUES(`privilege_name`);
 
@@ -345,9 +348,28 @@ INSERT INTO `role_privileges` (`role_name`, `privilege_code`) VALUES
 ('admin', 'manage_vintages'),
 ('admin', 'manage_wine_attributes'),
 ('admin', 'manage_rating_scales'),
+('admin', 'manage_static_pages'),
 ('admin', 'moderate_comments')
 ON DUPLICATE KEY UPDATE `privilege_code` = VALUES(`privilege_code`);
-```
+```---
+
+### 9. Unified Backend Dashboards (`add*.php` & `edit*.php` → `manage*.php`)
+
+In phpMyCellar 1.1.0, all standalone `add*.php` and `edit*.php` scripts were consolidated into cohesive, cross-device friendly `manage*.php` management dashboards.
+
+#### Script Consolidation Mapping
+* **Cellar & Bottles:** `addBottle.php` & `editBottle.php` &rarr; `manageBottles.php`
+* **Purchase Orders:** `addOrder.php` &rarr; `manageOrders.php?action=create`
+* **Wine Masters:** `addWineMaster.php` & `editWineMaster.php` &rarr; `manageWineMasters.php`
+* **Wines & Vintages:** `addWine.php` & `editWine.php` &rarr; `manageWines.php`
+* **Tasting Notes & Blind Tastings:** `addTastingNote.php`, `blindTasting.php`, & `editTastingNote.php` &rarr; `manageTastingNotes.php`
+* **Stories & Blog:** `addBlogpost.php` & `editBlogpost.php` &rarr; `manageBlogposts.php` (aliased by `manageStories.php`)
+* **User Accounts:** `addUser.php` & `editUser.php` &rarr; `manageUsers.php`
+* **Static Content:** `editStaticPage.php` &rarr; `manageStaticPages.php`
+* **Terroir & Geography:** `add/editCountry.php` &rarr; `manageCountries.php`, `add/editRegion.php` &rarr; `manageRegions.php`, `add/editSubregion.php` &rarr; `manageSubregions.php`, `add/editAppellation.php` &rarr; `manageAppellations.php`, `add/editVineyard.php` &rarr; `manageVineyards.php`, `add/editProducer.php` &rarr; `manageProducers.php`.
+
+#### Backwards-Compatibility & Scheduled Removal
+All 27 legacy script endpoints currently function as transparent HTTP 301 redirect shims preserving incoming query parameters (such as `wine_id`, `bottle_id`, and `mode=blind`) while emitting an `@trigger_error(..., E_USER_DEPRECATED)`. In version **2.0.0**, these 27 legacy shim files will be permanently deleted. Custom bookmarks, webhooks, or browser extensions should be updated to target the `/backend/manage*.php` endpoints directly.
 
 ---
 

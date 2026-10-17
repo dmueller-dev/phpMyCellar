@@ -1659,9 +1659,6 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 
 .admin-domain-links li {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 10px;
   border-radius: 5px;
   background: #fafafa;
   transition: background-color 0.15s;
@@ -1676,9 +1673,11 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   text-decoration: none;
   font-size: 0.92rem;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  flex-grow: 1;
+  padding: 8px 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .admin-domain-links li a:hover {
@@ -1696,7 +1695,7 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   transition: all 0.15s;
 }
 
-.admin-domain-links li .link-action:hover {
+.admin-domain-links li a:hover .link-action {
   background: var(--primary-accent, indianred);
   color: white !important;
   border-color: var(--primary-accent, indianred);
@@ -1737,11 +1736,25 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 
 .terroir-btn {
   display: inline-block;
-  padding: 3px 8px;
-  font-size: 0.78rem;
-  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  border-radius: 4px;
   text-decoration: none !important;
   margin-left: 4px;
+  transition: all 0.15s;
+}
+
+.terroir-btn-manage {
+  background: white;
+  color: var(--secondary-accent, firebrick) !important;
+  font-weight: 500;
+  border: 1px solid #ddd;
+}
+
+.terroir-btn-manage:hover {
+  background: var(--primary-accent, indianred);
+  color: white !important;
+  border-color: var(--primary-accent, indianred);
 }
 
 .terroir-btn-add {
@@ -1915,6 +1928,121 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   border-bottom: none;
 }
 
+/* Unified Administration & CRUD Layouts */
+.admin-dual-manage-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.admin-dual-manage-grid.unequal {
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
+.admin-mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #555;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  min-height: 44px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.admin-tab-btn:hover {
+  background: #eee;
+  color: #222;
+}
+
+.admin-tab-btn.active {
+  background: var(--secondary-accent, firebrick);
+  color: white;
+  border-color: var(--secondary-accent, firebrick);
+}
+
+.admin-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+.admin-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table-container th {
+  background: #fdf8f8;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid #ecd8d8;
+  color: #444;
+}
+
+.admin-table-container td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.admin-table-container tr:hover td {
+  background-color: #faf7f7;
+}
+
+.form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-row-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.admin-search-box {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  min-height: 44px;
+}
+
+.admin-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 2px solid #f0e6e6;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
 /* Mobile adjustments */
 @media screen and (max-width: 720px) {
   .admin-hero {
@@ -1936,6 +2064,14 @@ li + li:has(> details:not(.vintage-menu-detail)) {
     grid-template-columns: 1fr;
   }
   .admin-storage-manage-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-dual-manage-grid,
+  .admin-dual-manage-grid.unequal {
+    grid-template-columns: 1fr;
+  }
+  .form-row-2col,
+  .form-row-3col {
     grid-template-columns: 1fr;
   }
 }

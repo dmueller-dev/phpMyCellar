@@ -97,7 +97,7 @@
   }
 
   $csrf_token = generateCSRFToken();
-  $page_title = 'Manage Grape Varieties - Catalog Administration';
+  $page_title = 'Manage Grape Varieties - Catalogue Administration';
   require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -122,7 +122,7 @@
             </a>
           <?php endif; ?>
           <?php if (hasPrivilege($conn, 'add_wine_master')): ?>
-            <a href="addWineMaster.php" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
+            <a href="manageWineMasters.php" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
               + New Wine Master
             </a>
           <?php endif; ?>
@@ -163,7 +163,7 @@
             <span class="kpi-val"><?php echo number_format($activeVarieties); ?></span>
             <span class="kpi-icon">&#127991;&#65039;</span>
           </div>
-          <div class="kpi-label">Active in Wine Catalog</div>
+          <div class="kpi-label">Active in Wine Catalogue</div>
           <div class="kpi-sub">
             <span>Used in registered master cuv&eacute;es</span>
           </div>

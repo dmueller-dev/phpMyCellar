@@ -32,15 +32,15 @@ Privileges are defined at the granular operation level across eight functional c
 - `moderate_comments`: Review, edit, approve, and delete reader comments (`manageComments.php`).
 
 ### Tasting Notes
-- `add_tasting_note`: Create regular and blind tasting notes (`addTastingNote.php`).
-- `edit_tasting_note`: Edit tasting notes authored by oneself.
-- `edit_all_tasting_notes`: Edit tasting notes authored by any user.
+- `add_tasting_note`: Create regular and blind tasting notes (`manageTastingNotes.php`).
+- `edit_tasting_note`: Edit tasting notes authored by oneself (`manageTastingNotes.php`).
+- `edit_all_tasting_notes`: Edit tasting notes authored by any user (`manageTastingNotes.php`).
 - `publish_tasting_note`: Publish tasting notes directly (without requiring draft review).
 
 ### Blog Stories
-- `add_blogpost`: Create new blog stories and articles (`addBlogpost.php`).
-- `edit_blogpost`: Edit stories authored by oneself.
-- `edit_all_blogposts`: Edit stories authored by any author.
+- `add_blogpost`: Create new blog stories and articles (`manageBlogposts.php`).
+- `edit_blogpost`: Edit stories authored by oneself (`manageBlogposts.php`).
+- `edit_all_blogposts`: Edit stories authored by any author (`manageBlogposts.php`).
 - `publish_blogpost`: Publish stories directly (without requiring draft review).
 
 ### Cellar & Orders
@@ -48,33 +48,34 @@ Privileges are defined at the granular operation level across eight functional c
 - `manage_storage_bins`: Manage cellars, storage bins, and maximum capacities (`manageStorageBins.php`).
 - `manage_stores`: Manage wine merchants, retailers, and order sources (`manageStores.php`).
 - `manage_formats`: Manage bottle formats and standard liquid volumes (`manageFormats.php`).
-- `add_bottle`: Add new bottles to the cellar (`addBottle.php`).
-- `edit_bottle`: Update bottle details, drink windows, and statuses (`editBottle.php`).
-- `add_order`: Create wine purchasing orders (`addOrder.php`).
+- `add_bottle`: Add new bottles to the cellar (`manageBottles.php`).
+- `edit_bottle`: Update bottle details, drink windows, and statuses (`manageBottles.php`).
+- `add_order`: Create wine purchasing orders (`manageOrders.php?action=create`).
 - `manage_orders`: Manage open wine orders and accept deliveries into cellar bins (`manageOrders.php`).
 
 ### Wines & Masters
 - `browse_wines`: Search and view wines in the backend database (`browseWines.php`).
-- `add_wine`: Add new individual wine vintage entries (`addWine.php`).
-- `edit_wine`: Edit individual wine vintage details (`editWine.php`).
-- `add_wine_master`: Create new wine master profiles (`addWineMaster.php`).
-- `edit_wine_master`: Edit wine master profiles and naming conventions (`editWineMaster.php`).
+- `add_wine`: Add new individual wine vintage entries (`manageWines.php`).
+- `edit_wine`: Edit individual wine vintage details (`manageWines.php`).
+- `add_wine_master`: Create new wine master profiles (`manageWineMasters.php`).
+- `edit_wine_master`: Edit wine master profiles and naming conventions (`manageWineMasters.php`).
 - `manage_varieties`: Manage grape varieties and c&eacute;page profiles (`manageVarieties.php`).
 - `manage_vintages`: Manage harvest vintages and regional character reports (`manageVintages.php`).
 - `manage_wine_attributes`: Manage wine styles, colours, and display templates (`manageWineAttributes.php`).
 
 ### Geography & Producers
-- `manage_producers`: Add and edit wine producers (`addProducer.php`, `editProducer.php`).
-- `manage_countries`: Add and edit countries (`addCountry.php`, `editCountry.php`).
-- `manage_regions`: Add and edit regions (`addRegion.php`, `editRegion.php`).
-- `manage_subregions`: Add and edit subregions (`addSubregion.php`, `editSubregion.php`).
-- `manage_appellations`: Add and edit appellations (`addAppellation.php`, `editAppellation.php`).
-- `manage_vineyards`: Add and edit vineyards (`addVineyard.php`, `editVineyard.php`).
+- `manage_producers`: Add and edit wine producers (`manageProducers.php`).
+- `manage_countries`: Add and edit countries (`manageCountries.php`).
+- `manage_regions`: Add and edit regions (`manageRegions.php`).
+- `manage_subregions`: Add and edit subregions (`manageSubregions.php`).
+- `manage_appellations`: Add and edit appellations (`manageAppellations.php`).
+- `manage_vineyards`: Add and edit vineyards (`manageVineyards.php`).
 
 ### Administration
-- `manage_users`: Add and edit user accounts (`addUser.php`, `editUser.php`).
-- `manage_privileges`: Configure role permissions, custom roles, and user privilege overrides (`managePrivileges.php`).
+- `manage_users`: Add and edit user accounts (`manageUsers.php`).
 - `manage_rating_scales`: Configure qualitative score descriptors for rating scales (`manageRatingScales.php`).
+- `manage_static_pages`: Edit site copy, legal notices, homepage welcome blocks, and section sidebars (`manageStaticPages.php`).
+- `manage_privileges`: Configure role permissions, custom roles, and user privilege overrides (`managePrivileges.php`).
 
 ---
 
