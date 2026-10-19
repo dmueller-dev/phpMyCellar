@@ -301,7 +301,7 @@
       <?php if (empty($comments)): ?>
         <p style="color: #666; font-style: italic; padding: 20px 0;">No comments found matching the active filters.</p>
       <?php else: ?>
-        <div style="overflow-x: auto;">
+        <div class="admin-table-container">
           <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
             <thead>
               <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
@@ -341,22 +341,22 @@
                   }
                 ?>
                 <tr style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 8px 10px; color: #888; font-size: 0.85rem;">
+                  <td data-label="Comment ID" style="padding: 8px 10px; color: #888; font-size: 0.85rem;">
                     #<?php echo $cId; ?>
                   </td>
-                  <td style="padding: 8px 10px;">
+                  <td class="card-primary-cell" style="padding: 8px 10px;">
                     <strong><?php echo htmlspecialchars($author, ENT_QUOTES, 'UTF-8'); ?></strong>
                     <div style="color: #666; font-size: 0.78rem;"><?php echo !empty($com['comment_date']) ? date('M j, Y H:i', strtotime($com['comment_date'])) : 'Unknown date'; ?></div>
                   </td>
-                  <td style="padding: 8px 10px; font-size: 0.85rem;">
+                  <td data-label="Target" style="padding: 8px 10px; font-size: 0.85rem;">
                     <a href="<?php echo htmlspecialchars($targetUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" style="text-decoration: none; color: #1a73e8; font-weight: 500;" title="View discussion on page">
                       <?php echo $targetLabel; ?> &#8599;
                     </a>
                   </td>
-                  <td style="padding: 8px 10px; color: #333; font-size: 0.88rem;">
+                  <td data-label="Comment" style="padding: 8px 10px; color: #333; font-size: 0.88rem;">
                     <?php echo nl2br(htmlspecialchars($com['comment'] ?? '', ENT_QUOTES, 'UTF-8')); ?>
                   </td>
-                  <td style="padding: 8px 10px; text-align: center;">
+                  <td data-label="Status" style="padding: 8px 10px; text-align: center;">
                     <?php if ($status === 'approved'): ?>
                       <span style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem; font-weight: bold; background: #e8f5e9; color: #2e7d32;">APPROVED</span>
                     <?php elseif ($status === 'pending'): ?>

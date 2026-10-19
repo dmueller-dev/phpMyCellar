@@ -337,7 +337,7 @@
                           <?php endif; ?>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Location">
                         <span style="color: #333; font-weight: 500; font-size: 0.9rem;"><?php echo htmlspecialchars($item['location'], ENT_QUOTES, 'UTF-8'); ?></span>
                         <?php if (!empty($item['url'])): ?>
                           <div>
@@ -347,7 +347,7 @@
                           </div>
                         <?php endif; ?>
                       </td>
-                      <td style="font-size: 0.85rem; color: #666; line-height: 1.4;">
+                      <td data-label="Description" style="font-size: 0.85rem; color: #666; line-height: 1.4;">
                         <?php echo htmlspecialchars($item['description'], ENT_QUOTES, 'UTF-8'); ?>
                       </td>
                       <td style="text-align: right; white-space: nowrap;">

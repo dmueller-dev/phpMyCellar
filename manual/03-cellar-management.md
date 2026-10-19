@@ -109,3 +109,13 @@ phpMyCellar lets you record purchasing transactions to calculate your cellar val
   - **Order Items:** Format, quantity, unit price, tax status (duty paid vs in-bond), and delivery status.
   - **Receiving Deliveries:** Accept deliveries via `manageOrders.php` to assign bins and automatically move bottles into active `in cellar` status.
   - **Invoice Archive:** Securely upload and store PDF receipts and merchant invoices in `uploads/invoices/`.
+
+---
+
+## 8. Mobile Administration & Touch Optimisation
+
+All cellar administration interfaces (`backend/manage*.php`) adapt seamlessly to mobile smartphones and tablets (&le; 720px viewport):
+- **Responsive Card Transformation:** Wide data tables automatically transform into self-contained touch cards displaying key metadata with `data-label` headers and prominent item titles.
+- **Dual-Pane Segmented Switcher:** Dual-column management pages (terroir, cuvées, storage bins, formats, stores, attributes, vintages, and rating scales) present a top segmented toggle (`[ 📋 Directory ] [ ➕ Add / ✏️ Edit ]`), eliminating vertical scrolling fatigue.
+- **Touch-Friendly Controls:** All action buttons and form inputs maintain a minimum touch target size of 44 &times; 44 px, preventing iOS auto-zooming and ensuring thumb navigation comfort.
+

@@ -193,11 +193,21 @@
         </div>
       </div>
 
+      <!-- Mobile Segmented View Switcher -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" id="tabBtnList" class="admin-mobile-pane-btn <?php echo !$is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('list')">
+          📋 Countries (<?php echo count($country_records); ?>)
+        </button>
+        <button type="button" id="tabBtnForm" class="admin-mobile-pane-btn <?php echo $is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('form')">
+          <?php echo $is_edit ? '✏️ Edit Country' : '➕ Add Country'; ?>
+        </button>
+      </div>
+
       <!-- Responsive Dual Grid: Country Directory & Form -->
       <div class="admin-dual-manage-grid unequal">
         
         <!-- Left: Searchable Countries Directory -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?php echo $is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="margin: 0; color: #333; font-size: 1.1rem;">
               Existing Countries (<?php echo count($country_records); ?>)
@@ -228,12 +238,12 @@
                       <td>
                         <strong><?php echo htmlspecialchars($c['country'], ENT_QUOTES, 'UTF-8'); ?></strong>
                       </td>
-                      <td style="text-align: center;">
+                      <td data-label="Regions" style="text-align: center;">
                         <a href="manageRegions.php?country=<?php echo urlencode($c['country']); ?>" title="View regions" style="text-decoration: none; color: #555;">
                           <?php echo (int)$c['region_count']; ?>
                         </a>
                       </td>
-                      <td style="text-align: center; color: #666;">
+                      <td data-label="Wines" style="text-align: center; color: #666;">
                         <?php echo (int)$c['master_count']; ?>
                       </td>
                       <td style="text-align: right; white-space: nowrap;">
@@ -250,7 +260,7 @@
         </div>
 
         <!-- Right: Add / Edit Form Card -->
-        <div class="admin-system-card">
+        <div id="adminDualFormPane" class="admin-system-card admin-dual-pane <?php echo !$is_edit ? 'mobile-hidden' : ''; ?>">
           <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick);">
             <?php echo $is_edit ? '✏️ Edit Country: ' . htmlspecialchars($country, ENT_QUOTES, 'UTF-8') : '➕ Add New Country'; ?>
           </h3>

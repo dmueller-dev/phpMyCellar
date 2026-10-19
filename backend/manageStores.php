@@ -188,11 +188,22 @@
         </div>
       </div>
 
+      <?php $is_edit = !empty($editingStore); ?>
+      <!-- Mobile Segmented View Switcher -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" id="tabBtnList" class="admin-mobile-pane-btn <?php echo !$is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('list')">
+          📋 Merchants (<?php echo count($stores); ?>)
+        </button>
+        <button type="button" id="tabBtnForm" class="admin-mobile-pane-btn <?php echo $is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('form')">
+          <?php echo $is_edit ? '✏️ Edit Merchant' : '➕ Add Merchant'; ?>
+        </button>
+      </div>
+
       <!-- Main Layout: Table on Left / Form on Right -->
       <div class="admin-storage-manage-grid">
         
         <!-- Stores List -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?php echo $is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="margin: 0; color: #333;">Merchant Directory</h3>
             <input type="text" id="storeFilterInput" placeholder="Filter by merchant or country..." 
@@ -203,7 +214,7 @@
           <?php if (empty($stores)): ?>
             <p style="color: #666; font-style: italic;">No wine merchants have been added yet. Use the form to record your first store.</p>
           <?php else: ?>
-            <div style="overflow-x: auto;">
+            <div class="admin-table-container">
               <table id="storesTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                 <thead>
                   <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
@@ -227,16 +238,16 @@
                       <td style="padding: 8px 10px; font-weight: 600; color: #222;">
                         <?php echo htmlspecialchars($store['store_name'], ENT_QUOTES, 'UTF-8'); ?>
                       </td>
-                      <td style="padding: 8px 10px; color: #555;">
+                      <td data-label="Country" style="padding: 8px 10px; color: #555;">
                         <?php echo htmlspecialchars($store['country'], ENT_QUOTES, 'UTF-8'); ?>
                       </td>
-                      <td style="padding: 8px 10px; color: #666; font-size: 0.85rem;">
+                      <td data-label="Address" style="padding: 8px 10px; color: #666; font-size: 0.85rem;">
                         <?php echo !empty($store['address']) ? htmlspecialchars($store['address'], ENT_QUOTES, 'UTF-8') : '&mdash;'; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Orders" style="padding: 8px 10px; text-align: right;">
                         <?php echo $oCount; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Bottles" style="padding: 8px 10px; text-align: right;">
                         <strong><?php echo $bCount; ?></strong>
                       </td>
                       <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
@@ -265,7 +276,7 @@
         </div>
 
         <!-- Sidebar: Add / Edit Store Form -->
-        <div>
+        <div id="adminDualFormPane" class="admin-dual-pane <?php echo !$is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
             <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
               <?php echo $editingStore ? 'Edit Wine Merchant' : 'Add New Merchant'; ?>

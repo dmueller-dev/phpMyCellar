@@ -2074,4 +2074,302 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   .form-row-3col {
     grid-template-columns: 1fr;
   }
+
+  /* Dual-Grid Mobile Segmented Switcher */
+  .admin-mobile-pane-switch {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #e2e8f0;
+  }
+  .admin-mobile-pane-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .admin-mobile-pane-btn.active {
+    background: #ffffff;
+    color: var(--secondary-accent, firebrick);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  .admin-dual-pane.mobile-hidden {
+    display: none !important;
+  }
+
+  /* Mobile Jump Bar */
+  .mobile-jump-bar {
+    display: flex;
+    margin-bottom: 16px;
+  }
+  .mobile-jump-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    color: #475569;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-sizing: border-box;
+  }
+
+  /* Universal Mobile Card Transformation for Admin Tables */
+  .admin-table-container {
+    max-height: none !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    border: none !important;
+    background: transparent !important;
+    margin-bottom: 20px;
+  }
+
+  .admin-table-container table,
+  .admin-table-container tbody {
+    display: block !important;
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+  }
+
+  .admin-table-container thead {
+    display: none !important;
+  }
+
+  .admin-table-container tr {
+    display: block !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    margin-bottom: 12px !important;
+    padding: 12px 14px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    box-sizing: border-box !important;
+    position: relative;
+  }
+
+  /* Highlight or selected row accent */
+  .admin-table-container tr[style*="background"] {
+    border-left: 4px solid var(--secondary-accent, firebrick) !important;
+  }
+
+  .admin-table-container tr:hover td {
+    background-color: transparent !important;
+  }
+
+  /* Empty state rows */
+  .admin-table-container tr td[colspan] {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    border: 1px dashed #cbd5e1 !important;
+    border-radius: 8px !important;
+    background: #f8fafc !important;
+    padding: 24px 16px !important;
+    color: #64748b !important;
+    box-sizing: border-box !important;
+  }
+  .admin-table-container tr td[colspan]::before {
+    display: none !important;
+  }
+
+  .admin-table-container td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 7px 0 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-size: 0.9rem !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
+    white-space: normal !important;
+    min-height: auto !important;
+  }
+
+  /* Metadata label pseudo-element */
+  .admin-table-container td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  /* Primary title cell */
+  .admin-table-container td:first-child:not([colspan]):not([data-label]),
+  .admin-table-container td.card-primary-cell {
+    display: block !important;
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 4px !important;
+    border-bottom: 2px solid #f1f5f9 !important;
+  }
+  .admin-table-container td:first-child:not([colspan]):not([data-label])::before,
+  .admin-table-container td.card-primary-cell::before {
+    display: none !important;
+  }
+
+  .admin-table-container td:first-child[data-label] {
+    display: flex !important;
+    font-size: 0.9rem !important;
+    font-weight: normal !important;
+  }
+  .admin-table-container td:first-child[data-label]::before {
+    display: inline-block !important;
+    content: attr(data-label);
+  }
+
+  /* Bottom actions cell */
+  .admin-table-container td:last-child:not([colspan]),
+  .admin-table-container td.card-actions-cell {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding-top: 10px !important;
+    margin-top: 6px !important;
+    border-top: 1px dashed #e2e8f0 !important;
+    border-bottom: none !important;
+    flex-wrap: wrap !important;
+  }
+  .admin-table-container td:last-child:not([colspan])::before,
+  .admin-table-container td.card-actions-cell::before {
+    display: none !important;
+  }
+
+  /* Touch-friendly buttons inside cards */
+  .admin-table-container td:last-child a,
+  .admin-table-container td:last-child button,
+  .admin-table-container td.card-actions-cell a,
+  .admin-table-container td.card-actions-cell button,
+  .admin-table-container td:last-child .terroir-btn {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 8px 14px !important;
+    font-size: 0.88rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+    text-decoration: none !important;
+  }
+
+  /* Form & search controls on mobile */
+  .admin-search-box {
+    font-size: 16px !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+  }
+  .admin-system-card input[type="text"],
+  .admin-system-card input[type="number"],
+  .admin-system-card input[type="date"],
+  .admin-system-card select,
+  .admin-system-card textarea {
+    font-size: 16px !important;
+  }
+
+  /* Mobile tabs momentum scrolling */
+  .tab-nav,
+  .admin-mode-tabs {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 16px !important;
+  }
+  .tab-btn,
+  .admin-tab-btn {
+    flex-shrink: 0 !important;
+    min-height: 44px !important;
+  }
+
+  /* Order details line items cards */
+  .order-items-detail {
+    display: block !important;
+    border: none !important;
+    width: 100% !important;
+  }
+  .order-items-detail thead {
+    display: none !important;
+  }
+  .order-items-detail tbody {
+    display: block !important;
+  }
+  .order-items-detail tr {
+    display: block !important;
+    background: #fdfdfd !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 6px !important;
+    margin-bottom: 8px !important;
+    padding: 10px 12px !important;
+  }
+  .order-items-detail td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 4px 0 !important;
+    border-bottom: 1px solid #f1f3f5 !important;
+    font-size: 0.85rem !important;
+  }
+  .order-items-detail td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+  .order-items-detail td:first-child {
+    display: block !important;
+    font-weight: bold !important;
+    font-size: 0.95rem !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    padding-bottom: 6px !important;
+    margin-bottom: 4px !important;
+  }
+  .order-items-detail td:first-child::before {
+    display: none !important;
+  }
 }
+
+/* Desktop guarantees for mobile-only controls */
+.admin-mobile-pane-switch {
+  display: none;
+}
+.mobile-jump-bar {
+  display: none;
+}
+@media screen and (min-width: 721px) {
+  .admin-dual-pane {
+    display: block !important;
+  }
+}
+

@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Cross-device mobile layout transformations across all administrative management pages (`backend/manage*.php`):
+  - Responsive card transformation for tables on viewports &le; 720px (`.admin-table-container`), converting tabular rows into touch-friendly cards with `data-label` keys, prominent primary item headers, and &ge; 44 &times; 44 px action targets.
+  - Mobile segmented pane switchers (`.admin-mobile-pane-switch` and `switchAdminMobilePane()`) for dual-grid administration pages (terroir, cuvées, storage bins, grape varieties, formats, stores, attributes, vintages, and rating scales), allowing seamless switching between directory tables and add/edit forms without vertical scroll fatigue.
+  - Horizontal momentum scrolling navigation tabs (`.admin-mode-tabs`, `.tab-nav`) preventing button wrapping or clipping on narrow screens.
+  - Zero desktop layout regressions: all responsive rules strictly encapsulated within `@media screen and (max-width: 720px)`.
 - Unified administrative dashboards in `/backend/` with cross-device responsive design, horizontal table scroll containment, touch-friendly targets, and dual Add/Edit modes:
   - `backend/manageBottles.php` (consolidates `addBottle.php` and `editBottle.php` with batch 1–12 bottle additions, bin capacity validation, and quick inventory ledger).
   - `backend/manageWines.php` (consolidates `addWine.php` and `editWine.php` with harvest vintage management and CellarTracker ID linking).

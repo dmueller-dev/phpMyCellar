@@ -509,11 +509,21 @@
         </div>
       </div>
 
+      <!-- Mobile Segmented View Switcher -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" id="tabBtnList" class="admin-mobile-pane-btn <?php echo !$is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('list')">
+          📋 Cuv&eacute;es (<?php echo count($master_records); ?>)
+        </button>
+        <button type="button" id="tabBtnForm" class="admin-mobile-pane-btn <?php echo $is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('form')">
+          <?php echo $is_edit ? '✏️ Edit Cuv&eacute;e' : '➕ Add Cuv&eacute;e'; ?>
+        </button>
+      </div>
+
       <!-- Responsive Dual Grid: Master Directory & Form -->
       <div class="admin-dual-manage-grid unequal">
         
         <!-- Left: Searchable Master Directory -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?php echo $is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="margin: 0; color: #333; font-size: 1.1rem;">
               Existing Masters (<?php echo count($master_records); ?>)
@@ -560,11 +570,11 @@
                           <?php if (!empty($m['grape'])): ?> &bull; <?php echo htmlspecialchars($m['grape'], ENT_QUOTES, 'UTF-8'); ?><?php endif; ?>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Terroir">
                         <div style="font-size: 0.88rem;"><?php echo htmlspecialchars($m['region'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                         <div style="font-size: 0.78rem; color: #888;"><?php echo htmlspecialchars($m['country'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                       </td>
-                      <td style="text-align: center;">
+                      <td data-label="Vintages" style="text-align: center;">
                         <?php if ((int)$m['vintage_count'] > 0): ?>
                           <span style="display: inline-block; padding: 2px 8px; border-radius: 12px; background: #e8f5e9; color: #2e7d32; font-size: 0.82rem; font-weight: bold;">
                             <?php echo (int)$m['vintage_count']; ?>
@@ -594,7 +604,7 @@
         </div>
 
         <!-- Right: Add / Edit Master Form -->
-        <div style="background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
+        <div id="adminDualFormPane" class="admin-dual-pane <?php echo !$is_edit ? 'mobile-hidden' : ''; ?>" style="background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
             <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
               <?php echo $is_edit ? '&#9998; Edit Master #' . $master_id : '&#10010; Add Cuv&eacute;e Master'; ?>

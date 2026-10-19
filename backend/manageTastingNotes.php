@@ -329,6 +329,9 @@
             &#9998; Edit Tasting Note
           </a>
         <?php endif; ?>
+        <a href="#notesJournalSection" class="admin-tab-btn" style="color: #555;">
+          📋 Notes Directory (<?php echo count($accessible_notes); ?>)
+        </a>
       </div>
 
       <!-- Form Container -->
@@ -602,7 +605,7 @@
       </div>
 
       <!-- Searchable Tasting Notes Journal Ledger -->
-      <div style="margin-top: 30px;">
+      <div id="notesJournalSection" style="margin-top: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
           <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
             Tasting Journal Directory (<?php echo count($accessible_notes); ?> notes)
@@ -631,15 +634,15 @@
                   $n_title = getWineName($note['nameconvention'], $note['vintage'], $note['name'], $note['producer'], $note['grape'], $note['vineyard']);
                 ?>
                   <tr style="<?php echo ($requested_note_id === (int)$note['note_id']) ? 'background-color: #fff9e6;' : ''; ?>">
-                    <td><?php echo htmlspecialchars($note['tasting_date'], ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td>
+                    <td data-label="Date"><?php echo htmlspecialchars($note['tasting_date'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td class="card-primary-cell">
                       <div><strong><?php echo htmlspecialchars($n_title, ENT_QUOTES, 'UTF-8'); ?></strong></div>
                       <div style="font-size: 0.78rem; color: #777;">
                         <?php echo htmlspecialchars($note['producer'] ?? '', ENT_QUOTES, 'UTF-8'); ?> &bull; 
                         <?php echo htmlspecialchars($note['region'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                       </div>
                     </td>
-                    <td style="text-align: center;">
+                    <td data-label="Score" style="text-align: center;">
                       <?php if (!empty($note['pts_100'])): ?>
                         <span style="font-weight: bold;"><?php echo (int)$note['pts_100']; ?></span><span style="font-size: 0.78rem; color: #888;">/100</span>
                       <?php elseif (!empty($note['pts_20'])): ?>
@@ -650,7 +653,7 @@
                         <span style="color: #aaa;">—</span>
                       <?php endif; ?>
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span style="display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: bold; text-transform: uppercase; <?php echo ($note['status'] === 'published') ? 'background: #e8f5e9; color: #2e7d32;' : 'background: #f5f5f5; color: #666;'; ?>">
                         <?php echo htmlspecialchars($note['status'] ?? 'draft', ENT_QUOTES, 'UTF-8'); ?>
                       </span>

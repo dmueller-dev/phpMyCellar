@@ -176,14 +176,14 @@
 
     <!-- Navigation Tabs -->
     <div class="card" style="padding-bottom: 0;">
-      <div style="display: flex; gap: 10px; border-bottom: 1px solid #ddd;">
-        <a href="?tab=user&user_id=<?= $selectedUserId ?>" class="filter-nav" style="margin-bottom: -1px; text-decoration: none; padding: 8px 16px; border-radius: 4px 4px 0 0; font-weight: bold; <?= $activeTab === 'user' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;' ?>">
+      <div class="admin-mode-tabs" style="display: flex; gap: 10px; border-bottom: 1px solid #ddd;">
+        <a href="?tab=user&user_id=<?= $selectedUserId ?>" class="admin-mode-tab filter-nav <?= $activeTab === 'user' ? 'active' : '' ?>" style="margin-bottom: -1px; text-decoration: none; padding: 8px 16px; border-radius: 4px 4px 0 0; font-weight: bold; <?= $activeTab === 'user' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;' ?>">
           👤 Individual User Privileges
         </a>
-        <a href="?tab=role&role_name=<?= urlencode($selectedRoleName) ?>" class="filter-nav" style="margin-bottom: -1px; text-decoration: none; padding: 8px 16px; border-radius: 4px 4px 0 0; font-weight: bold; <?= $activeTab === 'role' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;' ?>">
+        <a href="?tab=role&role_name=<?= urlencode($selectedRoleName) ?>" class="admin-mode-tab filter-nav <?= $activeTab === 'role' ? 'active' : '' ?>" style="margin-bottom: -1px; text-decoration: none; padding: 8px 16px; border-radius: 4px 4px 0 0; font-weight: bold; <?= $activeTab === 'role' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;' ?>">
           🛡️ Role Privileges & Public Settings
         </a>
-        <a href="?tab=create_role" class="filter-nav" style="margin-bottom: -1px; text-decoration: none; padding: 8px 16px; border-radius: 4px 4px 0 0; font-weight: bold; <?= $activeTab === 'create_role' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;' ?>">
+        <a href="?tab=create_role" class="admin-mode-tab filter-nav <?= $activeTab === 'create_role' ? 'active' : '' ?>" style="margin-bottom: -1px; text-decoration: none; padding: 8px 16px; border-radius: 4px 4px 0 0; font-weight: bold; <?= $activeTab === 'create_role' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;' ?>">
           ➕ Create Custom Role
         </a>
       </div>
@@ -255,68 +255,70 @@
                   <div style="background: #eaedf1; padding: 10px 15px; font-weight: bold; font-size: 1em; border-bottom: 1px solid #ddd;">
                     📁 <?= htmlspecialchars($categoryName, ENT_QUOTES, 'UTF-8') ?>
                   </div>
-                  <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                      <tr style="background: #fdfdfd; border-bottom: 1px solid #eee; font-size: 0.85em; color: #555; text-align: left;">
-                        <th style="padding: 8px 12px; width: 35%;">Privilege</th>
-                        <th style="padding: 8px 12px; width: 20%;">Role Default</th>
-                        <th style="padding: 8px 12px; width: 30%;">User Override</th>
-                        <th style="padding: 8px 12px; width: 15%;">Effective Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php foreach ($privList as $p): ?>
-                        <?php
-                          $code = $p['privilege_code'];
-                          $isAdminOnly = (int)$p['is_admin_only'] === 1;
-                          $roleHasIt = in_array($code, $userRolePrivileges) || in_array($code, $publicPrivileges);
-                          $overrideVal = isset($userOverrides[$code]) ? (int)$userOverrides[$code] : 'inherit';
-
-                          $effectiveAllowed = false;
-                          if ($isAdminOnly) {
-                            $effectiveAllowed = ($selectedUserData['role'] === 'admin');
-                          } elseif ($overrideVal === 1) {
-                            $effectiveAllowed = true;
-                          } elseif ($overrideVal === 0) {
-                            $effectiveAllowed = false;
-                          } else {
-                            $effectiveAllowed = $roleHasIt;
-                          }
-                        ?>
-                        <tr style="border-bottom: 1px solid #f0f0f0;">
-                          <td style="padding: 10px 12px; vertical-align: top;">
-                            <div style="font-weight: bold; color: #333;"><?= htmlspecialchars($p['privilege_name'], ENT_QUOTES, 'UTF-8') ?></div>
-                            <div style="font-size: 0.8em; color: #777;"><?= htmlspecialchars($p['description'], ENT_QUOTES, 'UTF-8') ?></div>
-                          </td>
-                          <td style="padding: 10px 12px; vertical-align: middle;">
-                            <?php if ($roleHasIt): ?>
-                              <span style="background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">✓ Allowed by Role</span>
-                            <?php else: ?>
-                              <span style="background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">✗ Denied by Role</span>
-                            <?php endif; ?>
-                          </td>
-                          <td style="padding: 10px 12px; vertical-align: middle;">
-                            <?php if ($isAdminOnly): ?>
-                              <span style="color: #999; font-size: 0.85em; font-style: italic;">🔒 Admin Backstop Protected</span>
-                            <?php else: ?>
-                              <select name="privilege_override[<?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?>]" style="padding: 4px 8px; font-size: 0.9em;">
-                                <option value="inherit" <?= $overrideVal === 'inherit' ? 'selected' : '' ?>>Inherit (Default)</option>
-                                <option value="grant" <?= $overrideVal === 1 ? 'selected' : '' ?>>Explicitly Grant (Allow)</option>
-                                <option value="deny" <?= $overrideVal === 0 ? 'selected' : '' ?>>Explicitly Deny (Revoke)</option>
-                              </select>
-                            <?php endif; ?>
-                          </td>
-                          <td style="padding: 10px 12px; vertical-align: middle;">
-                            <?php if ($effectiveAllowed): ?>
-                              <strong style="color: #28a745;">✅ ALLOWED</strong>
-                            <?php else: ?>
-                              <strong style="color: #dc3545;">⛔ DENIED</strong>
-                            <?php endif; ?>
-                          </td>
+                  <div class="admin-table-container">
+                    <table style="width: 100%; border-collapse: collapse;">
+                      <thead>
+                        <tr style="background: #fdfdfd; border-bottom: 1px solid #eee; font-size: 0.85em; color: #555; text-align: left;">
+                          <th style="padding: 8px 12px; width: 35%;">Privilege</th>
+                          <th style="padding: 8px 12px; width: 20%;">Role Default</th>
+                          <th style="padding: 8px 12px; width: 30%;">User Override</th>
+                          <th style="padding: 8px 12px; width: 15%;">Effective Status</th>
                         </tr>
-                      <?php endforeach; ?>
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        <?php foreach ($privList as $p): ?>
+                          <?php
+                            $code = $p['privilege_code'];
+                            $isAdminOnly = (int)$p['is_admin_only'] === 1;
+                            $roleHasIt = in_array($code, $userRolePrivileges) || in_array($code, $publicPrivileges);
+                            $overrideVal = isset($userOverrides[$code]) ? (int)$userOverrides[$code] : 'inherit';
+
+                            $effectiveAllowed = false;
+                            if ($isAdminOnly) {
+                              $effectiveAllowed = ($selectedUserData['role'] === 'admin');
+                            } elseif ($overrideVal === 1) {
+                              $effectiveAllowed = true;
+                            } elseif ($overrideVal === 0) {
+                              $effectiveAllowed = false;
+                            } else {
+                              $effectiveAllowed = $roleHasIt;
+                            }
+                          ?>
+                          <tr style="border-bottom: 1px solid #f0f0f0;">
+                            <td data-label="Privilege" class="card-primary-cell" style="padding: 10px 12px; vertical-align: top;">
+                              <div style="font-weight: bold; color: #333;"><?= htmlspecialchars($p['privilege_name'], ENT_QUOTES, 'UTF-8') ?></div>
+                              <div style="font-size: 0.8em; color: #777;"><?= htmlspecialchars($p['description'], ENT_QUOTES, 'UTF-8') ?></div>
+                            </td>
+                            <td data-label="Role Default" style="padding: 10px 12px; vertical-align: middle;">
+                              <?php if ($roleHasIt): ?>
+                                <span style="background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">✓ Allowed by Role</span>
+                              <?php else: ?>
+                                <span style="background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">✗ Denied by Role</span>
+                              <?php endif; ?>
+                            </td>
+                            <td data-label="User Override" style="padding: 10px 12px; vertical-align: middle;">
+                              <?php if ($isAdminOnly): ?>
+                                <span style="color: #999; font-size: 0.85em; font-style: italic;">🔒 Admin Backstop Protected</span>
+                              <?php else: ?>
+                                <select name="privilege_override[<?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?>]" style="padding: 6px 8px; font-size: 0.9em; min-height: 40px; width: 100%; max-width: 220px;">
+                                  <option value="inherit" <?= $overrideVal === 'inherit' ? 'selected' : '' ?>>Inherit (Default)</option>
+                                  <option value="grant" <?= $overrideVal === 1 ? 'selected' : '' ?>>Explicitly Grant (Allow)</option>
+                                  <option value="deny" <?= $overrideVal === 0 ? 'selected' : '' ?>>Explicitly Deny (Revoke)</option>
+                                </select>
+                              <?php endif; ?>
+                            </td>
+                            <td data-label="Effective Status" style="padding: 10px 12px; vertical-align: middle;">
+                              <?php if ($effectiveAllowed): ?>
+                                <strong style="color: #28a745;">✅ ALLOWED</strong>
+                              <?php else: ?>
+                                <strong style="color: #dc3545;">⛔ DENIED</strong>
+                              <?php endif; ?>
+                            </td>
+                          </tr>
+                        <?php endforeach; ?>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               <?php endforeach; ?>
 
@@ -383,40 +385,42 @@
               <div style="background: #eaedf1; padding: 10px 15px; font-weight: bold; font-size: 1em; border-bottom: 1px solid #ddd;">
                 📁 <?= htmlspecialchars($categoryName, ENT_QUOTES, 'UTF-8') ?>
               </div>
-              <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="background: #fdfdfd; border-bottom: 1px solid #eee; font-size: 0.85em; color: #555; text-align: left;">
-                    <th style="padding: 8px 12px; width: 10%;">Granted</th>
-                    <th style="padding: 8px 12px; width: 35%;">Privilege</th>
-                    <th style="padding: 8px 12px; width: 55%;">Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <?php foreach ($privList as $p): ?>
-                    <?php
-                      $code = $p['privilege_code'];
-                      $isAdminOnly = (int)$p['is_admin_only'] === 1;
-                      $isGranted = in_array($code, $selectedRolePrivileges) || $selectedRoleName === 'admin';
-                      $isDisabled = ($selectedRoleName === 'admin') || ($isAdminOnly && $selectedRoleName !== 'admin');
-                    ?>
-                    <tr style="border-bottom: 1px solid #f0f0f0;">
-                      <td style="padding: 10px 12px; text-align: center; vertical-align: middle;">
-                        <input type="checkbox" name="role_privileges[]" value="<?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?>" <?= $isGranted ? 'checked' : '' ?> <?= $isDisabled ? 'disabled' : '' ?> style="transform: scale(1.2);">
-                      </td>
-                      <td style="padding: 10px 12px; vertical-align: top;">
-                        <div style="font-weight: bold; color: #333;"><?= htmlspecialchars($p['privilege_name'], ENT_QUOTES, 'UTF-8') ?></div>
-                        <div style="font-size: 0.8em; color: #888;"><code><?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?></code></div>
-                      </td>
-                      <td style="padding: 10px 12px; vertical-align: middle; font-size: 0.9em; color: #555;">
-                        <?= htmlspecialchars($p['description'], ENT_QUOTES, 'UTF-8') ?>
-                        <?php if ($isAdminOnly): ?>
-                          <span style="display: block; color: #d9534f; font-size: 0.8em; margin-top: 2px;">🔒 Administrator Only (Backstop Protected)</span>
-                        <?php endif; ?>
-                      </td>
+              <div class="admin-table-container">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: #fdfdfd; border-bottom: 1px solid #eee; font-size: 0.85em; color: #555; text-align: left;">
+                      <th style="padding: 8px 12px; width: 10%;">Granted</th>
+                      <th style="padding: 8px 12px; width: 35%;">Privilege</th>
+                      <th style="padding: 8px 12px; width: 55%;">Description</th>
                     </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($privList as $p): ?>
+                      <?php
+                        $code = $p['privilege_code'];
+                        $isAdminOnly = (int)$p['is_admin_only'] === 1;
+                        $isGranted = in_array($code, $selectedRolePrivileges) || $selectedRoleName === 'admin';
+                        $isDisabled = ($selectedRoleName === 'admin') || ($isAdminOnly && $selectedRoleName !== 'admin');
+                      ?>
+                      <tr style="border-bottom: 1px solid #f0f0f0;">
+                        <td data-label="Granted" style="padding: 10px 12px; text-align: center; vertical-align: middle;">
+                          <input type="checkbox" name="role_privileges[]" value="<?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?>" <?= $isGranted ? 'checked' : '' ?> <?= $isDisabled ? 'disabled' : '' ?> style="transform: scale(1.3); min-width: 24px; min-height: 24px;">
+                        </td>
+                        <td data-label="Privilege" class="card-primary-cell" style="padding: 10px 12px; vertical-align: top;">
+                          <div style="font-weight: bold; color: #333;"><?= htmlspecialchars($p['privilege_name'], ENT_QUOTES, 'UTF-8') ?></div>
+                          <div style="font-size: 0.8em; color: #888;"><code><?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?></code></div>
+                        </td>
+                        <td data-label="Description" style="padding: 10px 12px; vertical-align: middle; font-size: 0.9em; color: #555;">
+                          <?= htmlspecialchars($p['description'], ENT_QUOTES, 'UTF-8') ?>
+                          <?php if ($isAdminOnly): ?>
+                            <span style="display: block; color: #d9534f; font-size: 0.8em; margin-top: 2px;">🔒 Administrator Only (Backstop Protected)</span>
+                          <?php endif; ?>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
             </div>
           <?php endforeach; ?>
 

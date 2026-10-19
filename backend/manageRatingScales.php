@@ -177,24 +177,35 @@
       <?php endif; ?>
 
       <!-- Navigation Tabs -->
-      <div style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
-        <a href="?tab=scale_20" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'scale_20' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
+      <div class="admin-mode-tabs" style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+        <a href="?tab=scale_20" class="admin-mode-tab <?= $activeTab === 'scale_20' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'scale_20' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
           20-Point Scale (0–20 pts)
         </a>
-        <a href="?tab=scale_100" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'scale_100' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
+        <a href="?tab=scale_100" class="admin-mode-tab <?= $activeTab === 'scale_100' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'scale_100' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
           100-Point Scale (50–100 pts)
         </a>
-        <a href="?tab=wsetpts" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'wsetpts' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
+        <a href="?tab=wsetpts" class="admin-mode-tab <?= $activeTab === 'wsetpts' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'wsetpts' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
           WSET Qualitative Scale (0.0–4.0 pts)
         </a>
       </div>
 
       <!-- TAB 1: 20-POINT SCALE -->
       <?php if ($activeTab === 'scale_20'): ?>
+        <?php $is_edit_20 = !empty($editing20); ?>
+        <!-- Mobile Switcher for Dual-Pane Layout -->
+        <div class="admin-mobile-pane-switch">
+          <button type="button" class="admin-pane-btn <?= !$is_edit_20 ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+            📋 20-Point Scale
+          </button>
+          <button type="button" class="admin-pane-btn <?= $is_edit_20 ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+            <?= $is_edit_20 ? '✏️ Edit Descriptor' : '✏️ Edit Tier' ?>
+          </button>
+        </div>
+
         <div class="admin-storage-manage-grid">
-          <div>
+          <div id="adminDualListPane" class="admin-dual-pane <?= $is_edit_20 ? 'mobile-hidden' : '' ?>">
             <h3 style="margin-top: 0; color: #333;">20-Point Scale Qualitative Tiers</h3>
-            <div style="overflow-x: auto;">
+            <div class="admin-table-container">
               <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                 <thead>
                   <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
@@ -212,21 +223,21 @@
                       $isEditingThis = ($editing20 && (int)$editing20['pts'] === $p);
                     ?>
                     <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
-                      <td style="padding: 8px 10px; font-weight: bold; font-size: 1.05rem; color: #222;">
+                      <td data-label="Points" class="card-primary-cell" style="padding: 8px 10px; font-weight: bold; font-size: 1.05rem; color: #222;">
                         <?php echo $p; ?>
                       </td>
-                      <td style="padding: 8px 10px; white-space: nowrap;">
+                      <td data-label="Classification" style="padding: 8px 10px; white-space: nowrap;">
                         <span style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; background: #e0e0e0; color: #333;">
                           <?php echo htmlspecialchars($row['pts_class'], ENT_QUOTES, 'UTF-8'); ?>
                         </span>
                       </td>
-                      <td style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
+                      <td data-label="Qualitative Descriptor" style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
                         <?php echo htmlspecialchars($row['pts_desc'], ENT_QUOTES, 'UTF-8'); ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Notes" style="padding: 8px 10px; text-align: right;">
                         <?php echo (int)$row['total_notes']; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Action" style="padding: 8px 10px; text-align: right;">
                         <a href="manageRatingScales.php?tab=scale_20&edit_pts20=<?php echo $p; ?>" style="color: #1a73e8; text-decoration: none; font-size: 0.85rem;">
                           Edit
                         </a>
@@ -239,7 +250,7 @@
           </div>
 
           <!-- Edit Descriptor Form -->
-          <div>
+          <div id="adminDualFormPane" class="admin-dual-pane <?= !$is_edit_20 ? 'mobile-hidden' : '' ?>">
             <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
               <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
                 <?php echo $editing20 ? 'Edit Score Descriptor (' . (int)$editing20['pts'] . ' pts)' : 'Select Score Tier to Edit'; ?>
@@ -288,50 +299,63 @@
 
       <!-- TAB 2: 100-POINT SCALE -->
       <?php elseif ($activeTab === 'scale_100'): ?>
+        <?php $is_edit_100 = !empty($editing100); ?>
+        <!-- Mobile Switcher for Dual-Pane Layout -->
+        <div class="admin-mobile-pane-switch">
+          <button type="button" class="admin-pane-btn <?= !$is_edit_100 ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+            📋 100-Point Scale
+          </button>
+          <button type="button" class="admin-pane-btn <?= $is_edit_100 ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+            <?= $is_edit_100 ? '✏️ Edit Band' : '✏️ Edit Band' ?>
+          </button>
+        </div>
+
         <div class="admin-storage-manage-grid">
-          <div>
+          <div id="adminDualListPane" class="admin-dual-pane <?= $is_edit_100 ? 'mobile-hidden' : '' ?>">
             <h3 style="margin-top: 0; color: #333;">100-Point Scale Rating Bands</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-              <thead>
-                <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
-                  <th style="padding: 8px 10px; width: 100px;">Point Range</th>
-                  <th style="padding: 8px 10px;">Classification</th>
-                  <th style="padding: 8px 10px;">Qualitative Descriptor</th>
-                  <th style="padding: 8px 10px; text-align: right;">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($scale100Rows as $row): ?>
-                  <?php 
-                    $minP = (int)$row['min_pts'];
-                    $maxP = (int)$row['max_pts'];
-                    $isEditingThis = ($editing100 && (int)$editing100['min_pts'] === $minP && (int)$editing100['max_pts'] === $maxP);
-                  ?>
-                  <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
-                    <td style="padding: 8px 10px; font-weight: bold; color: #222; font-size: 0.95rem;">
-                      <?php echo $minP; ?>–<?php echo $maxP; ?> pts
-                    </td>
-                    <td style="padding: 8px 10px; white-space: nowrap;">
-                      <span style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; background: #e0e0e0; color: #333;">
-                        <?php echo htmlspecialchars($row['pts_class'], ENT_QUOTES, 'UTF-8'); ?>
-                      </span>
-                    </td>
-                    <td style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
-                      <?php echo htmlspecialchars($row['pts_desc'], ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                    <td style="padding: 8px 10px; text-align: right;">
-                      <a href="manageRatingScales.php?tab=scale_100&edit_min100=<?php echo $minP; ?>&edit_max100=<?php echo $maxP; ?>" style="color: #1a73e8; text-decoration: none; font-size: 0.85rem;">
-                        Edit
-                      </a>
-                    </td>
+            <div class="admin-table-container">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                  <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 8px 10px; width: 100px;">Point Range</th>
+                    <th style="padding: 8px 10px;">Classification</th>
+                    <th style="padding: 8px 10px;">Qualitative Descriptor</th>
+                    <th style="padding: 8px 10px; text-align: right;">Action</th>
                   </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <?php foreach ($scale100Rows as $row): ?>
+                    <?php 
+                      $minP = (int)$row['min_pts'];
+                      $maxP = (int)$row['max_pts'];
+                      $isEditingThis = ($editing100 && (int)$editing100['min_pts'] === $minP && (int)$editing100['max_pts'] === $maxP);
+                    ?>
+                    <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
+                      <td data-label="Point Range" class="card-primary-cell" style="padding: 8px 10px; font-weight: bold; color: #222; font-size: 0.95rem;">
+                        <?php echo $minP; ?>–<?php echo $maxP; ?> pts
+                      </td>
+                      <td data-label="Classification" style="padding: 8px 10px; white-space: nowrap;">
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; background: #e0e0e0; color: #333;">
+                          <?php echo htmlspecialchars($row['pts_class'], ENT_QUOTES, 'UTF-8'); ?>
+                        </span>
+                      </td>
+                      <td data-label="Qualitative Descriptor" style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
+                        <?php echo htmlspecialchars($row['pts_desc'], ENT_QUOTES, 'UTF-8'); ?>
+                      </td>
+                      <td data-label="Action" style="padding: 8px 10px; text-align: right;">
+                        <a href="manageRatingScales.php?tab=scale_100&edit_min100=<?php echo $minP; ?>&edit_max100=<?php echo $maxP; ?>" style="color: #1a73e8; text-decoration: none; font-size: 0.85rem;">
+                          Edit
+                        </a>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- Edit Range Form -->
-          <div>
+          <div id="adminDualFormPane" class="admin-dual-pane <?= !$is_edit_100 ? 'mobile-hidden' : '' ?>">
             <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
               <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
                 <?php echo $editing100 ? 'Edit Band (' . (int)$editing100['min_pts'] . '–' . (int)$editing100['max_pts'] . ' pts)' : 'Select Rating Band to Edit'; ?>
@@ -372,47 +396,60 @@
 
       <!-- TAB 3: WSET QUALITATIVE SCALE -->
       <?php else: ?>
+        <?php $is_edit_wset = !empty($editingWset); ?>
+        <!-- Mobile Switcher for Dual-Pane Layout -->
+        <div class="admin-mobile-pane-switch">
+          <button type="button" class="admin-pane-btn <?= !$is_edit_wset ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+            📋 WSET Scale
+          </button>
+          <button type="button" class="admin-pane-btn <?= $is_edit_wset ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+            <?= $is_edit_wset ? '✏️ Edit Definition' : '✏️ Edit Point' ?>
+          </button>
+        </div>
+
         <div class="admin-storage-manage-grid">
-          <div>
+          <div id="adminDualListPane" class="admin-dual-pane <?= $is_edit_wset ? 'mobile-hidden' : '' ?>">
             <h3 style="margin-top: 0; color: #333;">WSET Qualitative Points &amp; BILC Criteria</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-              <thead>
-                <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
-                  <th style="padding: 8px 10px; width: 70px;">WSET Pts</th>
-                  <th style="padding: 8px 10px;">Assessment Definition</th>
-                  <th style="padding: 8px 10px; text-align: right;">Notes</th>
-                  <th style="padding: 8px 10px; text-align: right;">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($wsetRows as $row): ?>
-                  <?php 
-                    $wPts = (float)$row['pts'];
-                    $isEditingThis = ($editingWset && abs((float)$editingWset['pts'] - $wPts) < 0.01);
-                  ?>
-                  <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
-                    <td style="padding: 8px 10px; font-weight: bold; color: #222; font-size: 1rem;">
-                      <?php echo number_format($wPts, 1); ?>
-                    </td>
-                    <td style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
-                      <?php echo htmlspecialchars($row['wset_desc'], ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                    <td style="padding: 8px 10px; text-align: right;">
-                      <?php echo (int)$row['total_notes']; ?>
-                    </td>
-                    <td style="padding: 8px 10px; text-align: right;">
-                      <a href="manageRatingScales.php?tab=wsetpts&edit_wset=<?php echo number_format($wPts, 1); ?>" style="color: #1a73e8; text-decoration: none; font-size: 0.85rem;">
-                        Edit
-                      </a>
-                    </td>
+            <div class="admin-table-container">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                  <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 8px 10px; width: 70px;">WSET Pts</th>
+                    <th style="padding: 8px 10px;">Assessment Definition</th>
+                    <th style="padding: 8px 10px; text-align: right;">Notes</th>
+                    <th style="padding: 8px 10px; text-align: right;">Action</th>
                   </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <?php foreach ($wsetRows as $row): ?>
+                    <?php 
+                      $wPts = (float)$row['pts'];
+                      $isEditingThis = ($editingWset && abs((float)$editingWset['pts'] - $wPts) < 0.01);
+                    ?>
+                    <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
+                      <td data-label="WSET Pts" class="card-primary-cell" style="padding: 8px 10px; font-weight: bold; color: #222; font-size: 1rem;">
+                        <?php echo number_format($wPts, 1); ?>
+                      </td>
+                      <td data-label="Assessment Definition" style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
+                        <?php echo htmlspecialchars($row['wset_desc'], ENT_QUOTES, 'UTF-8'); ?>
+                      </td>
+                      <td data-label="Notes" style="padding: 8px 10px; text-align: right;">
+                        <?php echo (int)$row['total_notes']; ?>
+                      </td>
+                      <td data-label="Action" style="padding: 8px 10px; text-align: right;">
+                        <a href="manageRatingScales.php?tab=wsetpts&edit_wset=<?php echo number_format($wPts, 1); ?>" style="color: #1a73e8; text-decoration: none; font-size: 0.85rem;">
+                          Edit
+                        </a>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- Edit WSET Form -->
-          <div>
+          <div id="adminDualFormPane" class="admin-dual-pane <?= !$is_edit_wset ? 'mobile-hidden' : '' ?>">
             <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
               <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
                 <?php echo $editingWset ? 'Edit WSET Definition (' . number_format((float)$editingWset['pts'], 1) . ' pts)' : 'Select WSET Point to Edit'; ?>

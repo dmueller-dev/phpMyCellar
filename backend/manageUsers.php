@@ -213,6 +213,9 @@
             &#10010; Add New User
           </a>
         <?php endif; ?>
+        <a href="#usersDirectorySection" class="admin-tab-btn" style="color: #555;">
+          📋 User Directory (<?php echo count($users); ?>)
+        </a>
       </div>
 
       <?php if ($mode === 'add' && $can_add): ?>
@@ -428,7 +431,7 @@
       <?php endif; ?>
 
       <!-- Searchable User Ledger Directory -->
-      <div style="margin-top: 30px;">
+      <div id="usersDirectorySection" style="margin-top: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
           <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
             Registered User Directory (<?php echo count($users); ?> accounts)
@@ -451,18 +454,18 @@
             <tbody>
               <?php foreach ($users as $u): ?>
                 <tr style="<?php echo ($selected_user_id === (int)$u['user_id']) ? 'background-color: #fff9e6;' : ''; ?>">
-                  <td><strong>#<?php echo (int)$u['user_id']; ?></strong></td>
-                  <td>
+                  <td data-label="User ID"><strong>#<?php echo (int)$u['user_id']; ?></strong></td>
+                  <td class="card-primary-cell">
                     <div><strong><?php echo htmlspecialchars($u['displayname'], ENT_QUOTES, 'UTF-8'); ?></strong></div>
                     <div style="font-size: 0.78rem; color: #777;"><code><?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?></code></div>
                   </td>
-                  <td><?php echo htmlspecialchars($u['email'], ENT_QUOTES, 'UTF-8'); ?></td>
-                  <td>
+                  <td data-label="Email"><?php echo htmlspecialchars($u['email'], ENT_QUOTES, 'UTF-8'); ?></td>
+                  <td data-label="Role">
                     <span style="display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: bold; text-transform: uppercase; <?php echo ($u['role'] === 'admin') ? 'background: #fce4ec; color: #c2185b;' : 'background: #e3f2fd; color: #1565c0;'; ?>">
                       <?php echo htmlspecialchars($u['role'], ENT_QUOTES, 'UTF-8'); ?>
                     </span>
                   </td>
-                  <td><strong><?php echo htmlspecialchars($u['initials'] ?? '', ENT_QUOTES, 'UTF-8'); ?></strong></td>
+                  <td data-label="Initials"><strong><?php echo htmlspecialchars($u['initials'] ?? '', ENT_QUOTES, 'UTF-8'); ?></strong></td>
                   <td style="text-align: right; white-space: nowrap;">
                     <?php if ($can_edit): ?>
                       <a href="manageUsers.php?mode=edit&user_id=<?php echo (int)$u['user_id']; ?>" class="btn-action btn-secondary" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none;">

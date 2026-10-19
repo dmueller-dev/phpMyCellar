@@ -216,11 +216,21 @@
         </div>
       </div>
 
+      <!-- Mobile Segmented View Switcher -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" id="tabBtnList" class="admin-mobile-pane-btn <?php echo !$is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('list')">
+          📋 Vineyards (<?php echo count($vineyard_records); ?>)
+        </button>
+        <button type="button" id="tabBtnForm" class="admin-mobile-pane-btn <?php echo $is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('form')">
+          <?php echo $is_edit ? '✏️ Edit Vineyard' : '➕ Add Vineyard'; ?>
+        </button>
+      </div>
+
       <!-- Responsive Dual Grid: Vineyard Directory & Form -->
       <div class="admin-dual-manage-grid unequal">
         
         <!-- Left: Searchable Vineyards Directory -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?php echo $is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="margin: 0; color: #333; font-size: 1.1rem;">
               Existing Vineyards (<?php echo count($vineyard_records); ?>)
@@ -263,10 +273,10 @@
                         <strong><?php echo htmlspecialchars($v['vineyard'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
                         <small style="color: #666;"><?php echo htmlspecialchars($v['region'] . ', ' . $v['country'], ENT_QUOTES, 'UTF-8'); ?></small>
                       </td>
-                      <td style="color: #555; font-size: 0.88rem;">
+                      <td data-label="Appellation" style="color: #555; font-size: 0.88rem;">
                         <?php echo !empty($v['appellation']) ? htmlspecialchars($v['appellation'], ENT_QUOTES, 'UTF-8') : '<em style="color:#999;">None</em>'; ?>
                       </td>
-                      <td style="text-align: center; color: #666;">
+                      <td data-label="Wines" style="text-align: center; color: #666;">
                         <?php echo (int)$v['master_count']; ?>
                       </td>
                       <td style="text-align: right; white-space: nowrap;">
@@ -283,7 +293,7 @@
         </div>
 
         <!-- Right: Add / Edit Form Card -->
-        <div class="admin-system-card">
+        <div id="adminDualFormPane" class="admin-system-card admin-dual-pane <?php echo !$is_edit ? 'mobile-hidden' : ''; ?>">
           <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick);">
             <?php echo $is_edit ? '✏️ Edit Vineyard: ' . htmlspecialchars($vineyard, ENT_QUOTES, 'UTF-8') : '➕ Add New Vineyard'; ?>
           </h3>

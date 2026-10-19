@@ -306,6 +306,9 @@
             &#9998; Edit Existing Bottle
           </a>
         <?php endif; ?>
+        <a href="#bottlesLedgerSection" class="admin-tab-btn" style="color: #555;">
+          📋 Inventory Ledger (<?php echo count($bottles); ?>)
+        </a>
       </div>
 
       <!-- ADD MODE -->
@@ -706,7 +709,7 @@
       <?php endif; ?>
 
       <!-- Quick Inventory Directory / Lookup -->
-      <div style="margin-top: 30px;">
+      <div id="bottlesLedgerSection" style="margin-top: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
           <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
             Quick Cellar Inventory Directory (<?php echo count($bottles); ?> tracked)
@@ -733,16 +736,16 @@
               <?php else: ?>
                 <?php foreach (array_slice($bottles, 0, 100) as $b): ?>
                   <tr style="<?php echo ($requested_bottle_id === (int)$b['bottle_id']) ? 'background-color: #fff9e6;' : ''; ?>">
-                    <td><strong>#<?php echo (int)$b['bottle_id']; ?></strong></td>
-                    <td>
+                    <td data-label="Bottle ID"><strong>#<?php echo (int)$b['bottle_id']; ?></strong></td>
+                    <td class="card-primary-cell">
                       <div><strong><?php echo htmlspecialchars(getWineName($b['nameconvention'], $b['vintage'], $b['name'], $b['producer'], $b['grape'], $b['vineyard']), ENT_QUOTES, 'UTF-8'); ?></strong></div>
                       <div style="font-size: 0.78rem; color: #777;"><?php echo htmlspecialchars($b['producer'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                     </td>
-                    <td>
+                    <td data-label="Storage Bin">
                       <div style="font-size: 0.88rem;"><?php echo htmlspecialchars($b['cellar_name'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8'); ?></div>
                       <div style="font-size: 0.78rem; color: #888;"><?php echo htmlspecialchars($b['bin_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                     </td>
-                    <td><?php echo htmlspecialchars($b['vintage'] ?? 'NV', ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td data-label="Vintage"><?php echo htmlspecialchars($b['vintage'] ?? 'NV', ENT_QUOTES, 'UTF-8'); ?></td>
                     <td style="text-align: right; white-space: nowrap;">
                       <?php if ($can_edit): ?>
                         <a href="manageBottles.php?mode=edit&bottle_id=<?php echo (int)$b['bottle_id']; ?>" class="btn-action btn-secondary" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none;">

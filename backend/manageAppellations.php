@@ -211,11 +211,21 @@
         </div>
       </div>
 
+      <!-- Mobile Segmented View Switcher -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" id="tabBtnList" class="admin-mobile-pane-btn <?php echo !$is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('list')">
+          📋 Appellations (<?php echo count($appellation_records); ?>)
+        </button>
+        <button type="button" id="tabBtnForm" class="admin-mobile-pane-btn <?php echo $is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('form')">
+          <?php echo $is_edit ? '✏️ Edit Appellation' : '➕ Add Appellation'; ?>
+        </button>
+      </div>
+
       <!-- Responsive Dual Grid: Appellation Directory & Form -->
       <div class="admin-dual-manage-grid unequal">
         
         <!-- Left: Searchable Appellations Directory -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?php echo $is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="margin: 0; color: #333; font-size: 1.1rem;">
               Existing Appellations (<?php echo count($appellation_records); ?>)
@@ -258,12 +268,12 @@
                         <strong><?php echo htmlspecialchars($a['appellation'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
                         <small style="color: #666;"><?php echo htmlspecialchars($a['region'] . ', ' . $a['country'], ENT_QUOTES, 'UTF-8'); ?></small>
                       </td>
-                      <td style="text-align: center;">
+                      <td data-label="Vineyards" style="text-align: center;">
                         <a href="manageVineyards.php?appellation_id=<?php echo (int)$a['appellation_id']; ?>" title="View vineyards" style="text-decoration: none; color: #555;">
                           <?php echo (int)$a['vineyard_count']; ?>
                         </a>
                       </td>
-                      <td style="text-align: center; color: #666;">
+                      <td data-label="Wines" style="text-align: center; color: #666;">
                         <?php echo (int)$a['master_count']; ?>
                       </td>
                       <td style="text-align: right; white-space: nowrap;">
@@ -280,7 +290,7 @@
         </div>
 
         <!-- Right: Add / Edit Form Card -->
-        <div class="admin-system-card">
+        <div id="adminDualFormPane" class="admin-system-card admin-dual-pane <?php echo !$is_edit ? 'mobile-hidden' : ''; ?>">
           <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick);">
             <?php echo $is_edit ? '✏️ Edit Appellation: ' . htmlspecialchars($appellation, ENT_QUOTES, 'UTF-8') : '➕ Add New Appellation'; ?>
           </h3>

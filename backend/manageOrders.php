@@ -485,6 +485,59 @@
         background: var(--secondary-accent, firebrick);
         color: white;
       }
+      @media screen and (max-width: 720px) {
+        .tab-nav {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          padding-bottom: 8px;
+        }
+        .tab-btn {
+          flex-shrink: 0;
+          white-space: nowrap;
+        }
+        .order-card-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 6px;
+        }
+        .order-table tr {
+          display: block;
+          background: #fff;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          margin-bottom: 14px;
+          padding: 12px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .order-table thead {
+          display: none;
+        }
+        .order-table td {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 6px 0;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .order-table td::before {
+          content: attr(data-label);
+          font-weight: 600;
+          color: #555;
+          margin-bottom: 4px;
+          font-size: 0.82rem;
+        }
+        .order-table td:last-child {
+          border-bottom: none;
+          align-items: flex-end;
+          padding-top: 8px;
+        }
+        .btn-remove {
+          min-height: 44px;
+          min-width: 80px;
+          font-size: 0.85rem;
+        }
+      }
       .order-card {
         border: 1px solid #ddd;
         border-radius: 6px;
@@ -717,7 +770,7 @@ HTML;
         }
 
         row.innerHTML = `
-          <td>
+          <td data-label="Wine Cuvée">
             <div style="position: relative; width: 100%;">
               <input type="text" class="search-box" placeholder="🔍 Filter wine..." onkeyup="filterWineDropdown(\${rowIndex})" style="width:100%; padding: 5px; font-size: small; box-sizing: border-box; margin-bottom:4px; border: 1px solid #ccc; border-radius: 4px;">
               <select name="wine_id[]" id="wine_select_\${rowIndex}" required style="width:100%; padding: 6px; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
@@ -725,25 +778,25 @@ HTML;
               </select>
             </div>
           </td>
-          <td>
+          <td data-label="Format">
             <select name="format[]" required style="width:100%; padding: 6px; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
               \${formatsHTML}
             </select>
           </td>
-          <td>
+          <td data-label="Drinking Window">
             <div style="display: flex; align-items: center; gap: 4px;">
               <input type="text" name="drink_from[]" maxlength="4" size="4" value="\${drinkFrom || ''}" placeholder="yyyy" title="Drink from (yyyy)" style="width:52px; padding: 5px; font-size: small; border: 1px solid #ccc; border-radius: 4px; text-align: center;">
               <span style="color: #666; font-size: small;">&ndash;</span>
               <input type="text" name="drink_through[]" maxlength="4" size="4" value="\${drinkThrough || ''}" placeholder="yyyy" title="Drink through (yyyy)" style="width:52px; padding: 5px; font-size: small; border: 1px solid #ccc; border-radius: 4px; text-align: center;">
             </div>
           </td>
-          <td>
+          <td data-label="Qty">
             <input type="number" name="quantity[]" min="1" value="\${quantity}" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:60px; padding: 5px; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
           </td>
-          <td>
+          <td data-label="Total Price">
             <input type="number" name="total_price[]" step="0.01" min="0" value="\${totalPrice}" placeholder="0.00" required onchange="calculatePrices()" onkeyup="calculatePrices()" style="width:90px; padding: 5px; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
           </td>
-          <td style="text-align: center;">
+          <td data-label="Action" style="text-align: center;">
             <button type="button" class="btn-remove" onclick="removeWineRow(\${rowIndex})">Remove</button>
           </td>
         `;
@@ -1005,46 +1058,48 @@ HTML;
                   </div>
                 <?php endif; ?>
 
-                <table class="order-items-detail">
-                  <thead>
-                    <tr>
-                      <th>Wine Details</th>
-                      <th>Format</th>
-                      <th style="text-align: center;">Drinking Window</th>
-                      <th style="text-align: center;">Qty</th>
-                      <th style="text-align: right;">Total Price</th>
-                      <th style="text-align: right; color: #777;">Proportional Price/btl</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php foreach ($items as $item): 
-                      $wine_title = getWineName($item['nameconvention'], $item['vintage'], $item['name'], $item['producer'], $item['grape'], $item['vineyard']);
-                      $shipping_share = ($total_qty > 0) ? ($order['shipping_paid'] / $total_qty) : 0;
-                      $discount_share = ($total_qty > 0) ? (($order['discount'] ?? 0) / $total_qty) : 0;
-                      $unit_cost = ($item['total_price'] / $item['quantity']) + $shipping_share - $discount_share;
-                    ?>
+                <div class="admin-table-container">
+                  <table class="order-items-detail">
+                    <thead>
                       <tr>
-                        <td>
-                          <strong><?php echo htmlspecialchars($wine_title, ENT_QUOTES, 'UTF-8'); ?></strong>
-                          <span style="font-size: 11px; color: #777; display: block;"><?php echo htmlspecialchars($item['country'] . ': ' . $item['region'], ENT_QUOTES, 'UTF-8'); ?></span>
-                        </td>
-                        <td><?php echo htmlspecialchars($item['format'], ENT_QUOTES, 'UTF-8'); ?></td>
-                        <td style="text-align: center;">
-                          <?php 
-                            if (!empty($item['drink_from']) || !empty($item['drink_through'])) {
-                              echo htmlspecialchars(($item['drink_from'] ?? '?') . ' – ' . ($item['drink_through'] ?? '?'));
-                            } else {
-                              echo '<span style="color:#aaa;">—</span>';
-                            }
-                          ?>
-                        </td>
-                        <td style="text-align: center;"><?php echo $item['quantity']; ?></td>
-                        <td style="text-align: right;">&euro;<?php echo number_format($item['total_price'], 2); ?></td>
-                        <td style="text-align: right; color: #777;">&euro;<?php echo number_format($unit_cost, 2); ?></td>
+                        <th>Wine Details</th>
+                        <th>Format</th>
+                        <th style="text-align: center;">Drinking Window</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Total Price</th>
+                        <th style="text-align: right; color: #777;">Proportional Price/btl</th>
                       </tr>
-                    <?php endforeach; ?>
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      <?php foreach ($items as $item): 
+                        $wine_title = getWineName($item['nameconvention'], $item['vintage'], $item['name'], $item['producer'], $item['grape'], $item['vineyard']);
+                        $shipping_share = ($total_qty > 0) ? ($order['shipping_paid'] / $total_qty) : 0;
+                        $discount_share = ($total_qty > 0) ? (($order['discount'] ?? 0) / $total_qty) : 0;
+                        $unit_cost = ($item['total_price'] / $item['quantity']) + $shipping_share - $discount_share;
+                      ?>
+                        <tr>
+                          <td data-label="Wine Details" class="card-primary-cell">
+                            <strong><?php echo htmlspecialchars($wine_title, ENT_QUOTES, 'UTF-8'); ?></strong>
+                            <span style="font-size: 11px; color: #777; display: block;"><?php echo htmlspecialchars($item['country'] . ': ' . $item['region'], ENT_QUOTES, 'UTF-8'); ?></span>
+                          </td>
+                          <td data-label="Format"><?php echo htmlspecialchars($item['format'], ENT_QUOTES, 'UTF-8'); ?></td>
+                          <td data-label="Drinking Window" style="text-align: center;">
+                            <?php 
+                              if (!empty($item['drink_from']) || !empty($item['drink_through'])) {
+                                echo htmlspecialchars(($item['drink_from'] ?? '?') . ' – ' . ($item['drink_through'] ?? '?'));
+                              } else {
+                                echo '<span style="color:#aaa;">—</span>';
+                              }
+                            ?>
+                          </td>
+                          <td data-label="Qty" style="text-align: center;"><?php echo $item['quantity']; ?></td>
+                          <td data-label="Total Price" style="text-align: right;">&euro;<?php echo number_format($item['total_price'], 2); ?></td>
+                          <td data-label="Proportional Price/btl" style="text-align: right; color: #777;">&euro;<?php echo number_format($unit_cost, 2); ?></td>
+                        </tr>
+                      <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
 
                 <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px; align-items: center; flex-wrap: wrap;">
                   <button type="button" class="btn-action" onclick="toggleDeliveryForm(<?php echo $order_id; ?>)" style="font-size: 13px; padding: 6px 14px;">
@@ -1264,26 +1319,28 @@ HTML;
                     <?php endforeach; ?>
                   </div>
                 <?php endif; ?>
-                <table class="order-items-detail">
-                  <thead>
-                    <tr>
-                      <th>Wine Details</th>
-                      <th>Format</th>
-                      <th style="text-align: center;">Qty</th>
-                      <th style="text-align: right;">Total Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php foreach ($items as $item): ?>
+                <div class="admin-table-container">
+                  <table class="order-items-detail">
+                    <thead>
                       <tr>
-                        <td><?php echo htmlspecialchars(getWineName($item['nameconvention'], $item['vintage'], $item['name'], $item['producer'], $item['grape'], $item['vineyard']), ENT_QUOTES, 'UTF-8'); ?></td>
-                        <td><?php echo htmlspecialchars($item['format'], ENT_QUOTES, 'UTF-8'); ?></td>
-                        <td style="text-align: center;"><?php echo $item['quantity']; ?></td>
-                        <td style="text-align: right;">&euro;<?php echo number_format($item['total_price'], 2); ?></td>
+                        <th>Wine Details</th>
+                        <th>Format</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Total Price</th>
                       </tr>
-                    <?php endforeach; ?>
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      <?php foreach ($items as $item): ?>
+                        <tr>
+                          <td data-label="Wine Details" class="card-primary-cell"><?php echo htmlspecialchars(getWineName($item['nameconvention'], $item['vintage'], $item['name'], $item['producer'], $item['grape'], $item['vineyard']), ENT_QUOTES, 'UTF-8'); ?></td>
+                          <td data-label="Format"><?php echo htmlspecialchars($item['format'], ENT_QUOTES, 'UTF-8'); ?></td>
+                          <td data-label="Qty" style="text-align: center;"><?php echo $item['quantity']; ?></td>
+                          <td data-label="Total Price" style="text-align: right;">&euro;<?php echo number_format($item['total_price'], 2); ?></td>
+                        </tr>
+                      <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           <?php endforeach; ?>

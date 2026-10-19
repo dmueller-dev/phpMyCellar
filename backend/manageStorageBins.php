@@ -320,11 +320,22 @@
         </div>
       </div>
 
+      <?php $is_edit = (!empty($editingBin) || !empty($editingCellar)); ?>
+      <!-- Mobile Switcher for Dual-Pane Layout -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" class="admin-pane-btn <?= !$is_edit ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          📋 Storage Bins
+        </button>
+        <button type="button" class="admin-pane-btn <?= $is_edit ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+          <?= $is_edit ? '✏️ Edit Location' : '➕ Add Bin / Cellar' ?>
+        </button>
+      </div>
+
       <!-- Main Layout: Table on Left / Forms on Right -->
       <div class="admin-storage-manage-grid">
         
         <!-- Storage Bins List -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?= $is_edit ? 'mobile-hidden' : '' ?>">
           <h3 style="margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px;">
             Storage Locations &amp; Capacity
           </h3>
@@ -332,7 +343,7 @@
           <?php if (empty($storageBins)): ?>
             <p style="color: #666; font-style: italic;">No storage bins have been configured yet. Use the form to add your first bin.</p>
           <?php else: ?>
-            <div style="overflow-x: auto;">
+            <div class="admin-table-container">
               <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                 <thead>
                   <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
@@ -352,21 +363,21 @@
                       $curCellar = $bin['cellar_name'];
                   ?>
                     <tr style="border-bottom: 1px solid #eee; <?php echo ($editingBin && $editingBin['bin_id'] == $bin['bin_id']) ? 'background-color: #fff9e6;' : ''; ?>">
-                      <td style="padding: 8px 10px; font-weight: <?php echo $isDifferentCellar ? '600' : 'normal'; ?>; color: #333;">
+                      <td data-label="Cellar" style="padding: 8px 10px; font-weight: <?php echo $isDifferentCellar ? '600' : 'normal'; ?>; color: #333;">
                         <?php echo htmlspecialchars($bin['cellar_name'], ENT_QUOTES, 'UTF-8'); ?>
                       </td>
-                      <td style="padding: 8px 10px; font-weight: 600;">
+                      <td data-label="Bin" class="card-primary-cell" style="padding: 8px 10px; font-weight: 600;">
                         <a href="browseBottles.php?sort=location" title="View bottles in this bin" style="text-decoration: none; color: #2c2c2c;">
                           <?php echo htmlspecialchars($bin['bin_name'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Occupancy" style="padding: 8px 10px; text-align: right;">
                         <strong><?php echo (int)$bin['current_bottles']; ?></strong> btl<?php echo ((int)$bin['current_bottles'] === 1 ? '' : 's'); ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right; color: <?php echo ($bin['max_capacity'] !== null) ? '#333' : '#888'; ?>;">
+                      <td data-label="Capacity" style="padding: 8px 10px; text-align: right; color: <?php echo ($bin['max_capacity'] !== null) ? '#333' : '#888'; ?>;">
                         <?php echo ($bin['max_capacity'] !== null) ? (int)$bin['max_capacity'] : '&mdash;'; ?>
                       </td>
-                      <td style="padding: 8px 10px;">
+                      <td data-label="Usage %" style="padding: 8px 10px;">
                         <?php if ($bin['max_capacity'] !== null && $bin['max_capacity'] > 0): ?>
                           <?php
                             $pct = (int)$bin['usage_pct'];
@@ -389,7 +400,7 @@
                           <span style="color: #999; font-size: 0.8rem;">Unlimited</span>
                         <?php endif; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
                         <a href="manageStorageBins.php?edit_bin=<?php echo (int)$bin['bin_id']; ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;" title="Edit bin">
                           Edit
                         </a>
@@ -415,7 +426,7 @@
         </div>
 
         <!-- Sidebar: Add / Edit Bin Form & Add Cellar -->
-        <div>
+        <div id="adminDualFormPane" class="admin-dual-pane <?= !$is_edit ? 'mobile-hidden' : '' ?>">
           <!-- Add / Edit Bin Card -->
           <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
             <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">

@@ -170,11 +170,22 @@
         </div>
       </div>
 
+      <?php $is_edit = !empty($editingVariety); ?>
+      <!-- Mobile Switcher for Dual-Pane Layout -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" class="admin-pane-btn <?= !$is_edit ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          📋 Grape Varieties
+        </button>
+        <button type="button" class="admin-pane-btn <?= $is_edit ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+          <?= $is_edit ? '✏️ Edit Variety' : '➕ Add Variety' ?>
+        </button>
+      </div>
+
       <!-- Main Layout: Table on Left / Form on Right -->
       <div class="admin-storage-manage-grid">
         
         <!-- Varieties List -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?= $is_edit ? 'mobile-hidden' : '' ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="margin: 0; color: #333;">Grape Varieties Directory</h3>
             <input type="text" id="varietyFilterInput" placeholder="Filter varieties..." 
@@ -185,7 +196,7 @@
           <?php if (empty($varieties)): ?>
             <p style="color: #666; font-style: italic;">No grape varieties recorded yet. Add your first variety using the form.</p>
           <?php else: ?>
-            <div style="overflow-x: auto;">
+            <div class="admin-table-container">
               <table id="varietiesTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                 <thead>
                   <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
@@ -203,13 +214,13 @@
                       $isEditingThis = ($editingVariety && $editingVariety['grape'] === $gName);
                     ?>
                     <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
-                      <td style="padding: 8px 10px; font-weight: 600; color: #222; white-space: nowrap;">
+                      <td data-label="Grape Variety" class="card-primary-cell" style="padding: 8px 10px; font-weight: 600; color: #222; white-space: nowrap;">
                         <?php echo htmlspecialchars($gName, ENT_QUOTES, 'UTF-8'); ?>
                       </td>
-                      <td style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
+                      <td data-label="Description &amp; Origin" style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
                         <?php echo !empty($v['grape_desc']) ? htmlspecialchars($v['grape_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">&mdash;</span>'; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Cuv&eacute;es" style="padding: 8px 10px; text-align: right;">
                         <?php if ($mCount > 0): ?>
                           <a href="browseWines.php?q=<?php echo urlencode($gName); ?>" style="text-decoration: none; font-weight: bold; color: #2e7d32;" title="View wines crafted with this grape">
                             <?php echo $mCount; ?>
@@ -218,7 +229,7 @@
                           <span style="color: #999;">0</span>
                         <?php endif; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
                         <a href="manageVarieties.php?edit_grape=<?php echo urlencode($gName); ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;" title="Edit grape details">
                           Edit
                         </a>
@@ -244,7 +255,7 @@
         </div>
 
         <!-- Sidebar: Add / Edit Variety Form -->
-        <div>
+        <div id="adminDualFormPane" class="admin-dual-pane <?= !$is_edit ? 'mobile-hidden' : '' ?>">
           <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
             <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
               <?php echo $editingVariety ? 'Edit Grape Variety' : 'Add Grape Variety'; ?>

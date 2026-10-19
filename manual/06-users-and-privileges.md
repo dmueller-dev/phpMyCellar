@@ -91,3 +91,10 @@ Administrators can manage baseline role permissions, introduce custom roles, and
      - `Deny`: Explicitly deny the privilege regardless of base role.
   2. **Role Privileges (`?tab=role`):** Select any system or custom role to toggle default privilege grants on or off.
   3. **Create Custom Role (`?tab=create_role`):** Establish custom roles (e.g. *Cellar Assistant*, *Sommelier Intern*) tailored to your specific household or group requirements.
+
+---
+
+## 4. Mobile Usability
+
+On mobile viewports (&le; 720px), `manageUsers.php` and `managePrivileges.php` format user tables and privilege category matrices as structured touch cards. Override selectors expand into touch-optimised dropdowns with minimum 44px tap targets, while navigation tabs feature horizontal momentum scrolling.
+

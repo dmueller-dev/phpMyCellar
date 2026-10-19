@@ -211,74 +211,87 @@
       <?php endif; ?>
 
       <!-- Navigation Tabs -->
-      <div style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
-        <a href="?tab=styles" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'styles' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
+      <div class="admin-mode-tabs" style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+        <a href="?tab=styles" class="admin-mode-tab <?= $activeTab === 'styles' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'styles' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
           &#127870; Wine Styles (<?php echo count($styles); ?>)
         </a>
-        <a href="?tab=colours" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'colours' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
+        <a href="?tab=colours" class="admin-mode-tab <?= $activeTab === 'colours' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'colours' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
           &#127912; Wine Colours (<?php echo count($colours); ?>)
         </a>
-        <a href="?tab=conventions" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'conventions' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
+        <a href="?tab=conventions" class="admin-mode-tab <?= $activeTab === 'conventions' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'conventions' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
           &#127991;&#65039; Naming Conventions (<?php echo count($conventions); ?>)
         </a>
       </div>
 
       <!-- TAB 1: WINE STYLES -->
       <?php if ($activeTab === 'styles'): ?>
+        <?php $is_edit_style = !empty($editingStyle); ?>
+        <!-- Mobile Switcher for Dual-Pane Layout -->
+        <div class="admin-mobile-pane-switch">
+          <button type="button" class="admin-pane-btn <?= !$is_edit_style ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+            📋 Wine Styles
+          </button>
+          <button type="button" class="admin-pane-btn <?= $is_edit_style ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+            <?= $is_edit_style ? '✏️ Edit Style' : '➕ Add Style' ?>
+          </button>
+        </div>
+
         <div class="admin-storage-manage-grid">
-          <div>
+          <div id="adminDualListPane" class="admin-dual-pane <?= $is_edit_style ? 'mobile-hidden' : '' ?>">
             <h3 style="margin-top: 0; color: #333;">Registered Wine Styles</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-              <thead>
-                <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
-                  <th style="padding: 8px 10px;">Style Name</th>
-                  <th style="padding: 8px 10px;">Description</th>
-                  <th style="padding: 8px 10px; text-align: right;">Cuv&eacute;es</th>
-                  <th style="padding: 8px 10px; text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($styles as $st): ?>
-                  <?php 
-                    $sName = $st['style']; 
-                    $mCount = (int)$st['total_masters'];
-                    $isEditingThis = ($editingStyle && $editingStyle['style'] === $sName);
-                  ?>
-                  <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
-                    <td style="padding: 8px 10px; font-weight: bold; color: #222; white-space: nowrap;">
-                      <?php echo htmlspecialchars($sName, ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                    <td style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
-                      <?php echo !empty($st['style_desc']) ? htmlspecialchars($st['style_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">&mdash;</span>'; ?>
-                    </td>
-                    <td style="padding: 8px 10px; text-align: right;">
-                      <?php echo $mCount; ?>
-                    </td>
-                    <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
-                      <a href="manageWineAttributes.php?tab=styles&edit_style=<?php echo urlencode($sName); ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;">
-                        Edit
-                      </a>
-                      <?php if ($mCount === 0): ?>
-                        <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete style \'<?php echo htmlspecialchars($sName, ENT_QUOTES, 'UTF-8'); ?>\'?');">
-                          <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                          <input type="hidden" name="action" value="delete_style">
-                          <input type="hidden" name="style" value="<?php echo htmlspecialchars($sName, ENT_QUOTES, 'UTF-8'); ?>">
-                          <button type="submit" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 0; font-size: 0.85rem; text-decoration: underline;">
-                            Delete
-                          </button>
-                        </form>
-                      <?php else: ?>
-                        <span style="color: #ccc; font-size: 0.85rem;" title="Cannot delete: Linked to master cuvées">Delete</span>
-                      <?php endif; ?>
-                    </td>
+            <div class="admin-table-container">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                  <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 8px 10px;">Style Name</th>
+                    <th style="padding: 8px 10px;">Description</th>
+                    <th style="padding: 8px 10px; text-align: right;">Cuv&eacute;es</th>
+                    <th style="padding: 8px 10px; text-align: right;">Actions</th>
                   </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <?php foreach ($styles as $st): ?>
+                    <?php 
+                      $sName = $st['style']; 
+                      $mCount = (int)$st['total_masters'];
+                      $isEditingThis = ($editingStyle && $editingStyle['style'] === $sName);
+                    ?>
+                    <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
+                      <td data-label="Style Name" class="card-primary-cell" style="padding: 8px 10px; font-weight: bold; color: #222; white-space: nowrap;">
+                        <?php echo htmlspecialchars($sName, ENT_QUOTES, 'UTF-8'); ?>
+                      </td>
+                      <td data-label="Description" style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
+                        <?php echo !empty($st['style_desc']) ? htmlspecialchars($st['style_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">&mdash;</span>'; ?>
+                      </td>
+                      <td data-label="Cuv&eacute;es" style="padding: 8px 10px; text-align: right;">
+                        <?php echo $mCount; ?>
+                      </td>
+                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                        <a href="manageWineAttributes.php?tab=styles&edit_style=<?php echo urlencode($sName); ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;">
+                          Edit
+                        </a>
+                        <?php if ($mCount === 0): ?>
+                          <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete style \'<?php echo htmlspecialchars($sName, ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                            <input type="hidden" name="action" value="delete_style">
+                            <input type="hidden" name="style" value="<?php echo htmlspecialchars($sName, ENT_QUOTES, 'UTF-8'); ?>">
+                            <button type="submit" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 0; font-size: 0.85rem; text-decoration: underline;">
+                              Delete
+                            </button>
+                          </form>
+                        <?php else: ?>
+                          <span style="color: #ccc; font-size: 0.85rem;" title="Cannot delete: Linked to master cuvées">Delete</span>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- Add / Edit Style Form -->
-          <div>
+          <div id="adminDualFormPane" class="admin-dual-pane <?= !$is_edit_style ? 'mobile-hidden' : '' ?>">
             <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
               <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
                 <?php echo $editingStyle ? 'Edit Wine Style' : 'Add Wine Style'; ?>
@@ -319,58 +332,70 @@
 
       <!-- TAB 2: WINE COLOURS -->
       <?php elseif ($activeTab === 'colours'): ?>
+        <!-- Mobile Switcher for Dual-Pane Layout -->
+        <div class="admin-mobile-pane-switch">
+          <button type="button" class="admin-pane-btn active" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+            📋 Wine Colours
+          </button>
+          <button type="button" class="admin-pane-btn" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+            ➕ Add Colour
+          </button>
+        </div>
+
         <div class="admin-storage-manage-grid">
-          <div>
+          <div id="adminDualListPane" class="admin-dual-pane">
             <h3 style="margin-top: 0; color: #333;">Wine Colour Categories</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-              <thead>
-                <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
-                  <th style="padding: 8px 10px;">Colour</th>
-                  <th style="padding: 8px 10px; text-align: right;">Cuv&eacute;es</th>
-                  <th style="padding: 8px 10px; text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($colours as $col): ?>
-                  <?php 
-                    $cName = $col['colour']; 
-                    $mCount = (int)$col['total_masters'];
-                    $dotColor = '#777';
-                    if ($cName === 'red') $dotColor = '#800020';
-                    elseif ($cName === 'white') $dotColor = '#d4af37';
-                    elseif ($cName === 'rosé') $dotColor = '#ff69b4';
-                    elseif ($cName === 'orange') $dotColor = '#ff8c00';
-                  ?>
-                  <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 8px 10px; font-weight: bold; color: #222;">
-                      <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: <?php echo $dotColor; ?>; margin-right: 8px; vertical-align: middle;"></span>
-                      <?php echo htmlspecialchars($cName, ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                    <td style="padding: 8px 10px; text-align: right;">
-                      <?php echo $mCount; ?>
-                    </td>
-                    <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
-                      <?php if ($mCount === 0): ?>
-                        <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete colour \'<?php echo htmlspecialchars($cName, ENT_QUOTES, 'UTF-8'); ?>\'?');">
-                          <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                          <input type="hidden" name="action" value="delete_colour">
-                          <input type="hidden" name="colour" value="<?php echo htmlspecialchars($cName, ENT_QUOTES, 'UTF-8'); ?>">
-                          <button type="submit" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 0; font-size: 0.85rem; text-decoration: underline;">
-                            Delete
-                          </button>
-                        </form>
-                      <?php else: ?>
-                        <span style="color: #ccc; font-size: 0.85rem;" title="Cannot delete: Linked to master cuvées">Delete</span>
-                      <?php endif; ?>
-                    </td>
+            <div class="admin-table-container">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                  <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 8px 10px;">Colour</th>
+                    <th style="padding: 8px 10px; text-align: right;">Cuv&eacute;es</th>
+                    <th style="padding: 8px 10px; text-align: right;">Actions</th>
                   </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <?php foreach ($colours as $col): ?>
+                    <?php 
+                      $cName = $col['colour']; 
+                      $mCount = (int)$col['total_masters'];
+                      $dotColor = '#777';
+                      if ($cName === 'red') $dotColor = '#800020';
+                      elseif ($cName === 'white') $dotColor = '#d4af37';
+                      elseif ($cName === 'rosé') $dotColor = '#ff69b4';
+                      elseif ($cName === 'orange') $dotColor = '#ff8c00';
+                    ?>
+                    <tr style="border-bottom: 1px solid #eee;">
+                      <td data-label="Colour" class="card-primary-cell" style="padding: 8px 10px; font-weight: bold; color: #222;">
+                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: <?php echo $dotColor; ?>; margin-right: 8px; vertical-align: middle;"></span>
+                        <?php echo htmlspecialchars($cName, ENT_QUOTES, 'UTF-8'); ?>
+                      </td>
+                      <td data-label="Cuv&eacute;es" style="padding: 8px 10px; text-align: right;">
+                        <?php echo $mCount; ?>
+                      </td>
+                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                        <?php if ($mCount === 0): ?>
+                          <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete colour \'<?php echo htmlspecialchars($cName, ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                            <input type="hidden" name="action" value="delete_colour">
+                            <input type="hidden" name="colour" value="<?php echo htmlspecialchars($cName, ENT_QUOTES, 'UTF-8'); ?>">
+                            <button type="submit" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 0; font-size: 0.85rem; text-decoration: underline;">
+                              Delete
+                            </button>
+                          </form>
+                        <?php else: ?>
+                          <span style="color: #ccc; font-size: 0.85rem;" title="Cannot delete: Linked to master cuvées">Delete</span>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- Add Colour Form -->
-          <div>
+          <div id="adminDualFormPane" class="admin-dual-pane mobile-hidden">
             <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
               <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
                 + Add Wine Colour
@@ -396,60 +421,73 @@
 
       <!-- TAB 3: NAMING CONVENTIONS -->
       <?php else: ?>
+        <?php $is_edit_conv = !empty($editingConv); ?>
+        <!-- Mobile Switcher for Dual-Pane Layout -->
+        <div class="admin-mobile-pane-switch">
+          <button type="button" class="admin-pane-btn <?= !$is_edit_conv ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+            📋 Naming Conventions
+          </button>
+          <button type="button" class="admin-pane-btn <?= $is_edit_conv ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+            <?= $is_edit_conv ? '✏️ Edit Convention' : '➕ Add Convention' ?>
+          </button>
+        </div>
+
         <div class="admin-storage-manage-grid">
-          <div>
+          <div id="adminDualListPane" class="admin-dual-pane <?= $is_edit_conv ? 'mobile-hidden' : '' ?>">
             <h3 style="margin-top: 0; color: #333;">Title Naming Conventions</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-              <thead>
-                <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
-                  <th style="padding: 8px 10px;">Convention Code</th>
-                  <th style="padding: 8px 10px;">Example / Description</th>
-                  <th style="padding: 8px 10px; text-align: right;">Cuv&eacute;es</th>
-                  <th style="padding: 8px 10px; text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($conventions as $conv): ?>
-                  <?php 
-                    $cCode = $conv['nameconvention']; 
-                    $mCount = (int)$conv['total_masters'];
-                    $isEditingThis = ($editingConv && $editingConv['nameconvention'] === $cCode);
-                  ?>
-                  <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
-                    <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #222; font-size: 0.88rem;">
-                      <?php echo htmlspecialchars($cCode, ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                    <td style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
-                      <?php echo htmlspecialchars($conv['description'], ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                    <td style="padding: 8px 10px; text-align: right;">
-                      <?php echo $mCount; ?>
-                    </td>
-                    <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
-                      <a href="manageWineAttributes.php?tab=conventions&edit_conv=<?php echo urlencode($cCode); ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;">
-                        Edit
-                      </a>
-                      <?php if ($mCount === 0): ?>
-                        <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete naming convention \'<?php echo htmlspecialchars($cCode, ENT_QUOTES, 'UTF-8'); ?>\'?');">
-                          <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                          <input type="hidden" name="action" value="delete_conv">
-                          <input type="hidden" name="nameconvention" value="<?php echo htmlspecialchars($cCode, ENT_QUOTES, 'UTF-8'); ?>">
-                          <button type="submit" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 0; font-size: 0.85rem; text-decoration: underline;">
-                            Delete
-                          </button>
-                        </form>
-                      <?php else: ?>
-                        <span style="color: #ccc; font-size: 0.85rem;" title="Cannot delete: Linked to master cuvées">Delete</span>
-                      <?php endif; ?>
-                    </td>
+            <div class="admin-table-container">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                  <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 8px 10px;">Convention Code</th>
+                    <th style="padding: 8px 10px;">Example / Description</th>
+                    <th style="padding: 8px 10px; text-align: right;">Cuv&eacute;es</th>
+                    <th style="padding: 8px 10px; text-align: right;">Actions</th>
                   </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <?php foreach ($conventions as $conv): ?>
+                    <?php 
+                      $cCode = $conv['nameconvention']; 
+                      $mCount = (int)$conv['total_masters'];
+                      $isEditingThis = ($editingConv && $editingConv['nameconvention'] === $cCode);
+                    ?>
+                    <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
+                      <td data-label="Convention Code" class="card-primary-cell" style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #222; font-size: 0.88rem;">
+                        <?php echo htmlspecialchars($cCode, ENT_QUOTES, 'UTF-8'); ?>
+                      </td>
+                      <td data-label="Example / Description" style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
+                        <?php echo htmlspecialchars($conv['description'], ENT_QUOTES, 'UTF-8'); ?>
+                      </td>
+                      <td data-label="Cuv&eacute;es" style="padding: 8px 10px; text-align: right;">
+                        <?php echo $mCount; ?>
+                      </td>
+                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                        <a href="manageWineAttributes.php?tab=conventions&edit_conv=<?php echo urlencode($cCode); ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;">
+                          Edit
+                        </a>
+                        <?php if ($mCount === 0): ?>
+                          <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete naming convention \'<?php echo htmlspecialchars($cCode, ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                            <input type="hidden" name="action" value="delete_conv">
+                            <input type="hidden" name="nameconvention" value="<?php echo htmlspecialchars($cCode, ENT_QUOTES, 'UTF-8'); ?>">
+                            <button type="submit" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 0; font-size: 0.85rem; text-decoration: underline;">
+                              Delete
+                            </button>
+                          </form>
+                        <?php else: ?>
+                          <span style="color: #ccc; font-size: 0.85rem;" title="Cannot delete: Linked to master cuvées">Delete</span>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- Add / Edit Convention Form -->
-          <div>
+          <div id="adminDualFormPane" class="admin-dual-pane <?= !$is_edit_conv ? 'mobile-hidden' : '' ?>">
             <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
               <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
                 <?php echo $editingConv ? 'Edit Naming Convention' : 'Add Naming Convention'; ?>

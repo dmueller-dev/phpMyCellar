@@ -174,11 +174,22 @@
         </div>
       </div>
 
+      <?php $is_edit = !empty($editingFormat); ?>
+      <!-- Mobile Segmented View Switcher -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" id="tabBtnList" class="admin-mobile-pane-btn <?php echo !$is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('list')">
+          📋 Formats (<?php echo count($formats); ?>)
+        </button>
+        <button type="button" id="tabBtnForm" class="admin-mobile-pane-btn <?php echo $is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('form')">
+          <?php echo $is_edit ? '✏️ Edit Format' : '➕ Add Format'; ?>
+        </button>
+      </div>
+
       <!-- Main Layout: Table on Left / Form on Right -->
       <div class="admin-storage-manage-grid">
         
         <!-- Formats List -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?php echo $is_edit ? 'mobile-hidden' : ''; ?>">
           <h3 style="margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px;">
             Standard &amp; Custom Formats
           </h3>
@@ -186,7 +197,7 @@
           <?php if (empty($formats)): ?>
             <p style="color: #666; font-style: italic;">No bottle formats recorded. Use the form to configure your first format.</p>
           <?php else: ?>
-            <div style="overflow-x: auto;">
+            <div class="admin-table-container">
               <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                 <thead>
                   <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
@@ -206,16 +217,16 @@
                       $isEditingThis = ($editingFormat && $editingFormat['format'] === $fCode);
                     ?>
                     <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
-                      <td style="padding: 8px 10px; font-weight: 600; color: #222; font-family: monospace; font-size: 0.95rem;">
+                      <td class="card-primary-cell" style="padding: 8px 10px; font-weight: 600; color: #222; font-family: monospace; font-size: 0.95rem;">
                         <?php echo htmlspecialchars($fCode, ENT_QUOTES, 'UTF-8'); ?>
                       </td>
-                      <td style="padding: 8px 10px; color: #555;">
+                      <td data-label="Description" style="padding: 8px 10px; color: #555;">
                         <?php echo !empty($fmt['format_desc']) ? htmlspecialchars($fmt['format_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">&mdash;</span>'; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Inventory" style="padding: 8px 10px; text-align: right;">
                         <strong><?php echo $bCount; ?></strong> btl<?php echo ($bCount === 1 ? '' : 's'); ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right; color: #666;">
+                      <td data-label="Orders" style="padding: 8px 10px; text-align: right; color: #666;">
                         <?php echo $oCount; ?>
                       </td>
                       <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
@@ -244,7 +255,7 @@
         </div>
 
         <!-- Sidebar: Add / Edit Format Form -->
-        <div>
+        <div id="adminDualFormPane" class="admin-dual-pane <?php echo !$is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
             <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
               <?php echo $editingFormat ? 'Edit Bottle Format' : 'Add Bottle Format'; ?>

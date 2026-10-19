@@ -211,11 +211,21 @@
         </div>
       </div>
 
+      <!-- Mobile Segmented View Switcher -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" id="tabBtnList" class="admin-mobile-pane-btn <?php echo !$is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('list')">
+          📋 Subregions (<?php echo count($subregion_records); ?>)
+        </button>
+        <button type="button" id="tabBtnForm" class="admin-mobile-pane-btn <?php echo $is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('form')">
+          <?php echo $is_edit ? '✏️ Edit Subregion' : '➕ Add Subregion'; ?>
+        </button>
+      </div>
+
       <!-- Responsive Dual Grid: Subregion Directory & Form -->
       <div class="admin-dual-manage-grid unequal">
         
         <!-- Left: Searchable Subregions Directory -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?php echo $is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="margin: 0; color: #333; font-size: 1.1rem;">
               Existing Subregions (<?php echo count($subregion_records); ?>)
@@ -258,12 +268,12 @@
                         <strong><?php echo htmlspecialchars($sr['subregion'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
                         <small style="color: #666;"><?php echo htmlspecialchars($sr['region'] . ', ' . $sr['country'], ENT_QUOTES, 'UTF-8'); ?></small>
                       </td>
-                      <td style="text-align: center;">
+                      <td data-label="Appellations" style="text-align: center;">
                         <a href="manageAppellations.php?subregion_id=<?php echo (int)$sr['subregion_id']; ?>" title="View appellations" style="text-decoration: none; color: #555;">
                           <?php echo (int)$sr['appellation_count']; ?>
                         </a>
                       </td>
-                      <td style="text-align: center; color: #666;">
+                      <td data-label="Wines" style="text-align: center; color: #666;">
                         <?php echo (int)$sr['master_count']; ?>
                       </td>
                       <td style="text-align: right; white-space: nowrap;">
@@ -280,7 +290,7 @@
         </div>
 
         <!-- Right: Add / Edit Form Card -->
-        <div class="admin-system-card">
+        <div id="adminDualFormPane" class="admin-system-card admin-dual-pane <?php echo !$is_edit ? 'mobile-hidden' : ''; ?>">
           <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick);">
             <?php echo $is_edit ? '✏️ Edit Subregion: ' . htmlspecialchars($subregion, ENT_QUOTES, 'UTF-8') : '➕ Add New Subregion'; ?>
           </h3>

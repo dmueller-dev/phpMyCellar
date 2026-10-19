@@ -34,5 +34,31 @@
   </footer>
 </div>
 
+<script>
+/**
+ * Switch between Directory and Form panes on mobile viewports (<= 720px).
+ *
+ * @param {string} pane - Target pane to show ('list' or 'form').
+ */
+function switchAdminMobilePane(pane) {
+  const listPane = document.getElementById('adminDualListPane');
+  const formPane = document.getElementById('adminDualFormPane');
+  const btnList = document.getElementById('tabBtnList');
+  const btnForm = document.getElementById('tabBtnForm');
+
+  if (pane === 'form') {
+    if (listPane) listPane.classList.add('mobile-hidden');
+    if (formPane) formPane.classList.remove('mobile-hidden');
+    if (btnList) btnList.classList.remove('active');
+    if (btnForm) btnForm.classList.add('active');
+  } else {
+    if (listPane) listPane.classList.remove('mobile-hidden');
+    if (formPane) formPane.classList.add('mobile-hidden');
+    if (btnList) btnList.classList.add('active');
+    if (btnForm) btnForm.classList.remove('active');
+  }
+}
+</script>
+
 </body>
 </html>

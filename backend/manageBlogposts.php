@@ -302,6 +302,9 @@
             &#9998; Edit Stories
           </a>
         <?php endif; ?>
+        <a href="#storiesDirectorySection" class="admin-tab-btn" style="color: #555;">
+          📋 Story Directory (<?php echo count($accessible_posts); ?>)
+        </a>
       </div>
 
       <!-- Form Container -->
@@ -431,7 +434,7 @@
       </div>
 
       <!-- Searchable Stories Directory -->
-      <div style="margin-top: 30px;">
+      <div id="storiesDirectorySection" style="margin-top: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
           <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
             Story Directory (<?php echo count($accessible_posts); ?> articles)
@@ -458,10 +461,10 @@
               <?php else: ?>
                 <?php foreach ($accessible_posts as $post): ?>
                   <tr style="<?php echo ($requested_blog_id === (int)$post['blog_id']) ? 'background-color: #fff9e6;' : ''; ?>">
-                    <td><?php echo htmlspecialchars($post['pub_date'], ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><strong><?php echo htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8'); ?></strong></td>
-                    <td><?php echo htmlspecialchars($post['author'] ?? $post['initials'] ?? 'Author', ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td>
+                    <td data-label="Date"><?php echo htmlspecialchars($post['pub_date'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td class="card-primary-cell"><strong><?php echo htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8'); ?></strong></td>
+                    <td data-label="Author"><?php echo htmlspecialchars($post['author'] ?? $post['initials'] ?? 'Author', ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td data-label="Status">
                       <span style="display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: bold; text-transform: uppercase; <?php echo ($post['status'] === 'published') ? 'background: #e8f5e9; color: #2e7d32;' : 'background: #f5f5f5; color: #666;'; ?>">
                         <?php echo htmlspecialchars($post['status'], ENT_QUOTES, 'UTF-8'); ?>
                       </span>

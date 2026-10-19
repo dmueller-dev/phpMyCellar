@@ -204,19 +204,29 @@
       </div>
 
       <!-- Navigation Tabs -->
-      <div style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
-        <a href="?tab=vintages" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'vintages' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
+      <div class="admin-mode-tabs" style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+        <a href="?tab=vintages" class="admin-mode-tab <?= $activeTab === 'vintages' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'vintages' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
           &#128197; Harvest Vintage Years (<?php echo $totalVintages; ?>)
         </a>
-        <a href="?tab=reports" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'reports' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
+        <a href="?tab=reports" class="admin-mode-tab <?= $activeTab === 'reports' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'reports' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
           &#127757; Regional Character Reports (<?php echo $totalReports; ?>)
         </a>
       </div>
 
       <!-- TAB 1: HARVEST VINTAGES -->
       <?php if ($activeTab === 'vintages'): ?>
+        <!-- Mobile Switcher for Dual-Pane Layout -->
+        <div class="admin-mobile-pane-switch">
+          <button type="button" class="admin-pane-btn active" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+            📋 Harvest Vintages
+          </button>
+          <button type="button" class="admin-pane-btn" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+            ➕ Add Vintage
+          </button>
+        </div>
+
         <div class="admin-storage-manage-grid">
-          <div>
+          <div id="adminDualListPane" class="admin-dual-pane">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
               <h3 style="margin: 0; color: #333;">Configured Harvest Vintages</h3>
               <input type="text" id="vintageFilterInput" placeholder="Filter year..." 
@@ -224,7 +234,7 @@
                      style="padding: 6px 10px; font-size: 0.88rem; width: 140px; border: 1px solid #ccc; border-radius: 4px;">
             </div>
 
-            <div style="overflow-x: auto;">
+            <div class="admin-table-container">
               <table id="vintagesTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                 <thead>
                   <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
@@ -244,18 +254,18 @@
                       $rCount = (int)$vRow['regional_reports_count'];
                     ?>
                     <tr style="border-bottom: 1px solid #eee;">
-                      <td style="padding: 8px 10px; font-weight: bold; font-size: 1rem; color: #222;">
+                      <td data-label="Vintage Year" class="card-primary-cell" style="padding: 8px 10px; font-weight: bold; font-size: 1rem; color: #222;">
                         <a href="/vintages.php?vintage=<?php echo $vYear; ?>" style="text-decoration: none; color: #222;" title="View public vintage report">
                           <?php echo $vYear; ?> &rarr;
                         </a>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Wines Catalogued" style="padding: 8px 10px; text-align: right;">
                         <?php echo $wCount; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Tasting Notes" style="padding: 8px 10px; text-align: right;">
                         <?php echo $tnCount; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Regional Reports" style="padding: 8px 10px; text-align: right;">
                         <?php if ($rCount > 0): ?>
                           <a href="manageVintages.php?tab=reports&filter_vintage=<?php echo $vYear; ?>" style="text-decoration: none; color: #1a73e8; font-weight: bold;">
                             <?php echo $rCount; ?> report<?php echo ($rCount === 1 ? '' : 's'); ?>
@@ -264,7 +274,7 @@
                           <span style="color: #aaa;">&mdash;</span>
                         <?php endif; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
                         <a href="manageVintages.php?tab=reports&prefill_v=<?php echo $vYear; ?>" style="color: #2e7d32; text-decoration: none; margin-right: 8px; font-size: 0.85rem;" title="Write regional character report">
                           + Report
                         </a>
@@ -289,7 +299,7 @@
           </div>
 
           <!-- Add Vintage Form -->
-          <div>
+          <div id="adminDualFormPane" class="admin-dual-pane mobile-hidden">
             <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
               <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
                 + Add Harvest Vintage
@@ -317,8 +327,19 @@
 
       <!-- TAB 2: REGIONAL REPORTS -->
       <?php else: ?>
+        <?php $is_edit_report = !empty($editingReport); ?>
+        <!-- Mobile Switcher for Dual-Pane Layout -->
+        <div class="admin-mobile-pane-switch">
+          <button type="button" class="admin-pane-btn <?= !$is_edit_report ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+            📋 Regional Reports
+          </button>
+          <button type="button" class="admin-pane-btn <?= $is_edit_report ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+            <?= $is_edit_report ? '✏️ Edit Report' : '➕ Author Report' ?>
+          </button>
+        </div>
+
         <div class="admin-storage-manage-grid">
-          <div>
+          <div id="adminDualListPane" class="admin-dual-pane <?= $is_edit_report ? 'mobile-hidden' : '' ?>">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
               <h3 style="margin: 0; color: #333;">Regional Harvest Reports</h3>
               <form method="GET" action="manageVintages.php" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -348,7 +369,7 @@
             <?php if (empty($reports)): ?>
               <p style="color: #666; font-style: italic;">No regional vintage reports match the selected filters. Use the form to write a new harvest evaluation.</p>
             <?php else: ?>
-              <div style="overflow-x: auto;">
+              <div class="admin-table-container">
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                   <thead>
                     <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
@@ -366,17 +387,17 @@
                         $isEditingThis = ($editingReport && (int)$editingReport['vintage'] === $rVintage && (int)$editingReport['region_id'] === $rRegId);
                       ?>
                       <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
-                        <td style="padding: 8px 10px; font-weight: bold; white-space: nowrap;">
+                        <td data-label="Vintage" class="card-primary-cell" style="padding: 8px 10px; font-weight: bold; white-space: nowrap;">
                           <?php echo $rVintage; ?>
                         </td>
-                        <td style="padding: 8px 10px; white-space: nowrap; color: #333;">
+                        <td data-label="Region &amp; Country" style="padding: 8px 10px; white-space: nowrap; color: #333;">
                           <strong><?php echo htmlspecialchars($rep['region'], ENT_QUOTES, 'UTF-8'); ?></strong>
                           <div style="color: #777; font-size: 0.8rem;"><?php echo htmlspecialchars($rep['country'], ENT_QUOTES, 'UTF-8'); ?></div>
                         </td>
-                        <td style="padding: 8px 10px; font-size: 0.85rem; color: #555;">
+                        <td data-label="Evaluation Summary" style="padding: 8px 10px; font-size: 0.85rem; color: #555;">
                           <?php echo nl2br(htmlspecialchars($rep['vintage_desc'], ENT_QUOTES, 'UTF-8')); ?>
                         </td>
-                        <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                        <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
                           <a href="manageVintages.php?tab=reports&edit_v=<?php echo $rVintage; ?>&edit_r=<?php echo $rRegId; ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;">
                             Edit
                           </a>
@@ -399,7 +420,7 @@
           </div>
 
           <!-- Add / Edit Report Form -->
-          <div>
+          <div id="adminDualFormPane" class="admin-dual-pane <?= !$is_edit_report ? 'mobile-hidden' : '' ?>">
             <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
               <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
                 <?php echo $editingReport ? 'Edit Regional Report' : 'Author Vintage Report'; ?>

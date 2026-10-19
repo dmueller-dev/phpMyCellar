@@ -223,11 +223,21 @@
         </div>
       </div>
 
+      <!-- Mobile Segmented View Switcher -->
+      <div class="admin-mobile-pane-switch">
+        <button type="button" id="tabBtnList" class="admin-mobile-pane-btn <?php echo !$is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('list')">
+          📋 Vintages (<?php echo count($wine_records); ?>)
+        </button>
+        <button type="button" id="tabBtnForm" class="admin-mobile-pane-btn <?php echo $is_edit ? 'active' : ''; ?>" onclick="switchAdminMobilePane('form')">
+          <?php echo $is_edit ? '✏️ Edit Vintage' : '➕ Add Vintage'; ?>
+        </button>
+      </div>
+
       <!-- Responsive Dual Grid: Wine Directory & Form -->
       <div class="admin-dual-manage-grid unequal">
         
         <!-- Left: Searchable Wine Directory -->
-        <div>
+        <div id="adminDualListPane" class="admin-dual-pane <?php echo $is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="margin: 0; color: #333; font-size: 1.1rem;">
               Existing Vintages (<?php echo count($wine_records); ?>)
@@ -274,11 +284,11 @@
                           <?php if (!empty($w['ct_id'])): ?> &bull; CT #<?php echo (int)$w['ct_id']; ?><?php endif; ?>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Terroir">
                         <div style="font-size: 0.88rem;"><?php echo htmlspecialchars($w['region'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                         <div style="font-size: 0.78rem; color: #888;"><?php echo htmlspecialchars($w['country'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                       </td>
-                      <td style="text-align: center;">
+                      <td data-label="Bottles" style="text-align: center;">
                         <?php if ((int)$w['bottle_count'] > 0): ?>
                           <span style="display: inline-block; padding: 2px 8px; border-radius: 12px; background: #e8f5e9; color: #2e7d32; font-size: 0.82rem; font-weight: bold;">
                             <?php echo (int)$w['bottle_count']; ?>
@@ -308,7 +318,7 @@
         </div>
 
         <!-- Right: Add / Edit Wine Form -->
-        <div style="background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
+        <div id="adminDualFormPane" class="admin-dual-pane <?php echo !$is_edit ? 'mobile-hidden' : ''; ?>" style="background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
             <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
               <?php echo $is_edit ? '&#9998; Edit Wine #' . $wine_id : '&#10010; Add Wine Vintage'; ?>
