@@ -111,13 +111,13 @@
     </div>
 
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #f0e6e6; padding-bottom: 12px; margin-bottom: 16px;">
+      <div class="admin-card-header">
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#127815; Grape Varieties
         </h2>
-        <div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <?php if (hasPrivilege($conn, 'browse_wines')): ?>
-            <a href="browseWines.php?sort=variety" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px; margin-right: 8px;">
+            <a href="browseWines.php?sort=variety" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
               Browse by Variety &rarr;
             </a>
           <?php endif; ?>
@@ -188,9 +188,9 @@
         <div id="adminDualListPane" class="admin-dual-pane <?= $is_edit ? 'mobile-hidden' : '' ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="margin: 0; color: #333;">Grape Varieties Directory</h3>
-            <input type="text" id="varietyFilterInput" placeholder="Filter varieties..." 
+            <input type="text" id="varietyFilterInput" class="admin-search-box" placeholder="Filter varieties..." 
                    oninput="filterVarietyTable()" 
-                   style="padding: 6px 10px; font-size: 0.88rem; width: 220px; border: 1px solid #ccc; border-radius: 4px;">
+                   style="padding: 6px 10px; font-size: 0.88rem; width: 220px; max-width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 0;">
           </div>
 
           <?php if (empty($varieties)): ?>
@@ -229,7 +229,7 @@
                           <span style="color: #999;">0</span>
                         <?php endif; ?>
                       </td>
-                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td data-label="Actions" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageVarieties.php?edit_grape=<?php echo urlencode($gName); ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;" title="Edit grape details">
                           Edit
                         </a>

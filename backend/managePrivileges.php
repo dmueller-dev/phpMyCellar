@@ -194,8 +194,8 @@
       <div class="card">
         <h3>Select User</h3>
         <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
-          <input type="text" id="userSearchInput" placeholder="Filter users by name or username..." style="padding: 6px 10px; width: 280px;" oninput="filterUserDropdown()">
-          <select id="userSelectDropdown" onchange="window.location.href='?tab=user&user_id=' + this.value;" style="padding: 6px 10px; min-width: 250px;">
+          <input type="text" id="userSearchInput" placeholder="Filter users by name or username..." style="padding: 6px 10px; width: 280px; max-width: 100%; box-sizing: border-box;" oninput="filterUserDropdown()">
+          <select id="userSelectDropdown" onchange="window.location.href='?tab=user&user_id=' + this.value;" style="padding: 6px 10px; min-width: 250px; max-width: 100%; box-sizing: border-box;">
             <?php foreach ($userList as $u): ?>
               <option value="<?= (int)$u['user_id'] ?>" <?= (int)$u['user_id'] === $selectedUserId ? 'selected' : '' ?>>
                 <?= htmlspecialchars($u['displayname'], ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8') ?>) [<?= htmlspecialchars($u['role'], ENT_QUOTES, 'UTF-8') ?>]
@@ -322,7 +322,7 @@
                 </div>
               <?php endforeach; ?>
 
-              <div style="margin-top: 20px; display: flex; gap: 15px; align-items: center;">
+              <div style="margin-top: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                 <button type="submit" style="padding: 8px 20px; font-weight: bold; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
                   💾 Save User Privileges
                 </button>

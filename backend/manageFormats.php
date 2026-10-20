@@ -115,13 +115,13 @@
     </div>
 
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #f0e6e6; padding-bottom: 12px; margin-bottom: 16px;">
+      <div class="admin-card-header">
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#127870; Bottle Formats &amp; Volume Sizes
         </h2>
-        <div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <?php if (hasPrivilege($conn, 'browse_bottles')): ?>
-            <a href="browseBottles.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px; margin-right: 8px;">
+            <a href="browseBottles.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
               Browse Bottles &rarr;
             </a>
           <?php endif; ?>
@@ -229,7 +229,7 @@
                       <td data-label="Orders" style="padding: 8px 10px; text-align: right; color: #666;">
                         <?php echo $oCount; ?>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageFormats.php?edit_format=<?php echo urlencode($fCode); ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;" title="Edit description">
                           Edit
                         </a>

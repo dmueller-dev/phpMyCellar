@@ -936,7 +936,7 @@ HTML;
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#128230; Wine Purchase Orders &amp; Intake
         </h2>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <a href="manageBottles.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
             Manage Bottles &rarr;
           </a>

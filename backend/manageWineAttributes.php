@@ -181,11 +181,11 @@
     </div>
 
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #f0e6e6; padding-bottom: 12px; margin-bottom: 16px;">
+      <div class="admin-card-header">
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#9881;&#65039; Wine Classifications &amp; Attributes
         </h2>
-        <div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <?php if (hasPrivilege($conn, 'browse_wines')): ?>
             <a href="browseWines.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
               Wine Catalog &rarr;
@@ -266,7 +266,7 @@
                       <td data-label="Cuv&eacute;es" style="padding: 8px 10px; text-align: right;">
                         <?php echo $mCount; ?>
                       </td>
-                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td data-label="Actions" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageWineAttributes.php?tab=styles&edit_style=<?php echo urlencode($sName); ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;">
                           Edit
                         </a>
@@ -373,7 +373,7 @@
                       <td data-label="Cuv&eacute;es" style="padding: 8px 10px; text-align: right;">
                         <?php echo $mCount; ?>
                       </td>
-                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td data-label="Actions" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <?php if ($mCount === 0): ?>
                           <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete colour \'<?php echo htmlspecialchars($cName, ENT_QUOTES, 'UTF-8'); ?>\'?');">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
@@ -462,7 +462,7 @@
                       <td data-label="Cuv&eacute;es" style="padding: 8px 10px; text-align: right;">
                         <?php echo $mCount; ?>
                       </td>
-                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td data-label="Actions" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageWineAttributes.php?tab=conventions&edit_conv=<?php echo urlencode($cCode); ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;">
                           Edit
                         </a>

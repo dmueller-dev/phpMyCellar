@@ -233,8 +233,8 @@
             <?php endif; ?>
           </div>
 
-          <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-            <select id="countryFilter" style="flex: 1; min-width: 140px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px;" onchange="filterRegionList()">
+          <div class="admin-filter-bar" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+            <select id="countryFilter" style="flex: 1; min-width: 140px; max-width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px;" onchange="filterRegionList()">
               <option value="">All Countries</option>
               <?php foreach ($countries as $c): ?>
                 <option value="<?php echo htmlspecialchars($c['country'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo ($filter_country === $c['country']) ? 'selected' : ''; ?>>
@@ -242,7 +242,7 @@
                 </option>
               <?php endforeach; ?>
             </select>
-            <input type="text" id="regionSearch" class="admin-search-box" style="flex: 2; min-width: 160px; margin-bottom: 0;" placeholder="Search regions..." onkeyup="filterRegionList()">
+            <input type="text" id="regionSearch" class="admin-search-box" style="flex: 2; min-width: 160px; max-width: 100%; box-sizing: border-box; margin-bottom: 0;" placeholder="Search regions..." oninput="filterRegionList()" onkeyup="filterRegionList()">
           </div>
 
           <div class="admin-table-container" style="max-height: 520px; overflow-y: auto;">
@@ -262,7 +262,7 @@
                   <?php foreach ($region_records as $r): ?>
                     <tr data-country="<?php echo htmlspecialchars(strtolower($r['country']), ENT_QUOTES, 'UTF-8'); ?>"
                         style="<?php echo ($is_edit && $region_id === (int)$r['region_id']) ? 'background: #fff8e7; font-weight: 500;' : ''; ?>">
-                      <td>
+                      <td class="card-primary-cell">
                         <strong><?php echo htmlspecialchars($r['region'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
                         <small style="color: #666;"><?php echo htmlspecialchars($r['country'], ENT_QUOTES, 'UTF-8'); ?></small>
                       </td>
@@ -274,7 +274,7 @@
                       <td data-label="Wines" style="text-align: center; color: #666;">
                         <?php echo (int)$r['master_count']; ?>
                       </td>
-                      <td style="text-align: right; white-space: nowrap;">
+                      <td class="card-actions-cell" style="text-align: right;">
                         <a href="manageRegions.php?region_id=<?php echo (int)$r['region_id']; ?>" class="terroir-btn terroir-btn-edit" style="padding: 4px 10px; font-size: 0.8rem;" title="Edit region">
                           Edit
                         </a>

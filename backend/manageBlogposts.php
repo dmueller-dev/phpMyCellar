@@ -254,7 +254,7 @@
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#128214; Manage Wine Stories &amp; Articles
         </h2>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <a href="/blog.php" target="_blank" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
             View Public Blog &rarr;
           </a>
@@ -469,7 +469,7 @@
                         <?php echo htmlspecialchars($post['status'], ENT_QUOTES, 'UTF-8'); ?>
                       </span>
                     </td>
-                    <td style="text-align: right; white-space: nowrap;">
+                    <td class="card-actions-cell" style="text-align: right;">
                       <?php if ($can_edit): ?>
                         <a href="manageBlogposts.php?mode=edit&blog_id=<?php echo (int)$post['blog_id']; ?>" class="btn-action btn-secondary" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none;">
                           Edit

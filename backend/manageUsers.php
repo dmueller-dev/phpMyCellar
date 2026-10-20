@@ -161,7 +161,7 @@
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#128101; User Accounts &amp; Access Control
         </h2>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <a href="managePrivileges.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
             &#128737;&#65039; User &amp; Role Privileges &rarr;
           </a>
@@ -266,7 +266,7 @@
                 <label for="password" style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9rem;">
                   Initial Password: <span style="color: red;">*</span>
                 </label>
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <input type="password" name="password" id="password" required minlength="6" style="flex: 1; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-height: 44px;">
                   <button type="button" onclick="generateNewUserPassword()" class="btn-action btn-secondary" style="font-size: 0.85rem; padding: 8px 14px; white-space: nowrap;">
                     &#127922; Generate
@@ -466,7 +466,7 @@
                     </span>
                   </td>
                   <td data-label="Initials"><strong><?php echo htmlspecialchars($u['initials'] ?? '', ENT_QUOTES, 'UTF-8'); ?></strong></td>
-                  <td style="text-align: right; white-space: nowrap;">
+                  <td class="card-actions-cell" style="text-align: right;">
                     <?php if ($can_edit): ?>
                       <a href="manageUsers.php?mode=edit&user_id=<?php echo (int)$u['user_id']; ?>" class="btn-action btn-secondary" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none;">
                         Edit

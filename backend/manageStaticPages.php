@@ -146,7 +146,7 @@
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#128196; Static Content &amp; Sidebars
         </h2>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <a href="settings.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
             Site Settings &rarr;
           </a>
@@ -328,7 +328,7 @@
                 <tbody>
                   <?php foreach ($items as $item): ?>
                     <tr>
-                      <td>
+                      <td class="card-primary-cell">
                         <strong><?php echo htmlspecialchars($item['page_title'], ENT_QUOTES, 'UTF-8'); ?></strong>
                         <div style="font-size: 0.78rem; color: #777; margin-top: 2px;">
                           <code><?php echo htmlspecialchars($item['page_key'], ENT_QUOTES, 'UTF-8'); ?></code>
@@ -350,7 +350,7 @@
                       <td data-label="Description" style="font-size: 0.85rem; color: #666; line-height: 1.4;">
                         <?php echo htmlspecialchars($item['description'], ENT_QUOTES, 'UTF-8'); ?>
                       </td>
-                      <td style="text-align: right; white-space: nowrap;">
+                      <td class="card-actions-cell" style="text-align: right;">
                         <a href="manageStaticPages.php?key=<?php echo urlencode($item['page_key']); ?>" class="btn-action" style="font-size: 0.82rem; padding: 5px 12px; text-decoration: none;">
                           Edit Content
                         </a>

@@ -217,7 +217,7 @@
             <?php endif; ?>
           </div>
 
-          <input type="text" id="countrySearch" class="admin-search-box" placeholder="Search countries..." onkeyup="filterCountryList()">
+          <input type="text" id="countrySearch" class="admin-search-box" placeholder="Search countries..." oninput="filterCountryList()" onkeyup="filterCountryList()">
 
           <div class="admin-table-container" style="max-height: 520px; overflow-y: auto;">
             <table id="countryTable">
@@ -235,7 +235,7 @@
                 <?php else: ?>
                   <?php foreach ($country_records as $c): ?>
                     <tr style="<?php echo ($is_edit && $country === $c['country']) ? 'background: #fff8e7; font-weight: 500;' : ''; ?>">
-                      <td>
+                      <td class="card-primary-cell">
                         <strong><?php echo htmlspecialchars($c['country'], ENT_QUOTES, 'UTF-8'); ?></strong>
                       </td>
                       <td data-label="Regions" style="text-align: center;">
@@ -246,7 +246,7 @@
                       <td data-label="Wines" style="text-align: center; color: #666;">
                         <?php echo (int)$c['master_count']; ?>
                       </td>
-                      <td style="text-align: right; white-space: nowrap;">
+                      <td class="card-actions-cell" style="text-align: right;">
                         <a href="manageCountries.php?country=<?php echo urlencode($c['country']); ?>" class="terroir-btn terroir-btn-edit" style="padding: 4px 10px; font-size: 0.8rem;" title="Edit country">
                           Edit
                         </a>

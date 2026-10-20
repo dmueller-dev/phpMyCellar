@@ -120,13 +120,13 @@
     </div>
 
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #f0e6e6; padding-bottom: 12px; margin-bottom: 16px;">
+      <div class="admin-card-header">
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#127978; Wine Merchants &amp; Retailers
         </h2>
-        <div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <?php if (hasPrivilege($conn, 'manage_orders') || hasPrivilege($conn, 'add_order')): ?>
-            <a href="manageOrders.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px; margin-right: 8px;">
+            <a href="manageOrders.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
               Manage Orders &rarr;
             </a>
             <a href="manageOrders.php?action=create" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
@@ -206,9 +206,9 @@
         <div id="adminDualListPane" class="admin-dual-pane <?php echo $is_edit ? 'mobile-hidden' : ''; ?>">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="margin: 0; color: #333;">Merchant Directory</h3>
-            <input type="text" id="storeFilterInput" placeholder="Filter by merchant or country..." 
+            <input type="text" id="storeFilterInput" class="admin-search-box" placeholder="Filter by merchant or country..." 
                    oninput="filterStoreTable()" 
-                   style="padding: 6px 10px; font-size: 0.88rem; width: 240px; border: 1px solid #ccc; border-radius: 4px;">
+                   style="padding: 6px 10px; font-size: 0.88rem; width: 240px; max-width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 0;">
           </div>
 
           <?php if (empty($stores)): ?>
@@ -235,7 +235,7 @@
                       $isEditingThis = ($editingStore && (int)$editingStore['store_id'] === $sId);
                     ?>
                     <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
-                      <td style="padding: 8px 10px; font-weight: 600; color: #222;">
+                      <td class="card-primary-cell" style="padding: 8px 10px; font-weight: 600; color: #222;">
                         <?php echo htmlspecialchars($store['store_name'], ENT_QUOTES, 'UTF-8'); ?>
                       </td>
                       <td data-label="Country" style="padding: 8px 10px; color: #555;">
@@ -250,7 +250,7 @@
                       <td data-label="Bottles" style="padding: 8px 10px; text-align: right;">
                         <strong><?php echo $bCount; ?></strong>
                       </td>
-                      <td style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageStores.php?edit_store=<?php echo $sId; ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;" title="Edit merchant details">
                           Edit
                         </a>

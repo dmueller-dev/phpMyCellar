@@ -247,8 +247,8 @@
             <?php endif; ?>
           </div>
 
-          <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-            <select id="masterFilter" style="flex: 1; min-width: 140px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px;" onchange="filterWineList()">
+          <div class="admin-filter-bar" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+            <select id="masterFilter" style="flex: 1; min-width: 140px; max-width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px;" onchange="filterWineList()">
               <option value="">All Cuv&eacute;es</option>
               <?php foreach ($masters as $m): ?>
                 <option value="<?php echo (int)$m['master_id']; ?>" <?php echo ($filter_master_id === (int)$m['master_id']) ? 'selected' : ''; ?>>
@@ -256,7 +256,7 @@
                 </option>
               <?php endforeach; ?>
             </select>
-            <input type="text" id="wineSearch" class="admin-search-box" style="flex: 2; min-width: 160px; margin-bottom: 0;" placeholder="Search wine vintages..." onkeyup="filterWineList()">
+            <input type="text" id="wineSearch" class="admin-search-box" style="flex: 2; min-width: 160px; max-width: 100%; box-sizing: border-box; margin-bottom: 0;" placeholder="Search wine vintages..." oninput="filterWineList()" onkeyup="filterWineList()">
           </div>
 
           <div class="admin-table-container" style="max-height: 580px; overflow-y: auto;">
@@ -277,7 +277,7 @@
                 <?php else: ?>
                   <?php foreach ($wine_records as $w): ?>
                     <tr data-master-id="<?php echo (int)$w['master_id']; ?>" style="<?php echo ($is_edit && $wine_id === (int)$w['wine_id']) ? 'background-color: #fff9e6;' : ''; ?>">
-                      <td>
+                      <td class="card-primary-cell">
                         <strong><?php echo htmlspecialchars(getWineName($w['nameconvention'], $w['vintage'], $w['name'], $w['producer'], $w['grape'], $w['vineyard']), ENT_QUOTES, 'UTF-8'); ?></strong>
                         <div style="font-size: 0.78rem; color: #555;">
                           Vintage: <strong><?php echo ((int)$w['vintage'] === 0) ? 'NV' : (int)$w['vintage']; ?></strong>
@@ -297,14 +297,14 @@
                           <span style="color: #bbb; font-size: 0.82rem;">0</span>
                         <?php endif; ?>
                       </td>
-                      <td style="text-align: right; white-space: nowrap;">
+                      <td class="card-actions-cell" style="text-align: right;">
                         <?php if ($can_edit): ?>
                           <a href="manageWines.php?wine_id=<?php echo (int)$w['wine_id']; ?>" class="btn-action btn-secondary" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none;">
                             Edit
                           </a>
                         <?php endif; ?>
                         <?php if (hasPrivilege($conn, 'add_bottle')): ?>
-                          <a href="manageBottles.php?mode=add&wine_id=<?php echo (int)$w['wine_id']; ?>" title="Add bottles" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none; color: #0d6efd;">
+                          <a href="manageBottles.php?mode=add&wine_id=<?php echo (int)$w['wine_id']; ?>" class="btn-action" title="Add bottles" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none; background: #198754;">
                             + Bottle
                           </a>
                         <?php endif; ?>
@@ -341,7 +341,7 @@
               </label>
               <div style="border: 1px solid #ccc; border-radius: 4px; background: white;">
                 <input type="text" id="searchMasterBox" placeholder="🔍 Search cuvée master by producer, name, region..." onkeyup="filterMasterDropdown()" style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px 10px; box-sizing: border-box; font-family: inherit; font-size: 0.9rem; background: #fafafa; border-radius: 4px 4px 0 0;" autocomplete="off">
-                <select name="master_id" id="master_id" required style="width: 100%; border: none; padding: 8px 10px; border-radius: 0 0 4px 4px; box-sizing: border-box; min-height: 44px; font-family: inherit; font-size: 0.9rem;">
+                <select name="master_id" id="master_id" required style="width: 100%; max-width: 100%; border: none; padding: 8px 10px; border-radius: 0 0 4px 4px; box-sizing: border-box; min-height: 44px; font-family: inherit; font-size: 0.9rem;">
                   <option value="">-- Select Cuv&eacute;e Master --</option>
                   <?php foreach ($masters as $m): ?>
                     <option value="<?php echo (int)$m['master_id']; ?>" <?php echo ((int)$master_id === (int)$m['master_id']) ? 'selected' : ''; ?>>

@@ -146,12 +146,12 @@
     </div>
 
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #f0e6e6; padding-bottom: 12px; margin-bottom: 16px;">
+      <div class="admin-card-header">
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#127815; Harvest Vintages &amp; Regional Reports
         </h2>
-        <div>
-          <a href="/vintages.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px; margin-right: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="/vintages.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
             View Public Reports &rarr;
           </a>
           <?php if (hasPrivilege($conn, 'add_wine')): ?>
@@ -274,7 +274,7 @@
                           <span style="color: #aaa;">&mdash;</span>
                         <?php endif; ?>
                       </td>
-                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td data-label="Actions" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageVintages.php?tab=reports&prefill_v=<?php echo $vYear; ?>" style="color: #2e7d32; text-decoration: none; margin-right: 8px; font-size: 0.85rem;" title="Write regional character report">
                           + Report
                         </a>
@@ -397,7 +397,7 @@
                         <td data-label="Evaluation Summary" style="padding: 8px 10px; font-size: 0.85rem; color: #555;">
                           <?php echo nl2br(htmlspecialchars($rep['vintage_desc'], ENT_QUOTES, 'UTF-8')); ?>
                         </td>
-                        <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                        <td data-label="Actions" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                           <a href="manageVintages.php?tab=reports&edit_v=<?php echo $rVintage; ?>&edit_r=<?php echo $rRegId; ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;">
                             Edit
                           </a>
@@ -476,7 +476,7 @@
                             style="width: 100%; padding: 7px; font-size: 0.9rem; box-sizing: border-box;"><?php echo htmlspecialchars($editingReport['vintage_desc'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
                 </div>
 
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <button type="submit" class="btn-action" style="flex: 1; padding: 8px 14px; font-size: 0.9rem;">
                     <?php echo $editingReport ? 'Update Report' : 'Save Report'; ?>
                   </button>

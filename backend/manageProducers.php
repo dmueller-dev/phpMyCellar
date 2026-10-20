@@ -243,8 +243,8 @@
             <?php endif; ?>
           </div>
 
-          <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-            <select id="regionFilter" style="flex: 1; min-width: 140px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px;" onchange="filterProducerList()">
+          <div class="admin-filter-bar" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+            <select id="regionFilter" style="flex: 1; min-width: 140px; max-width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px;" onchange="filterProducerList()">
               <option value="">All Regions</option>
               <?php foreach ($regions as $r): ?>
                 <option value="<?php echo (int)$r['region_id']; ?>" <?php echo ($filter_region_id === (int)$r['region_id']) ? 'selected' : ''; ?>>
@@ -252,7 +252,7 @@
                 </option>
               <?php endforeach; ?>
             </select>
-            <input type="text" id="producerSearch" class="admin-search-box" style="flex: 2; min-width: 160px; margin-bottom: 0;" placeholder="Search producers..." onkeyup="filterProducerList()">
+            <input type="text" id="producerSearch" class="admin-search-box" style="flex: 2; min-width: 160px; max-width: 100%; box-sizing: border-box; margin-bottom: 0;" placeholder="Search producers..." oninput="filterProducerList()" onkeyup="filterProducerList()">
           </div>
 
           <div class="admin-table-container" style="max-height: 540px; overflow-y: auto;">
@@ -273,7 +273,7 @@
                 <?php else: ?>
                   <?php foreach ($producer_records as $p): ?>
                     <tr data-region-id="<?php echo (int)$p['region_id']; ?>" style="<?php echo ($is_edit && $producer_id === (int)$p['producer_id']) ? 'background-color: #fff9e6;' : ''; ?>">
-                      <td>
+                      <td class="card-primary-cell">
                         <strong><?php echo htmlspecialchars($p['producer'], ENT_QUOTES, 'UTF-8'); ?></strong>
                         <?php if (!empty($p['address'])): ?>
                           <div style="font-size: 0.78rem; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;" title="<?php echo htmlspecialchars($p['address'], ENT_QUOTES, 'UTF-8'); ?>">
@@ -294,11 +294,11 @@
                           <span style="color: #bbb; font-size: 0.82rem;">0</span>
                         <?php endif; ?>
                       </td>
-                      <td style="text-align: right; white-space: nowrap;">
+                      <td class="card-actions-cell" style="text-align: right;">
                         <a href="manageProducers.php?producer_id=<?php echo (int)$p['producer_id']; ?>" class="btn-action btn-secondary" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none;">
                           Edit
                         </a>
-                        <a href="manageWineMasters.php?producer_id=<?php echo (int)$p['producer_id']; ?>&region_id=<?php echo (int)$p['region_id']; ?>" title="Add cuv&eacute;e master" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none; color: #0d6efd;">
+                        <a href="manageWineMasters.php?producer_id=<?php echo (int)$p['producer_id']; ?>&region_id=<?php echo (int)$p['region_id']; ?>" class="btn-action" title="Add cuv&eacute;e master" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none; background: #198754;">
                           + Cuv&eacute;e
                         </a>
                       </td>

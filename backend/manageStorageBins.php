@@ -257,11 +257,11 @@
     </div>
 
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #f0e6e6; padding-bottom: 12px; margin-bottom: 16px;">
+      <div class="admin-card-header">
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#128452;&#65039; Manage Cellars &amp; Storage Bins
         </h2>
-        <div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <a href="browseBottles.php?sort=location" class="btn-action" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
             Browse Stored Bottles &rarr;
           </a>
@@ -400,7 +400,7 @@
                           <span style="color: #999; font-size: 0.8rem;">Unlimited</span>
                         <?php endif; ?>
                       </td>
-                      <td data-label="Actions" style="padding: 8px 10px; text-align: right; white-space: nowrap;">
+                      <td data-label="Actions" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageStorageBins.php?edit_bin=<?php echo (int)$bin['bin_id']; ?>" style="color: #1a73e8; text-decoration: none; margin-right: 8px; font-size: 0.85rem;" title="Edit bin">
                           Edit
                         </a>

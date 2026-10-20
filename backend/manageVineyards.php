@@ -240,8 +240,8 @@
             <?php endif; ?>
           </div>
 
-          <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-            <select id="regionFilter" style="flex: 1; min-width: 140px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px;" onchange="filterVineyardList()">
+          <div class="admin-filter-bar" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+            <select id="regionFilter" style="flex: 1; min-width: 140px; max-width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px;" onchange="filterVineyardList()">
               <option value="">All Regions</option>
               <?php foreach ($regions as $r): ?>
                 <option value="<?php echo (int)$r['region_id']; ?>" <?php echo ($filter_region_id === (int)$r['region_id']) ? 'selected' : ''; ?>>
@@ -249,7 +249,7 @@
                 </option>
               <?php endforeach; ?>
             </select>
-            <input type="text" id="vineyardSearch" class="admin-search-box" style="flex: 2; min-width: 160px; margin-bottom: 0;" placeholder="Search vineyards..." onkeyup="filterVineyardList()">
+            <input type="text" id="vineyardSearch" class="admin-search-box" style="flex: 2; min-width: 160px; max-width: 100%; box-sizing: border-box; margin-bottom: 0;" placeholder="Search vineyards..." oninput="filterVineyardList()" onkeyup="filterVineyardList()">
           </div>
 
           <div class="admin-table-container" style="max-height: 520px; overflow-y: auto;">
@@ -269,7 +269,7 @@
                   <?php foreach ($vineyard_records as $v): ?>
                     <tr data-region-id="<?php echo (int)$v['region_id']; ?>"
                         style="<?php echo ($is_edit && $vineyard_id === (int)$v['vineyard_id']) ? 'background: #fff8e7; font-weight: 500;' : ''; ?>">
-                      <td>
+                      <td class="card-primary-cell">
                         <strong><?php echo htmlspecialchars($v['vineyard'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
                         <small style="color: #666;"><?php echo htmlspecialchars($v['region'] . ', ' . $v['country'], ENT_QUOTES, 'UTF-8'); ?></small>
                       </td>
@@ -279,7 +279,7 @@
                       <td data-label="Wines" style="text-align: center; color: #666;">
                         <?php echo (int)$v['master_count']; ?>
                       </td>
-                      <td style="text-align: right; white-space: nowrap;">
+                      <td class="card-actions-cell" style="text-align: right;">
                         <a href="manageVineyards.php?vineyard_id=<?php echo (int)$v['vineyard_id']; ?>" class="terroir-btn terroir-btn-edit" style="padding: 4px 10px; font-size: 0.8rem;" title="Edit vineyard">
                           Edit
                         </a>

@@ -149,11 +149,11 @@
     </div>
 
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #f0e6e6; padding-bottom: 12px; margin-bottom: 16px;">
+      <div class="admin-card-header">
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#128202; Scoring Scales &amp; Assessment Criteria
         </h2>
-        <div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <a href="settings.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
             System Settings &rarr;
           </a>
@@ -237,7 +237,7 @@
                       <td data-label="Notes" style="padding: 8px 10px; text-align: right;">
                         <?php echo (int)$row['total_notes']; ?>
                       </td>
-                      <td data-label="Action" style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Action" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageRatingScales.php?tab=scale_20&edit_pts20=<?php echo $p; ?>" style="color: #1a73e8; text-decoration: none; font-size: 0.85rem;">
                           Edit
                         </a>
@@ -342,7 +342,7 @@
                       <td data-label="Qualitative Descriptor" style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
                         <?php echo htmlspecialchars($row['pts_desc'], ENT_QUOTES, 'UTF-8'); ?>
                       </td>
-                      <td data-label="Action" style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Action" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageRatingScales.php?tab=scale_100&edit_min100=<?php echo $minP; ?>&edit_max100=<?php echo $maxP; ?>" style="color: #1a73e8; text-decoration: none; font-size: 0.85rem;">
                           Edit
                         </a>
@@ -436,7 +436,7 @@
                       <td data-label="Notes" style="padding: 8px 10px; text-align: right;">
                         <?php echo (int)$row['total_notes']; ?>
                       </td>
-                      <td data-label="Action" style="padding: 8px 10px; text-align: right;">
+                      <td data-label="Action" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <a href="manageRatingScales.php?tab=wsetpts&edit_wset=<?php echo number_format($wPts, 1); ?>" style="color: #1a73e8; text-decoration: none; font-size: 0.85rem;">
                           Edit
                         </a>

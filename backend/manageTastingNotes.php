@@ -247,7 +247,7 @@
         <h2 style="margin: 0; color: var(--secondary-accent, firebrick);">
           &#128221; Tasting Journal &amp; Notes
         </h2>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <a href="manageBottles.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
             &larr; Cellar Bottles
           </a>
@@ -658,7 +658,7 @@
                         <?php echo htmlspecialchars($note['status'] ?? 'draft', ENT_QUOTES, 'UTF-8'); ?>
                       </span>
                     </td>
-                    <td style="text-align: right; white-space: nowrap;">
+                    <td class="card-actions-cell" style="text-align: right;">
                       <?php if ($can_edit): ?>
                         <a href="manageTastingNotes.php?mode=edit&note_id=<?php echo (int)$note['note_id']; ?>" class="btn-action btn-secondary" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none;">
                           Edit
