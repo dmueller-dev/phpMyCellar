@@ -208,6 +208,8 @@
     FROM bottles
   ");
   $metrics = $stats_stmt ? $stats_stmt->fetch_assoc() : ['in_cellar' => 0, 'pending_delivery' => 0, 'consumed' => 0, 'total_bottles' => 0];
+  $in_cellar_count = (int)($metrics['in_cellar'] ?? 0);
+  $total_bottles_count = (int)($metrics['total_bottles'] ?? 0);
 
   $csrf_token = generateCSRFToken();
   $page_title = 'Manage Bottles & Inventory - Cellar Administration';
@@ -307,7 +309,7 @@
           </a>
         <?php endif; ?>
         <a href="#bottlesLedgerSection" class="admin-tab-btn" style="color: #555;">
-          📋 Inventory Ledger (<?php echo count($bottles); ?>)
+          📋 Inventory Ledger (<?php echo $in_cellar_count; ?> in cellar)
         </a>
       </div>
 
@@ -501,7 +503,7 @@
                 <option value="">-- Choose Bottle --</option>
                 <?php foreach ($bottles as $b): ?>
                   <option value="<?php echo (int)$b['bottle_id']; ?>" <?php echo ($requested_bottle_id === (int)$b['bottle_id']) ? 'selected' : ''; ?>>
-                    #<?php echo (int)$b['bottle_id']; ?> — <?php echo htmlspecialchars(($b['cellar_name'] ?? 'No Cellar') . ' / ' . ($b['bin_name'] ?? 'No Bin') . ' — ' . getWineName($b['nameconvention'], $b['vintage'], $b['name'], $b['producer'], $b['grape'], $b['vineyard']), ENT_QUOTES, 'UTF-8'); ?>
+                    #<?php echo (int)$b['bottle_id']; ?> — <?php echo htmlspecialchars(($b['cellar_name'] ?? 'No Cellar') . ' / ' . ($b['bin_name'] ?? 'No Bin') . ' — ' . getWineName($b['nameconvention'], $b['vintage'], $b['name'], $b['producer'], $b['grape'], $b['vineyard']), ENT_QUOTES, 'UTF-8'); ?><?php echo (($b['status'] ?? 'in cellar') !== 'in cellar') ? ' [' . strtoupper($b['status']) . ']' : ''; ?>
                   </option>
                 <?php endforeach; ?>
               </select>
@@ -712,9 +714,15 @@
       <div id="bottlesLedgerSection" style="margin-top: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
           <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
-            Quick Cellar Inventory Directory (<?php echo count($bottles); ?> tracked)
+            Quick Cellar Inventory Directory (<span id="ledgerCountDisplay"><?php echo $in_cellar_count; ?></span> in cellar)
           </h3>
-          <input type="text" id="quickSearchBox" class="admin-search-box" style="margin-bottom: 0; max-width: 320px;" placeholder="Search inventory ledger..." onkeyup="filterInventoryTable()" oninput="filterInventoryTable()">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <input type="text" id="quickSearchBox" class="admin-search-box" style="margin-bottom: 0; max-width: 280px;" placeholder="Search inventory ledger..." onkeyup="filterInventoryTable()" oninput="filterInventoryTable()">
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; cursor: pointer; color: #444; white-space: nowrap; user-select: none;">
+              <input type="checkbox" id="toggleOutOfCellar" onchange="filterInventoryTable()" style="margin: 0; cursor: pointer; width: 16px; height: 16px;">
+              <span>Also show bottles no longer in cellar</span>
+            </label>
+          </div>
         </div>
 
         <div class="admin-table-container" style="max-height: 480px; overflow-y: auto;">
@@ -725,17 +733,39 @@
                 <th>Wine Details</th>
                 <th>Storage Bin</th>
                 <th>Vintage</th>
+                <th>Status</th>
                 <th style="text-align: right;">Actions</th>
               </tr>
             </thead>
             <tbody>
               <?php if (empty($bottles)): ?>
                 <tr>
-                  <td colspan="5" style="text-align: center; color: #777; padding: 20px;">No bottles currently recorded.</td>
+                  <td colspan="6" style="text-align: center; color: #777; padding: 20px;">No bottles currently recorded.</td>
                 </tr>
               <?php else: ?>
-                <?php foreach (array_slice($bottles, 0, 100) as $b): ?>
-                  <tr style="<?php echo ($requested_bottle_id === (int)$b['bottle_id']) ? 'background-color: #fff9e6;' : ''; ?>">
+                <?php
+                  $inCellarList = [];
+                  $outOfCellarList = [];
+                  foreach ($bottles as $b) {
+                    if (($b['status'] ?? 'in cellar') === 'in cellar') {
+                      $inCellarList[] = $b;
+                    } else {
+                      $outOfCellarList[] = $b;
+                    }
+                  }
+                  $displayBottles = array_merge(array_slice($inCellarList, 0, 100), array_slice($outOfCellarList, 0, 100));
+                ?>
+                <?php foreach ($displayBottles as $b): 
+                  $isInCellar = (($b['status'] ?? 'in cellar') === 'in cellar');
+                  $rowStyle = ($requested_bottle_id === (int)$b['bottle_id']) ? 'background-color: #fff9e6;' : '';
+                  if (!$isInCellar) {
+                    $rowStyle .= ($rowStyle ? ' ' : '') . 'display: none;';
+                  }
+                ?>
+                  <tr data-status="<?php echo htmlspecialchars($b['status'] ?? 'in cellar', ENT_QUOTES, 'UTF-8'); ?>"
+                      data-in-cellar="<?php echo $isInCellar ? '1' : '0'; ?>"
+                      class="<?php echo $isInCellar ? 'in-cellar-row' : 'out-of-cellar-row'; ?>"
+                      style="<?php echo $rowStyle; ?>">
                     <td data-label="Bottle ID"><strong>#<?php echo (int)$b['bottle_id']; ?></strong></td>
                     <td class="card-primary-cell">
                       <div><strong><?php echo htmlspecialchars(getWineName($b['nameconvention'], $b['vintage'], $b['name'], $b['producer'], $b['grape'], $b['vineyard']), ENT_QUOTES, 'UTF-8'); ?></strong></div>
@@ -746,6 +776,19 @@
                       <div style="font-size: 0.78rem; color: #888;"><?php echo htmlspecialchars($b['bin_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                     </td>
                     <td data-label="Vintage"><?php echo htmlspecialchars($b['vintage'] ?? 'NV', ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td data-label="Status">
+                      <?php if ($isInCellar): ?>
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem; font-weight: bold; background: #e8f5e9; color: #2e7d32; text-transform: uppercase;">In Cellar</span>
+                      <?php elseif ($b['status'] === 'consumed'): ?>
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem; font-weight: bold; background: #fee2e2; color: #991b1b; text-transform: uppercase;">Consumed</span>
+                      <?php elseif ($b['status'] === 'pending delivery'): ?>
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem; font-weight: bold; background: #fff8e1; color: #f57f17; text-transform: uppercase;">Pending</span>
+                      <?php else: ?>
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem; font-weight: bold; background: #f1f5f9; color: #475569; text-transform: uppercase;">
+                          <?php echo htmlspecialchars($b['status'] ?? 'out of cellar', ENT_QUOTES, 'UTF-8'); ?>
+                        </span>
+                      <?php endif; ?>
+                    </td>
                     <td style="text-align: right; white-space: nowrap;">
                       <?php if ($can_edit): ?>
                         <a href="manageBottles.php?mode=edit&bottle_id=<?php echo (int)$b['bottle_id']; ?>" class="btn-action btn-secondary" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none;">
@@ -762,9 +805,9 @@
             </tbody>
           </table>
         </div>
-        <?php if (count($bottles) > 100): ?>
+        <?php if ($in_cellar_count > 100): ?>
           <div style="font-size: 0.82rem; color: #888; margin-top: 8px; text-align: right;">
-            Showing latest 100 bottles. <a href="browseBottles.php" style="color: #0d6efd;">View all in Cellar Browser &rarr;</a>
+            Showing latest 100 bottles in cellar. <a href="browseBottles.php" style="color: #0d6efd;">View all in Cellar Browser &rarr;</a>
           </div>
         <?php endif; ?>
       </div>
@@ -847,14 +890,35 @@
 
   function filterInventoryTable() {
     const searchVal = document.getElementById('quickSearchBox').value.toLowerCase().trim();
+    const showOut = document.getElementById('toggleOutOfCellar') ? document.getElementById('toggleOutOfCellar').checked : false;
     const table = document.getElementById('bottlesLedgerTable');
+    if (!table) return;
     const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
+    let visibleCount = 0;
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       if (row.cells.length < 5) continue;
+
+      const isInCellar = (row.getAttribute('data-in-cellar') === '1');
+      if (!isInCellar && !showOut) {
+        row.style.display = 'none';
+        continue;
+      }
+
       const textContent = row.textContent.toLowerCase();
-      row.style.display = (!searchVal || textContent.includes(searchVal)) ? '' : 'none';
+      const matches = !searchVal || textContent.includes(searchVal);
+      if (matches) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    }
+
+    const countDisplay = document.getElementById('ledgerCountDisplay');
+    if (countDisplay) {
+      countDisplay.textContent = visibleCount;
     }
   }
 </script>

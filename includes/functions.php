@@ -356,14 +356,22 @@ function getBottlesInCellar($conn) {
   }
 }
 
-// Function to get all bottles
-function getBottles($conn) {
+/**
+ * Fetch bottles with cellar, bin, and cuvée details.
+ *
+ * @param mysqli $conn Active database connection.
+ * @param string|null $status Optional bottle status filter (e.g. 'in cellar').
+ * @return array List of bottle records.
+ * @throws Exception If database query fails.
+ */
+function getBottles($conn, ?string $status = null) {
   if (!($conn instanceof mysqli)) {
     throw new Exception("Invalid database connection");
   }
 
   $sql = "select
 		bottles.bottle_id,
+		bottles.status,
     cellars.cellar_name,
     storageBins.bin_name,
 		wines.wine_id,
@@ -380,23 +388,44 @@ function getBottles($conn) {
 	left join variety on wines_master.grape=variety.grape
 	left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
   left join storageBins on bottles.storage_location=storageBins.bin_id
-  left join cellars on storageBins.cellar_id=cellars.cellar_id
-	order by cellars.cellar_name asc, storageBins.bin_name asc, producers.producer asc, wines_master.name asc, wines.vintage desc";
-  $result = $conn->query($sql);
+  left join cellars on storageBins.cellar_id=cellars.cellar_id ";
+
+  if ($status !== null) {
+    $sql .= "where bottles.status = ? ";
+  }
+
+  $sql .= "order by cellars.cellar_name asc, storageBins.bin_name asc, producers.producer asc, wines_master.name asc, wines.vintage desc";
+
+  if ($status !== null) {
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      throw new Exception("Query preparation failed: " . $conn->error);
+    }
+    $stmt->bind_param("s", $status);
+    $stmt->execute();
+    $result = $stmt->get_result();
+  } else {
+    $result = $conn->query($sql);
+  }
 
   if ($result === false) {
     throw new Exception("Query failed: " . $conn->error);
   }
 
   if (method_exists($result, 'fetch_all')) {
-    return $result->fetch_all(MYSQLI_ASSOC);
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
   } else {
     $rows = array();
     while ($row = $result->fetch_assoc()) {
       $rows[] = $row;
     }
-    return $rows;
   }
+
+  if ($status !== null && isset($stmt)) {
+    $stmt->close();
+  }
+
+  return $rows;
 }
 
 // Function to get all name conventions from table displayoptions
