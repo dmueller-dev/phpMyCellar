@@ -2074,6 +2074,11 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   .form-row-3col {
     grid-template-columns: 1fr;
   }
+  .form-row-2col > *,
+  .form-row-3col > * {
+    grid-column: auto !important;
+    min-width: 0;
+  }
 
   /* Dual-Grid Mobile Segmented Switcher */
   .admin-mobile-pane-switch {
@@ -2085,7 +2090,8 @@ li + li:has(> details:not(.vintage-menu-detail)) {
     margin-bottom: 16px;
     border: 1px solid #e2e8f0;
   }
-  .admin-mobile-pane-btn {
+  .admin-mobile-pane-btn,
+  .admin-pane-btn {
     flex: 1;
     padding: 10px 12px;
     border: none;
@@ -2104,7 +2110,8 @@ li + li:has(> details:not(.vintage-menu-detail)) {
     box-sizing: border-box;
     transition: background 0.15s ease, color 0.15s ease;
   }
-  .admin-mobile-pane-btn.active {
+  .admin-mobile-pane-btn.active,
+  .admin-pane-btn.active {
     background: #ffffff;
     color: var(--secondary-accent, firebrick);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -2160,15 +2167,20 @@ li + li:has(> details:not(.vintage-menu-detail)) {
   }
 
   .admin-table-container tr {
-    display: block !important;
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 8px !important;
-    margin-bottom: 12px !important;
-    padding: 12px 14px !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-    box-sizing: border-box !important;
+    display: block;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
     position: relative;
+  }
+
+  .admin-table-container tr[style*="display: none"],
+  .admin-table-container tr.is-hidden {
+    display: none !important;
   }
 
   /* Highlight or selected row accent */
@@ -2361,13 +2373,13 @@ li + li:has(> details:not(.vintage-menu-detail)) {
 }
 
 /* Desktop guarantees for mobile-only controls */
-.admin-mobile-pane-switch {
-  display: none;
-}
-.mobile-jump-bar {
-  display: none;
-}
 @media screen and (min-width: 721px) {
+  .admin-mobile-pane-switch {
+    display: none !important;
+  }
+  .mobile-jump-bar {
+    display: none !important;
+  }
   .admin-dual-pane {
     display: block !important;
   }
