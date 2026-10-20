@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AGENTS.md` coding directives and standards for agentic programming, including strict cookie minimisation directives restricting usage to anonymous session cookies for logged-in users.
 
 ### Changed
-- Configured quick inventory ledger in `backend/manageBottles.php` to display active in-cellar bottles by default, accompanied by an interactive status toggle checkbox and dynamic status badges to inspect bottles no longer in the cellar.
+- Configured quick inventory ledger in `backend/manageBottles.php` to display active in-cellar bottles by default with full directory search inclusion by default and configurable limit controls (100, 250, 500, 1000, all), accompanied by an interactive status toggle checkbox, dynamic status badges, and an adaptive count label displaying "Y bottles" when out-of-cellar inventory is inspected.
 - Streamlined the top navigation 'Admin' dropdown menu (`includes/header.php`) to focus strictly on essential, high-frequency actions (Browse bottles, Manage bottles, Manage orders; Browse wines, Add wine, Add wine master; Site settings, Manage users) grouped into clear semantic sections.
 - Deduplicated all links across the Admin Hub (`backend/index.php`) domain cards and Terroir table, wrapping each entry in a single full-row anchor element with unambiguous naming and distinct destination URLs.
 - Converted all 27 legacy standalone `add*.php` and `edit*.php` files in `/backend/` into backwards-compatible HTTP 301 redirect shims with query parameter preservation.

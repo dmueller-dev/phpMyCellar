@@ -30,6 +30,16 @@
   $requested_bottle_id = filter_input(INPUT_GET, 'bottle_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'edit_bottle', FILTER_VALIDATE_INT);
   $mode = filter_input(INPUT_GET, 'mode', FILTER_DEFAULT) ?? '';
 
+  // Ledger display limit (100, 250, 500, 1000, or 'all')
+  $ledger_limit = sanitizeInput($_GET['limit'] ?? 'all');
+  if ($ledger_limit !== 'all') {
+    $ledger_limit = (int)$ledger_limit;
+    if (!in_array($ledger_limit, [100, 250, 500, 1000], true)) {
+      $ledger_limit = 'all';
+    }
+  }
+  $initial_show_out = !empty($_GET['all_bottles']) || !empty($_GET['include_out']) || !empty($_GET['show_all']);
+
   if ($requested_bottle_id && $can_edit) {
     $mode = 'edit';
   } elseif ($mode === 'edit' && $can_edit) {
@@ -710,16 +720,27 @@
         </div>
       <?php endif; ?>
 
+      <?php
+        $inCellarCount = 0;
+        foreach ($bottles as $b) {
+          if (($b['status'] ?? 'in cellar') === 'in cellar') {
+            $inCellarCount++;
+          }
+        }
+        $totalBottlesCount = count($bottles);
+        $initial_display_count = $initial_show_out ? ($ledger_limit === 'all' ? $totalBottlesCount : min($totalBottlesCount, $ledger_limit * 2)) : ($ledger_limit === 'all' ? $inCellarCount : min($inCellarCount, $ledger_limit));
+        $initial_display_label = $initial_show_out ? ($initial_display_count === 1 ? 'bottle' : 'bottles') : 'in cellar';
+      ?>
       <!-- Quick Inventory Directory / Lookup -->
       <div id="bottlesLedgerSection" style="margin-top: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
           <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
-            Quick Cellar Inventory Directory (<span id="ledgerCountDisplay"><?php echo $in_cellar_count; ?></span> in cellar)
+            Quick Cellar Inventory Directory (<span id="ledgerCountDisplay"><?php echo $initial_display_count; ?></span> <span id="ledgerCountLabel"><?php echo $initial_display_label; ?></span>)
           </h3>
           <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <input type="text" id="quickSearchBox" class="admin-search-box" style="margin-bottom: 0; max-width: 280px;" placeholder="Search inventory ledger..." onkeyup="filterInventoryTable()" oninput="filterInventoryTable()">
             <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; cursor: pointer; color: #444; white-space: nowrap; user-select: none;">
-              <input type="checkbox" id="toggleOutOfCellar" onchange="filterInventoryTable()" style="margin: 0; cursor: pointer; width: 16px; height: 16px;">
+              <input type="checkbox" id="toggleOutOfCellar" onchange="filterInventoryTable()" <?php echo $initial_show_out ? 'checked' : ''; ?> style="margin: 0; cursor: pointer; width: 16px; height: 16px;">
               <span>Also show bottles no longer in cellar</span>
             </label>
           </div>
@@ -753,12 +774,16 @@
                       $outOfCellarList[] = $b;
                     }
                   }
-                  $displayBottles = array_merge(array_slice($inCellarList, 0, 100), array_slice($outOfCellarList, 0, 100));
+                  if ($ledger_limit === 'all') {
+                    $displayBottles = array_merge($inCellarList, $outOfCellarList);
+                  } else {
+                    $displayBottles = array_merge(array_slice($inCellarList, 0, $ledger_limit), array_slice($outOfCellarList, 0, $ledger_limit));
+                  }
                 ?>
                 <?php foreach ($displayBottles as $b): 
                   $isInCellar = (($b['status'] ?? 'in cellar') === 'in cellar');
                   $rowStyle = ($requested_bottle_id === (int)$b['bottle_id']) ? 'background-color: #fff9e6;' : '';
-                  if (!$isInCellar) {
+                  if (!$isInCellar && !$initial_show_out) {
                     $rowStyle .= ($rowStyle ? ' ' : '') . 'display: none;';
                   }
                 ?>
@@ -805,11 +830,35 @@
             </tbody>
           </table>
         </div>
-        <?php if ($in_cellar_count > 100): ?>
-          <div style="font-size: 0.82rem; color: #888; margin-top: 8px; text-align: right;">
-            Showing latest 100 bottles in cellar. <a href="browseBottles.php" style="color: #0d6efd;">View all in Cellar Browser &rarr;</a>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.85rem; color: #666; margin-top: 10px;">
+          <div>
+            Showing:
+            <?php 
+              $limitOptions = [100, 250, 500, 1000, 'all'];
+              foreach ($limitOptions as $idx => $opt):
+                $isCurrent = ($ledger_limit === $opt);
+                $optParams = $_GET;
+                if ($opt === 'all') {
+                  unset($optParams['limit']);
+                } else {
+                  $optParams['limit'] = $opt;
+                }
+                $optUrl = 'manageBottles.php?' . http_build_query($optParams) . '#bottlesLedgerSection';
+                $label = ($opt === 'all') ? 'All (default)' : number_format($opt);
+            ?>
+              <?php if ($idx > 0): ?> &middot; <?php endif; ?>
+              <?php if ($isCurrent): ?>
+                <strong style="color: var(--secondary-accent, firebrick); font-weight: 700;"><?php echo $label; ?></strong>
+              <?php else: ?>
+                <a href="<?php echo htmlspecialchars($optUrl, ENT_QUOTES, 'UTF-8'); ?>" style="color: #0d6efd; text-decoration: none;"><?php echo $label; ?></a>
+              <?php endif; ?>
+            <?php endforeach; ?>
+            bottles
           </div>
-        <?php endif; ?>
+          <div>
+            <a href="browseBottles.php" style="color: #0d6efd; text-decoration: none;">View all in Cellar Browser &rarr;</a>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -919,6 +968,11 @@
     const countDisplay = document.getElementById('ledgerCountDisplay');
     if (countDisplay) {
       countDisplay.textContent = visibleCount;
+    }
+
+    const labelDisplay = document.getElementById('ledgerCountLabel');
+    if (labelDisplay) {
+      labelDisplay.textContent = showOut ? (visibleCount === 1 ? 'bottle' : 'bottles') : 'in cellar';
     }
   }
 </script>
