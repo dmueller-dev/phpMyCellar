@@ -112,7 +112,7 @@
            COUNT(DISTINCT wm.master_id) AS master_count
     FROM regions r
     LEFT JOIN subregions sr ON r.region_id = sr.region_id
-    LEFT JOIN x_wine_master wm ON r.region_id = wm.region_id
+    LEFT JOIN wines_master wm ON r.region_id = wm.region_id
     GROUP BY r.region_id, r.region, r.country, r.region_desc
     ORDER BY r.country ASC, r.region ASC
   ");

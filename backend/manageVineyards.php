@@ -119,7 +119,7 @@
     FROM vineyards v
     JOIN regions r ON v.region_id = r.region_id
     LEFT JOIN appellations a ON v.appellation_id = a.appellation_id
-    LEFT JOIN x_wine_master wm ON v.vineyard_id = wm.vineyard_id
+    LEFT JOIN wines_master wm ON v.vineyard_id = wm.vineyard_id
     GROUP BY v.vineyard_id, v.vineyard, v.region_id, v.appellation_id, v.vineyard_desc, r.region, r.country, a.appellation
     ORDER BY r.country ASC, r.region ASC, v.vineyard ASC
   ");
