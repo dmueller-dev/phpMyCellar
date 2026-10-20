@@ -6874,12 +6874,15 @@ function getBackendComments($conn, ?string $status = null, ?string $type = null,
   }
 
   if ($search !== null && trim($search) !== '') {
-    $where[] = "(c.{$contentCol} LIKE ? OR u.username LIKE ? OR u.displayname LIKE ?)";
+    $where[] = "(c.{$contentCol} LIKE ? OR u.username LIKE ? OR u.displayname LIKE ? OR wm.name LIKE ? OR p.producer LIKE ? OR bp.title LIKE ?)";
     $like = '%' . trim($search) . '%';
     $params[] = $like;
     $params[] = $like;
     $params[] = $like;
-    $types .= 'sss';
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $types .= 'ssssss';
   }
 
   $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -6995,12 +6998,15 @@ function getBackendCommentsCount($conn, ?string $status = null, ?string $type = 
   }
 
   if ($search !== null && trim($search) !== '') {
-    $where[] = "(c.{$contentCol} LIKE ? OR u.username LIKE ? OR u.displayname LIKE ?)";
+    $where[] = "(c.{$contentCol} LIKE ? OR u.username LIKE ? OR u.displayname LIKE ? OR wm.name LIKE ? OR p.producer LIKE ? OR bp.title LIKE ?)";
     $like = '%' . trim($search) . '%';
     $params[] = $like;
     $params[] = $like;
     $params[] = $like;
-    $types .= 'sss';
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $types .= 'ssssss';
   }
 
   $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -7009,8 +7015,13 @@ function getBackendCommentsCount($conn, ?string $status = null, ?string $type = 
           FROM comments c
           LEFT JOIN users u ON c.user_id = u.user_id
           LEFT JOIN x_comments_blogposts xcb ON c.comment_id = xcb.comment_id
+          LEFT JOIN blogposts bp ON xcb.blog_id = bp.blog_id
           LEFT JOIN x_comments_tnotes xct ON c.comment_id = xct.comment_id
+          LEFT JOIN tnotes tn ON xct.note_id = tn.note_id
           LEFT JOIN x_comments_wines xcw ON c.comment_id = xcw.comment_id
+          LEFT JOIN wines w ON COALESCE(xcw.wine_id, tn.wine_id) = w.wine_id
+          LEFT JOIN wines_master wm ON w.master_id = wm.master_id
+          LEFT JOIN producers p ON wm.producer_id = p.producer_id
           {$whereClause}";
 
   try {

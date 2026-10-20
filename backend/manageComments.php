@@ -288,7 +288,7 @@
             <option value="wine" <?php echo ($typeFilter === 'wine') ? 'selected' : ''; ?>>Wine Database</option>
           </select>
 
-          <input type="text" name="q" value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Search comment or user..." style="padding: 5px 8px; font-size: 0.85rem; width: 180px;">
+          <input type="text" id="commentSearchBox" name="q" value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Search comment, user, wine, or story..." oninput="filterCommentsTable()" onkeyup="filterCommentsTable()" style="padding: 5px 8px; font-size: 0.85rem; width: 220px;">
           <button type="submit" class="btn-action" style="padding: 5px 10px; font-size: 0.85rem;">Search</button>
           <?php if (!empty($search) || $typeFilter !== 'all'): ?>
             <a href="manageComments.php?status=<?php echo htmlspecialchars($statusFilter, ENT_QUOTES, 'UTF-8'); ?>" style="font-size: 0.82rem; color: #d32f2f; text-decoration: none;">Reset</a>
@@ -302,7 +302,7 @@
         <p style="color: #666; font-style: italic; padding: 20px 0;">No comments found matching the active filters.</p>
       <?php else: ?>
         <div class="admin-table-container">
-          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+          <table id="commentsTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
             <thead>
               <tr style="background-color: #f7f7f7; text-align: left; border-bottom: 2px solid #ddd;">
                 <th style="padding: 8px 10px; width: 60px;">ID</th>
@@ -437,5 +437,26 @@
     </div>
   </div>
 </div>
+
+<script>
+/**
+ * Instant live filter for comments table rows on current view.
+ */
+function filterCommentsTable() {
+  const input = document.getElementById('commentSearchBox');
+  const table = document.getElementById('commentsTable');
+  if (!input || !table) return;
+
+  const searchVal = input.value.toLowerCase().trim();
+  const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (row.cells.length < 5) continue;
+    const textContent = row.textContent.toLowerCase();
+    row.style.display = (!searchVal || textContent.includes(searchVal)) ? '' : 'none';
+  }
+}
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
