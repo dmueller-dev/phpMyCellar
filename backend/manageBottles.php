@@ -446,10 +446,10 @@
                 <label style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9rem;">
                   Drinking Window (Years):
                 </label>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <input type="text" name="drink_from" maxlength="4" placeholder="From" style="flex: 1; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center;">
+                <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                  <input type="text" name="drink_from" maxlength="4" placeholder="From" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
                   <span>&ndash;</span>
-                  <input type="text" name="drink_through" maxlength="4" placeholder="To" style="flex: 1; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center;">
+                  <input type="text" name="drink_through" maxlength="4" placeholder="To" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
                 </div>
               </div>
 
@@ -639,10 +639,10 @@
                   <label style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9rem;">
                     Drinking Window (Years):
                   </label>
-                  <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="text" name="drink_from" maxlength="4" value="<?php echo htmlspecialchars($selected_bottle['drink_from'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="From" style="flex: 1; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center;">
+                  <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                    <input type="text" name="drink_from" maxlength="4" value="<?php echo htmlspecialchars($selected_bottle['drink_from'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="From" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
                     <span>&ndash;</span>
-                    <input type="text" name="drink_through" maxlength="4" value="<?php echo htmlspecialchars($selected_bottle['drink_through'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="To" style="flex: 1; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center;">
+                    <input type="text" name="drink_through" maxlength="4" value="<?php echo htmlspecialchars($selected_bottle['drink_through'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="To" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
                   </div>
                 </div>
 
@@ -714,7 +714,7 @@
           <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
             Quick Cellar Inventory Directory (<?php echo count($bottles); ?> tracked)
           </h3>
-          <input type="text" id="quickSearchBox" class="admin-search-box" style="margin-bottom: 0; max-width: 320px;" placeholder="Search inventory ledger..." onkeyup="filterInventoryTable()">
+          <input type="text" id="quickSearchBox" class="admin-search-box" style="margin-bottom: 0; max-width: 320px;" placeholder="Search inventory ledger..." onkeyup="filterInventoryTable()" oninput="filterInventoryTable()">
         </div>
 
         <div class="admin-table-container" style="max-height: 480px; overflow-y: auto;">

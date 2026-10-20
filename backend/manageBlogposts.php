@@ -439,7 +439,7 @@
           <h3 style="margin: 0; color: #333; font-size: 1.15rem;">
             Story Directory (<?php echo count($accessible_posts); ?> articles)
           </h3>
-          <input type="text" id="storySearchBox" class="admin-search-box" style="margin-bottom: 0; max-width: 320px;" placeholder="Search stories..." onkeyup="filterStoriesTable()">
+          <input type="text" id="storySearchBox" class="admin-search-box" style="margin-bottom: 0; max-width: 320px;" placeholder="Search stories..." onkeyup="filterStoriesTable()" oninput="filterStoriesTable()">
         </div>
 
         <div class="admin-table-container" style="max-height: 480px; overflow-y: auto;">
