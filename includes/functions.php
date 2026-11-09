@@ -566,10 +566,11 @@ function getStorageLocations($conn) {
 }
 
 /**
- * Function to get all tasting notes.
+ * Retrieve all tasting notes with joined wine, producer, region, vineyard, and author metadata.
  *
- * @param mysqli $conn
- * @return mysqli_result
+ * @param mysqli $conn Active database connection.
+ * @return array List of associative arrays representing tasting note records.
+ * @throws Exception If the database connection is invalid or the query fails.
  * @note The 'dmpts' key in returned rows is deprecated since v1.0.1 and scheduled for removal in v2.0.0; use 'pts_20'.
  */
 function getTastingNotes($conn) {
@@ -578,6 +579,7 @@ function getTastingNotes($conn) {
   }
 
   $sql = "select tnotes.note_id, tnotes.user_id, tnotes.status, tnotes.tasting_date, tnotes.pts_20, tnotes.pts_100, tnotes.pts_20 as dmpts, tnotes.wsetpts, tnotes.blind,
+    tnotes.favourite, tnotes.flawed_yn, tnotes.img, tnotes.img_class, tnotes.drinkwindow_min, tnotes.drinkwindow_max,
     wines.wine_id, wines.master_id, wines.vintage, wines_master.nameconvention, wines_master.name,
     wines_master.grape, producers.producer, regions.country, regions.region, vineyards.vineyard,
     users.initials
