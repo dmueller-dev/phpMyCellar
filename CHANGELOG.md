@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Transitional RBAC permission fallbacks (e.g. `manage_privileges` falling back to `moderate_comments` or `manage_rating_scales`) in `includes/init.php` and `getUserEffectivePrivileges()`; scheduled for removal in v2.0.0 in favour of strict granular role assignments.
 
 ### Fixed
+- Updated the "Edit tasting note" navigation link in `includes/header.php` to point directly to `/backend/manageTastingNotes.php?mode=edit` with accurate active menu item highlighting.
 - Restored missing functionality and full behavioural parity in `backend/manageTastingNotes.php` against legacy `addTastingNote.php`, `blindTasting.php`, and `editTastingNote.php`:
   - Restored image filename (`img`) and image formatting/alignment (`img_class`: `inline left`, `block center`) form fields across standard, blind, and edit modes.
   - Restored the favourite wine designation selector (`favourite`: `yes` / `no`) and added a favourite indicator in the Tasting Journal Directory.

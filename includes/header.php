@@ -286,14 +286,14 @@
               $isBlindNoteActive = ($currentPath == '/backend/manageTastingNotes.php' && isset($_GET['mode']) && $_GET['mode'] === 'blind') ||
                                    ($currentPath == '/backend/blindTasting.php') ||
                                    ($currentPath == '/backend/addTastingNote.php' && isset($_GET['mode']) && $_GET['mode'] === 'blind');
-              $isNormalNoteActive = ($currentPath == '/backend/manageTastingNotes.php' && (!isset($_GET['mode']) || $_GET['mode'] !== 'blind') && !isset($_GET['note_id'])) ||
+              $isNormalNoteActive = ($currentPath == '/backend/manageTastingNotes.php' && (!isset($_GET['mode']) || ($_GET['mode'] !== 'blind' && $_GET['mode'] !== 'edit')) && !isset($_GET['note_id'])) ||
                                     ($currentPath == '/backend/addTastingNote.php' && (!isset($_GET['mode']) || $_GET['mode'] !== 'blind'));
               echo "<li><a class='" . ($isNormalNoteActive ? 'active' : '') . "' href='/backend/manageTastingNotes.php' title='New tasting note'>Write tasting note</a></li>" .
                    "<li><a class='" . ($isBlindNoteActive ? 'active' : '') . "' href='/backend/manageTastingNotes.php?mode=blind' title='New blind tasting note'>Write <em>blind</em> tasting note</a></li>";
             }
             if ($canEditNote) {
-              $isEditNoteActive = ($currentPath == '/backend/manageTastingNotes.php' && isset($_GET['note_id'])) || ($currentPath == '/backend/editTastingNote.php');
-              echo "<li><a class='" . ($isEditNoteActive ? 'active' : '') . "' href='/backend/manageTastingNotes.php' title='Edit tasting notes'>Edit tasting note</a></li>";
+              $isEditNoteActive = ($currentPath == '/backend/manageTastingNotes.php' && ((isset($_GET['mode']) && $_GET['mode'] === 'edit') || isset($_GET['note_id']))) || ($currentPath == '/backend/editTastingNote.php');
+              echo "<li><a class='" . ($isEditNoteActive ? 'active' : '') . "' href='/backend/manageTastingNotes.php?mode=edit' title='Edit tasting notes'>Edit tasting note</a></li>";
             }
             if ($canAddBlog) {
               $isAddBlogActive = ($currentPath == '/backend/manageBlogposts.php' && !isset($_GET['blogpost_id'])) || ($currentPath == '/backend/addBlogpost.php');
