@@ -17,6 +17,8 @@ This document establishes the official instructions, standards, and conventions 
 - **British English (`en-GB`) Required:** All code comments, docblocks, documentation, user manuals, UI labels, error messages, and commit messages **must** use British English.
   - Examples: *colour* (not color), *customisation* (not customization), *standardise* (not standardize), *behaviour* (not behavior), *prioritise* (not prioritize), *synchroniser* (not synchronizer), *initialise* (not initialize), *licence* (noun) / *license* (verb), *catalogue* (not catalog).
 - **Existing Database Fields:** Note that some legacy database columns (e.g. `site_settings.accent_color`) retain their historic spelling for backwards compatibility. Do not rename database columns without an approved migration plan. All new comments and documentation discussing them must use British English (*accent colour*).
+- Never use em-dashes (—) or en-dashes (–). Use a spaced standard ASCII hyphen ( - ) for parenthetical breaks instead.
+- For quotes, use straight double quotes (") only. When using an apostrophe or single quote, use standard ASCII straight apostrophes (') only. Do not use curly smart quotes, backticks, or typographic punctuation.
 
 ---
 
