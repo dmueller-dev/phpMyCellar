@@ -4,7 +4,20 @@
   }
 
   if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+      || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    session_set_cookie_params([
+      'lifetime' => 0,
+      'path'     => '/',
+      'domain'   => '',
+      'secure'   => $isHttps,
+      'httponly' => true,
+      'samesite' => 'Lax'
+    ]);
+    // Only resume an existing session cookie so non-authenticated visitors receive no cookies.
+    if (isset($_COOKIE[session_name()])) {
+      session_start();
+    }
   }
 
   $envPath = __DIR__ . '/../.env';
@@ -22,12 +35,13 @@
   }
 
   $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+  $dbPort = isset($_ENV['DB_PORT']) && is_numeric($_ENV['DB_PORT']) ? (int)$_ENV['DB_PORT'] : 3306;
   $dbName = $_ENV['DB_NAME'] ?? '';
   $dbUser = $_ENV['DB_USER'] ?? '';
   $dbPass = $_ENV['DB_PASS'] ?? '';
 
   mysqli_report(MYSQLI_REPORT_OFF);
-  $mysqli = @new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+  $mysqli = @new mysqli($dbHost, $dbUser, $dbPass, $dbName, $dbPort);
 
   if ($mysqli->connect_error) {
     if (!file_exists($lockPath) && file_exists($installWizard)) {

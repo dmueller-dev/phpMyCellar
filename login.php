@@ -4,6 +4,11 @@
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/includes/init.php';
 
+  // Ensure a session is active on the login page for CSRF token generation and authentication
+  if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+  }
+
   // Generate the token for the form
   $csrf_token = generateCSRFToken();
 
@@ -16,22 +21,24 @@
       global $mysqli, $conn;
       
       // Username and password variables
-      $username = $_POST['username'];
-      $password = $_POST['password'];
+      $username = $_POST['username'] ?? '';
+      $password = $_POST['password'] ?? '';
 
       // Perform query using prepared statement to prevent SQL injection
       $stmt = $mysqli->prepare("SELECT user_id, password, role, initials FROM users WHERE username = ?");
-      $stmt->bind_param("s", $username);
-      $stmt->execute();
-      $result = $stmt->get_result();
+      if ($stmt) {
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-      // Validate user
-      if ($result->num_rows == 1) {
-        $user = $result->fetch_assoc();
-        $hashedPassword = $user['password'];
+        // Validate user
+        if ($result && $result->num_rows == 1) {
+          $user = $result->fetch_assoc();
+          $hashedPassword = $user['password'];
 
-        // Verify the password
+          // Verify the password
           if (password_verify($password, $hashedPassword)) {
+              session_regenerate_id(true);
               $_SESSION['user_id'] = $user['user_id'];
               $_SESSION['role'] = $user['role'];
               $_SESSION['initials'] = $user['initials'];
@@ -65,10 +72,13 @@
           } else {
               $error = "Invalid username or password";
           }
+        } else {
+          $error = "Invalid username or password";
+        }
+        $stmt->close();
       } else {
-        $error = "Invalid username or password";
+        $error = "Authentication service temporarily unavailable.";
       }
-      $stmt->close();
     }
   }
 ?>
