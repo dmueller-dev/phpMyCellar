@@ -659,6 +659,9 @@ function getWineSearcherUrl($wine_name) {
 function getCountryDetails($conn, $country) {
   $sql = "select * from countries where country = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("s", $country);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -668,6 +671,9 @@ function getCountryDetails($conn, $country) {
 function getRegionDetails($conn, $region_id) {
   $sql = "select * from regions where region_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("i", $region_id);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -677,6 +683,9 @@ function getRegionDetails($conn, $region_id) {
 function getSubregionDetails($conn, $subregion_id) {
   $sql = "select * from subregions where subregion_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("i", $subregion_id);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -686,6 +695,9 @@ function getSubregionDetails($conn, $subregion_id) {
 function getAppellationDetails($conn, $appellation_id) {
   $sql = "select * from appellations where appellation_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("i", $appellation_id);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -695,6 +707,9 @@ function getAppellationDetails($conn, $appellation_id) {
 function getVineyardDetails($conn, $vineyard_id) {
   $sql = "select * from vineyards where vineyard_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("i", $vineyard_id);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -704,6 +719,9 @@ function getVineyardDetails($conn, $vineyard_id) {
 function getProducerDetails($conn, $producer_id) {
   $sql = "select * from producers where producer_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("i", $producer_id);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -713,6 +731,9 @@ function getProducerDetails($conn, $producer_id) {
 function getMasterDetails($conn, $master_id) {
   $sql = "select * from wines_master where master_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("i", $master_id);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -722,6 +743,9 @@ function getMasterDetails($conn, $master_id) {
 function getWineDetails($conn, $wine_id) {
   $sql = "select * from wines where wine_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("i", $wine_id);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -760,6 +784,9 @@ function getBottleDetails($conn, $bottle_id) {
 	left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
   where bottle_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("i", $bottle_id);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -769,6 +796,9 @@ function getBottleDetails($conn, $bottle_id) {
 function getNoteDetails($conn, $note_id) {
   $sql = "select * from tnotes where note_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return null;
+  }
   $stmt->bind_param("i", $note_id);
   $stmt->execute();
   return $stmt->get_result()->fetch_assoc();
@@ -778,6 +808,9 @@ function getNoteDetails($conn, $note_id) {
 function checkCountryExists($conn, $country) {
   $sql = "select 1 from countries where country = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("s", $country);
   $stmt->execute();
   return $stmt->get_result()->num_rows > 0;
@@ -790,6 +823,9 @@ function updateCountry($conn, $country, $country_desc) {
   }
   $sql = "update countries set country_desc = ? where country = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("ss", $country_desc, $country);
   return $stmt->execute();
 }
@@ -801,6 +837,9 @@ function updateRegion($conn, $region_id, $region, $country, $region_desc) {
   }
   $sql = "update regions set region = ?, country = ?, region_desc = ? where region_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("sssi", $region, $country, $region_desc, $region_id);
   return $stmt->execute();
 }
@@ -809,6 +848,9 @@ function updateRegion($conn, $region_id, $region, $country, $region_desc) {
 function updateSubregion($conn, $subregion_id, $region_id, $subregion, $subregion_desc) {
   $sql = "update subregions set subregion = ?, region_id = ?, subregion_desc = ? where subregion_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("sisi", $subregion, $region_id, $subregion_desc, $subregion_id);
   return $stmt->execute();
 }
@@ -817,15 +859,21 @@ function updateSubregion($conn, $subregion_id, $region_id, $subregion, $subregio
 function updateAppellation($conn, $appellation_id, $region_id, $appellation, $appellation_desc) {
   $sql = "update appellations set appellation = ?, region_id = ?, appellation_desc = ? where appellation_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("sisi", $appellation, $region_id, $appellation_desc, $appellation_id);
   return $stmt->execute();
 }
 
 // Function to update vineyard
-function updateVineyard($conn, $vineyard_id, $appellation_id = null, $region_id, $vineyard, $vineyard_desc) {
+function updateVineyard($conn, $vineyard_id, $appellation_id, $region_id, $vineyard, $vineyard_desc) {
   if ($appellation_id=="") { $appellation_id=null; }
   $sql = "update vineyards set vineyard = ?, region_id = ?, appellation_id = ?, vineyard_desc = ? where vineyard_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("siisi", $vineyard, $region_id, $appellation_id, $vineyard_desc, $vineyard_id);
   return $stmt->execute();
 }
@@ -833,6 +881,9 @@ function updateVineyard($conn, $vineyard_id, $appellation_id = null, $region_id,
 function updateProducer($conn, $producer_id, $region_id, $producer, $address, $producer_desc) {
   $sql = "update producers set producer = ?, region_id = ?, address = ?, producer_desc = ? where producer_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("sissi", $producer, $region_id, $address, $producer_desc, $producer_id);
   return $stmt->execute();
 }
@@ -842,6 +893,9 @@ function updateWine($conn, $wine_id, $master_id, $vintage, $wine_desc, $ct_id) {
   if (empty($ct_id) || $ct_id=="") { $ct_id=null; }
   $sql = "update wines set master_id = ?, vintage = ?, wine_desc = ?, ct_id = ? where wine_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("iisii", $master_id, $vintage, $wine_desc, $ct_id, $wine_id);
   return $stmt->execute();
 }
@@ -852,6 +906,9 @@ function updateMaster($conn, $master_id, $producer_id, $region_id, $subregion_id
   if ($vineyard_id=="") { $vineyard_id=null; }
   $sql = "update wines_master set producer_id = ?, region_id = ?, subregion_id = ?, appellation_id = ?, vineyard_id = ?, name = ?, cuvee_yn = ?, grape = ?, colour = ?, style = ?, nameconvention = ? where master_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("iiiiissssssi", $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id, $name, $cuvee_yn, $variety, $colour, $style, $nameconvention, $master_id);
   return $stmt->execute();
 }
@@ -892,10 +949,16 @@ function updateBottle($conn, $bottle_id, $wine_id, $format, $bin_id, $store_id, 
   if (hasBottlesRestrictedColumn($conn)) {
     $sql = "update bottles set wine_id = ?, format = ?, storage_location = ?, purchased_from = ?, purchase_date = ?, purchase_price = ?, arrival_date = ?, status = ?, drink_from = ?, drink_through = ?, consumption_date = ?, consumption_note = ?, for_sale = ?, note_id = ?, restricted = ? where bottle_id = ?";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("isiisdssiisssiii", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted_val, $bottle_id);
   } else {
     $sql = "update bottles set wine_id = ?, format = ?, storage_location = ?, purchased_from = ?, purchase_date = ?, purchase_price = ?, arrival_date = ?, status = ?, drink_from = ?, drink_through = ?, consumption_date = ?, consumption_note = ?, for_sale = ?, note_id = ? where bottle_id = ?";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("isiisdssiisssii", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $bottle_id);
   }
   return $stmt->execute();
@@ -942,6 +1005,9 @@ function updateTastingNote($conn, $note_id, $wine_id, $tasting_date, $user_id, $
 
   $sql = "UPDATE tnotes SET wine_id = ?, tasting_date = ?, user_id = ?, tasting_note = ?, flawed_yn = ?, pts_20 = ?, pts_100 = ?, wset_balance = ?, wset_length = ?, wset_intensity = ?, wset_complexity = ?, wsetpts = ?, drinkwindow_min = ?, drinkwindow_max = ?, status = ?, blind = ?, img = ?, img_class = ?, favourite = ? WHERE note_id = ?";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("isissiidddddiisssssi", $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $pts_20, $pts_100, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drink_from, $drink_through, $status, $blind, $img, $img_class, $favourite, $note_id);
   return $stmt->execute();
 }
@@ -952,12 +1018,18 @@ function insertCountry($conn, $country, $country_desc = null) {
     // SQL without country_desc
     $sql = "INSERT INTO countries (country) VALUES (?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("s", $country);
   } else {
     // SQL with country_desc
     if ($country_desc=='' || empty($country_desc)) { $country_desc = null; }
     $sql = "INSERT INTO countries (country, country_desc) VALUES (?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("ss", $country, $country_desc);
   }
   return $stmt->execute();
@@ -972,12 +1044,18 @@ function insertRegion($conn, $region, $country, $region_desc = null) {
     // SQL without region_desc
     $sql = "INSERT INTO regions (region, country) VALUES (?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("ss", $region, $country);
   } else {
     // SQL with region_desc
     if ($region_desc=='' || empty($region_desc)) { $region_desc = null; }
     $sql = "INSERT INTO regions (region, country, region_desc) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("sss", $region, $country, $region_desc);
   }
   return $stmt->execute();
@@ -989,12 +1067,18 @@ function insertSubregion($conn, $subregion, $region_id, $subregion_desc = null) 
     // SQL without subregion_desc
     $sql = "INSERT INTO subregions (subregion, region_id) VALUES (?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("si", $subregion, $region_id);
   } else {
     // SQL with subregion_desc
     if ($subregion_desc=='' || empty($subregion_desc)) { $subregion_desc = null; }
     $sql = "INSERT INTO subregions (subregion, region_id, subregion_desc) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("sis", $subregion, $region_id, $subregion_desc);
   }
   return $stmt->execute();
@@ -1006,12 +1090,18 @@ function insertAppellation($conn, $appellation, $region_id, $appellation_desc = 
     // SQL without appellation_desc
     $sql = "INSERT INTO appellations (appellation, region_id) VALUES (?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("si", $appellation, $region_id);
   } else {
     // SQL with appellation_desc
     if ($appellation_desc=='' || empty($appellation_desc)) { $appellation_desc = null; }
     $sql = "INSERT INTO appellations (appellation, region_id, appellation_desc) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("sis", $appellation, $region_id, $appellation_desc);
   }
   return $stmt->execute();
@@ -1024,6 +1114,9 @@ function insertVineyard($conn, $vineyard, $region_id, $appellation_id = null, $v
     // SQL without vineyard_desc
     $sql = "INSERT INTO vineyards (vineyard, region_id, appellation_id) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("sii", $vineyard, $region_id, $appellation_id);
   } else {
     // SQL with vineyard_desc
@@ -1031,6 +1124,9 @@ function insertVineyard($conn, $vineyard, $region_id, $appellation_id = null, $v
     if ($vineyard_desc=='' || empty($vineyard_desc)) { $vineyard_desc = null; }
     $sql = "INSERT INTO vineyards (vineyard, region_id, appellation_id, vineyard_desc) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("siis", $vineyard, $region_id, $appellation_id, $vineyard_desc);
   }
   return $stmt->execute();
@@ -1042,17 +1138,23 @@ function insertProducer($conn, $producer, $region_id, $address = null, $producer
   if ($producer_desc=='' || empty($producer_desc)) { $producer_desc = null; }
   $sql = "INSERT INTO producers (producer, region_id, address, producer_desc) VALUES (?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("siss", $producer, $region_id, $address, $producer_desc);
   return $stmt->execute();
 }
 
 // Function to insert new wine master
-function insertWineMaster($conn, $name, $nameconvention, $producer_id, $region_id, $subregion_id = null, $appellation_id = null, $vineyard_id = null, $grape, $cuvee_yn, $colour, $style) {
+function insertWineMaster($conn, $name, $nameconvention, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id, $grape, $cuvee_yn, $colour, $style) {
   if ($subregion_id=='' || empty($subregion_id)) { $subregion_id = null; }
   if ($appellation_id=='' || empty($appellation_id)) { $appellation_id = null; }
   if ($vineyard_id=='' || empty($vineyard_id)) { $vineyard_id = null; }
   $sql = "INSERT INTO wines_master (name, nameconvention, producer_id, region_id, subregion_id, appellation_id, vineyard_id, grape, cuvee_yn, colour, style) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("ssiiiiissss", $name, $nameconvention, $producer_id, $region_id, $subregion_id, $appellation_id, $vineyard_id, $grape, $cuvee_yn, $colour, $style);
   return $stmt->execute();
 }
@@ -1064,6 +1166,9 @@ function insertWine($conn, $master_id, $ct_id = null, $vintage = null, $wine_des
   if ($wine_desc=='' || empty($wine_desc)) { $wine_desc = null; }
   $sql = "INSERT INTO wines (master_id, ct_id, vintage, wine_desc) VALUES (?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("iiis", $master_id, $ct_id, $vintage, $wine_desc);
   return $stmt->execute();
 }
@@ -1089,7 +1194,7 @@ function insertWine($conn, $master_id, $ct_id = null, $vintage = null, $wine_des
  * @param int|string|bool $restricted Restricted status (0 or 1).
  * @return bool True on success, false on failure.
  */
-function insertBottle($conn, $wine_id, $format, $bin_id = null, $store_id, $purchase_date, $purchase_price = null, $arrival_date = null, $status, $drink_from = null, $drink_through = null, $consumption_date = null, $consumption_note = null, $for_sale = 'no', $note_id = null, $restricted = 0) {
+function insertBottle($conn, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from = null, $drink_through = null, $consumption_date = null, $consumption_note = null, $for_sale = 'no', $note_id = null, $restricted = 0) {
   if ($bin_id=='' || empty($bin_id)) { $bin_id = null; }
   if ($purchase_price=='' || empty($purchase_price)) { $purchase_price = null; }
   if ($arrival_date=='' || empty($arrival_date)) { $arrival_date = null; }
@@ -1103,17 +1208,23 @@ function insertBottle($conn, $wine_id, $format, $bin_id = null, $store_id, $purc
   if (hasBottlesRestrictedColumn($conn)) {
     $sql = "INSERT INTO bottles (wine_id, format, storage_location, purchased_from, purchase_date, purchase_price, arrival_date, status, drink_from, drink_through, consumption_date, consumption_note, for_sale, note_id, restricted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("isiisdssiisssii", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted_val);
   } else {
     $sql = "INSERT INTO bottles (wine_id, format, storage_location, purchased_from, purchase_date, purchase_price, arrival_date, status, drink_from, drink_through, consumption_date, consumption_note, for_sale, note_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+      return false;
+    }
     $stmt->bind_param("isiisdssiisssi", $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id);
   }
   return $stmt->execute();
 }
 
 // Function to insert a new tasting note
-function insertTastingNote($conn, $bottle_id = null, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $pts_20 = null, $pts_100 = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $drinkwindow_min = null, $drinkwindow_max = null, $status = 'draft', $blind = 'not blind', $img = null, $img_class = null, $favourite = 'no') {
+function insertTastingNote($conn, $bottle_id, $wine_id, $tasting_date, $user_id, $tasting_note, $flawed_yn, $pts_20 = null, $pts_100 = null, $wset_balance = null, $wset_length = null, $wset_intensity = null, $wset_complexity = null, $wsetpts = null, $drinkwindow_min = null, $drinkwindow_max = null, $status = 'draft', $blind = 'not blind', $img = null, $img_class = null, $favourite = 'no') {
   // Check optional inputs
   if ($pts_20 === "" || $pts_20 === null) { $pts_20 = null; }
   if ($pts_100 === "" || $pts_100 === null) { $pts_100 = null; }
@@ -1130,6 +1241,9 @@ function insertTastingNote($conn, $bottle_id = null, $wine_id, $tasting_date, $u
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
     
   // Create an array of parameters
   $params = [$wine_id, $user_id, $tasting_date, $tasting_note, $flawed_yn, $pts_20, $pts_100, $wset_balance, $wset_length, $wset_intensity, $wset_complexity, $wsetpts, $drinkwindow_min, $drinkwindow_max, $status, $blind, $img, $img_class, $favourite];
@@ -1169,8 +1283,13 @@ function validateCSRFToken($token) {
   return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
-// Function to sanitize input and allow safe HTML formatting while neutralizing XSS vectors
-function sanitizeInput($input) {
+/**
+ * Sanitise rich-text HTML by allowing only whitelisted tags and safe attributes while neutralising XSS vectors.
+ *
+ * @param string|null $input Raw HTML content.
+ * @return string Sanitised HTML string.
+ */
+function sanitizeRichHtml($input) {
   if ($input === null) {
     return '';
   }
@@ -1179,18 +1298,114 @@ function sanitizeInput($input) {
     return '';
   }
 
-  // 1. Strip disallowed HTML tags
-  $allowed_tags = '<a><b><br><em><h1><h2><h3><h4><h5><h6><i><img><p><small><strong><u><ul><ol><li><table><thead><tbody><tr><th><td><blockquote><code><pre><hr><span><div><details><summary>';
-  $cleaned = strip_tags($trimmed, $allowed_tags);
+  $allowed_tags_list = [
+    'a', 'b', 'br', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'i', 'img', 'p', 'small', 'strong', 'u', 'ul', 'ol', 'li',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td', 'blockquote',
+    'code', 'pre', 'hr', 'span', 'div', 'details', 'summary'
+  ];
+  $allowed_tags_str = '<' . implode('><', $allowed_tags_list) . '>';
+  $cleaned = strip_tags($trimmed, $allowed_tags_str);
 
-  // 2. Remove inline JavaScript event handlers (e.g. onclick, onerror, onload, onmouseover)
-  $cleaned = preg_replace('/\s+on[a-zA-Z]+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/i', '', $cleaned);
+  if (class_exists('DOMDocument') && strpos($cleaned, '<') !== false) {
+    $dom = new DOMDocument('1.0', 'UTF-8');
+    $prevErrors = libxml_use_internal_errors(true);
+    $wrapped = '<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body><div id="pmc-sanitize-root">' . $cleaned . '</div></body></html>';
+    if ($dom->loadHTML($wrapped)) {
+      $allowed_attrs = [
+        'a'   => ['href', 'title', 'target', 'rel', 'class'],
+        'img' => ['src', 'alt', 'title', 'class', 'width', 'height'],
+        '*'   => ['class', 'title']
+      ];
+      $xpath = new DOMXPath($dom);
+      $nodes = $xpath->query('//*');
+      if ($nodes) {
+        foreach ($nodes as $node) {
+          if (!($node instanceof DOMElement)) {
+            continue;
+          }
+          if ($node->getAttribute('id') === 'pmc-sanitize-root') {
+            continue;
+          }
+          $tag = strtolower($node->tagName);
+          if (in_array($tag, ['html', 'head', 'meta', 'body'], true)) {
+            continue;
+          }
+          if ($node->hasAttributes()) {
+            $tag_allowed = array_merge($allowed_attrs['*'], $allowed_attrs[$tag] ?? []);
+            $to_remove = [];
+            foreach ($node->attributes as $attr) {
+              $attr_name = strtolower($attr->name);
+              if (!in_array($attr_name, $tag_allowed, true)) {
+                $to_remove[] = $attr->name;
+                continue;
+              }
+              if ($attr_name === 'href' || $attr_name === 'src') {
+                $val = html_entity_decode($attr->value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $val_norm = preg_replace('/[\x00-\x20]+/', '', strtolower($val));
+                if (
+                  preg_match('/^(?:javascript|vbscript|data):/i', $val_norm) ||
+                  (!preg_match('#^(?:https?://|mailto:|/|\#|[a-zA-Z0-9_\-./]+$)#i', trim($val)))
+                ) {
+                  $node->setAttribute($attr->name, '#');
+                }
+              }
+            }
+            foreach ($to_remove as $rem) {
+              $node->removeAttribute($rem);
+            }
+          }
+        }
+      }
+      $container = $dom->getElementById('pmc-sanitize-root');
+      if ($container) {
+        $out = '';
+        foreach ($container->childNodes as $child) {
+          $out .= $dom->saveHTML($child);
+        }
+        libxml_clear_errors();
+        libxml_use_internal_errors($prevErrors);
+        return trim($out);
+      }
+    }
+    libxml_clear_errors();
+    libxml_use_internal_errors($prevErrors);
+  }
 
-  // 3. Remove dangerous URI schemes in href, src, formaction (e.g. javascript:, vbscript:, data:text/html)
-  $cleaned = preg_replace('/(href|src|formaction)\s*=\s*(["\'])\s*(?:javascript|vbscript|data\s*:\s*text\/html):.*?\2/i', '$1="#"', $cleaned);
-  $cleaned = preg_replace('/(href|src|formaction)\s*=\s*(?:javascript|vbscript|data\s*:\s*text\/html):[^\s>]+/i', '$1="#"', $cleaned);
+  // Fallback regex sanitisation if DOMDocument is unavailable or no HTML tags are present
+  $cleaned = preg_replace('/\s+(?:on[a-zA-Z]+|style|formaction|srcdoc|xlink:href)\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $cleaned);
+  $cleaned = preg_replace_callback('/(href|src)\s*=\s*(["\'])(.*?)\2/is', function ($m) {
+    $decoded = html_entity_decode($m[3], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $norm = preg_replace('/[\x00-\x20]+/', '', strtolower($decoded));
+    if (preg_match('/^(?:javascript|vbscript|data):/i', $norm)) {
+      return $m[1] . '="#"';
+    }
+    return $m[0];
+  }, $cleaned);
+  $cleaned = preg_replace('/(href|src)\s*=\s*([^\s"\'>]+)/i', '$1="#"', $cleaned);
 
   return $cleaned;
+}
+
+/**
+ * Sanitise user input and optionally allow safe HTML formatting while neutralising XSS vectors.
+ *
+ * @param string|null $input Raw input string.
+ * @param string|null $allowed_tags Pass '' (empty string) to strip all HTML tags for plain-text fields.
+ * @return string Sanitised string.
+ */
+function sanitizeInput($input, $allowed_tags = null) {
+  if ($input === null) {
+    return '';
+  }
+  $trimmed = trim((string)$input);
+  if ($trimmed === '') {
+    return '';
+  }
+  if ($allowed_tags === '') {
+    return trim(strip_tags($trimmed));
+  }
+  return sanitizeRichHtml($trimmed);
 }
 
 // Function to validate and sanitize a redirect URL to prevent Open Redirect vulnerabilities
@@ -1484,7 +1699,7 @@ function validateMasterInput($conn, $master_id, $producer_id, $region_id, $subre
 }
 
 // Function to validate bottle input
-function validateBottleInput($bottle_id, $wine_id, $format, $bin_id = null, $store_id, $purchase_date, $purchase_price = null, $arrival_date = null, $status, $drink_from = null, $drink_through = null, $consumption_date = null, $consumption_note = null, $for_sale = 'no', $note_id = null, $restricted = 0) {
+function validateBottleInput($bottle_id, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from = null, $drink_through = null, $consumption_date = null, $consumption_note = null, $for_sale = 'no', $note_id = null, $restricted = 0) {
   $errors = [];
 
   if ($bin_id=="") { $bin_id=null; }
@@ -1553,6 +1768,12 @@ function validateImageInput($img, $img_class) {
     
   if (!is_string($img)) {
     $errors[] = "Invalid image file.";
+  } elseif ($img !== '' && (strpos($img, '..') !== false || strpos($img, '/') !== false || strpos($img, '\\') !== false)) {
+    $errors[] = "Invalid image filename.";
+  }
+
+  if (!empty($img) && !empty($img_class) && !in_array($img_class, ['inline left', 'block center'], true)) {
+    $errors[] = "Invalid image alignment class.";
   }
     
   return $errors;
@@ -1652,13 +1873,19 @@ function renderComments($conn, $id, $type) {
     return;
   }
 
+  $comments_meta = function_exists('getCommentsTableMetadata') ? getCommentsTableMetadata($conn) : ['has_status' => false];
+  $status_clause = !empty($comments_meta['has_status']) ? " and comments.status = 'approved'" : "";
+
   $sql = "select * from $table_prefix
             left join comments on $table_prefix.comment_id=comments.comment_id
             left join users on comments.user_id=users.user_id
-          where $table_prefix.$id_column=?
+          where $table_prefix.$id_column=?$status_clause
           order by comments.pub_time desc";
   
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return;
+  }
   $stmt->bind_param("i", $id);
   $stmt->execute();
   $result = $stmt->get_result();
@@ -1722,6 +1949,9 @@ function latestComments($num = 5) {
     $num = 5;
   }
 
+  $comments_meta = function_exists('getCommentsTableMetadata') ? getCommentsTableMetadata($db) : ['has_status' => false];
+  $status_where = !empty($comments_meta['has_status']) ? "WHERE c.status = 'approved'" : "";
+
   $sql = "SELECT 
             c.comment_id,
             c.user_id,
@@ -1762,6 +1992,7 @@ function latestComments($num = 5) {
           LEFT JOIN variety t_v ON t_wm.grape = t_v.grape
           LEFT JOIN x_comments_blogposts xb ON c.comment_id = xb.comment_id
           LEFT JOIN blogposts b ON xb.blog_id = b.blog_id
+          {$status_where}
           ORDER BY c.pub_time DESC, c.comment_id DESC
           LIMIT ?";
 
@@ -1845,14 +2076,17 @@ function renderBlogReferences($conn, $id, $type, $title) {
           order by blogposts.pub_date desc";
   
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return;
+  }
   $stmt->bind_param("i", $id);
   $stmt->execute();
   $result = $stmt->get_result();
   
   if ($result && mysqli_num_rows($result) != 0) {
-    echo "<div class='card'><h3>$title</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
+    echo "<div class='card'><h3>" . htmlspecialchars((string)$title, ENT_QUOTES, 'UTF-8') . "</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
     while ($blog = $result->fetch_assoc()) {
-      echo "<li>".date_format(date_create($blog["pub_date"]),"d M Y").": <a href='/blog.php?id=".$blog['blog_id']."'>".$blog["title"]."</a></li>";
+      echo "<li>" . date_format(date_create($blog["pub_date"]), "d M Y") . ": <a href='/blog.php?id=" . (int)$blog['blog_id'] . "'>" . htmlspecialchars((string)$blog["title"], ENT_QUOTES, 'UTF-8') . "</a></li>";
     }
     echo "</ul></p></div>";
   }
@@ -1888,6 +2122,9 @@ function insertBlogpost($conn, $user_id, $pub_date, $title, $content, $status, $
   }
   $sql = "INSERT INTO blogposts (user_id, pub_date, edit_date, title, content, status) VALUES (?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return false;
+  }
   $stmt->bind_param("isssss", $user_id, $pub_date, $edit_date, $title, $content, $status);
   return $stmt->execute();
 }
@@ -2957,9 +3194,9 @@ function getPrivilegeScriptMap() {
     'manageOrders.php'          => ['manage_orders', 'add_order'],
     'manageWineMasters.php'     => ['add_wine_master', 'edit_wine_master'],
     'manageWines.php'           => ['add_wine', 'edit_wine'],
-    'manageTastingNotes.php'    => ['add_tasting_note', 'edit_tasting_note'],
-    'manageBlogposts.php'       => ['add_blogpost', 'edit_blogpost'],
-    'manageStories.php'         => ['add_blogpost', 'edit_blogpost'],
+    'manageTastingNotes.php'    => ['add_tasting_note', 'edit_tasting_note', 'edit_all_tasting_notes'],
+    'manageBlogposts.php'       => ['add_blogpost', 'edit_blogpost', 'edit_all_blogposts'],
+    'manageStories.php'         => ['add_blogpost', 'edit_blogpost', 'edit_all_blogposts'],
     'manageProducers.php'       => 'manage_producers',
     'manageCountries.php'       => 'manage_countries',
     'manageRegions.php'         => 'manage_regions',
@@ -2970,7 +3207,7 @@ function getPrivilegeScriptMap() {
     'managePrivileges.php'      => 'manage_privileges',
     'settings.php'              => 'manage_privileges',
     'manageStaticPages.php'     => 'manage_static_pages',
-    'manageStorageBins.php'     => 'manage_storage_bins',
+    'manageStorageBins.php'     => ['manage_storage_bins', 'browse_bottles'],
     'manageStores.php'          => 'manage_stores',
     'manageFormats.php'         => 'manage_formats',
     'manageVarieties.php'       => 'manage_varieties',
@@ -2982,9 +3219,9 @@ function getPrivilegeScriptMap() {
     // Legacy scripts and redirect shims (deprecated in 1.1.0, removal in 2.0.0)
     'addTastingNote.php'        => 'add_tasting_note',
     'blindTasting.php'          => 'add_tasting_note',
-    'editTastingNote.php'       => 'edit_tasting_note',
+    'editTastingNote.php'       => ['edit_tasting_note', 'edit_all_tasting_notes'],
     'addBlogpost.php'           => 'add_blogpost',
-    'editBlogpost.php'          => 'edit_blogpost',
+    'editBlogpost.php'          => ['edit_blogpost', 'edit_all_blogposts'],
     'browseBottles.php'         => 'browse_bottles',
     'addBottle.php'             => 'add_bottle',
     'editBottle.php'            => 'edit_bottle',
@@ -3212,7 +3449,10 @@ function canAccessBackend($conn, $user_id = null) {
     'browse_bottles', 'add_bottle', 'edit_bottle', 'add_order', 'manage_orders',
     'browse_wines', 'add_wine', 'edit_wine', 'add_wine_master', 'edit_wine_master',
     'manage_producers', 'manage_countries', 'manage_regions', 'manage_subregions',
-    'manage_appellations', 'manage_vineyards', 'manage_users', 'manage_privileges'
+    'manage_appellations', 'manage_vineyards', 'manage_users', 'manage_privileges',
+    'moderate_comments', 'manage_storage_bins', 'manage_stores', 'manage_formats',
+    'manage_varieties', 'manage_vintages', 'manage_wine_attributes',
+    'manage_rating_scales', 'manage_static_pages'
   ];
 
   foreach ($backendPrivs as $bp) {
@@ -3464,8 +3704,22 @@ function updateUserRole($conn, $user_id, $role_name) {
     return false;
   }
 
-  // Non-admins cannot be assigned 'admin' role via interface
-  if ($role_name === 'admin') {
+  // Non-admins cannot be assigned 'admin' or virtual 'public' role via interface
+  if ($role_name === 'admin' || $role_name === 'public') {
+    return false;
+  }
+
+  // Verify the role exists in the roles table
+  $chk = $conn->prepare("SELECT 1 FROM roles WHERE role_name = ? LIMIT 1");
+  if (!$chk) {
+    return false;
+  }
+  $chk->bind_param("s", $role_name);
+  $chk->execute();
+  $chkRes = $chk->get_result();
+  $exists = $chkRes && $chkRes->num_rows > 0;
+  $chk->close();
+  if (!$exists) {
     return false;
   }
 
@@ -3991,10 +4245,14 @@ function interpolateSiteSettings($content) {
   $site_title = function_exists('getSiteTitle') ? getSiteTitle() : 'phpMyCellar';
   $site_tagline = function_exists('getSiteTagline') ? getSiteTagline() : '';
 
+  $formatted_address = (strpos($owner_address, '<') !== false)
+    ? (function_exists('sanitizeRichHtml') ? sanitizeRichHtml($owner_address) : $owner_address)
+    : nl2br(htmlspecialchars($owner_address, ENT_QUOTES, 'UTF-8'));
+
   $vars = [
     '{{owner_name}}'    => htmlspecialchars($owner_name, ENT_QUOTES, 'UTF-8'),
     '{{owner_email}}'   => htmlspecialchars($owner_email, ENT_QUOTES, 'UTF-8'),
-    '{{owner_address}}' => $owner_address,
+    '{{owner_address}}' => $formatted_address,
     '{{site_name}}'     => htmlspecialchars($site_title, ENT_QUOTES, 'UTF-8'),
     '{{site_title}}'    => htmlspecialchars($site_title, ENT_QUOTES, 'UTF-8'),
     '{{site_tagline}}'  => htmlspecialchars($site_tagline, ENT_QUOTES, 'UTF-8'),
@@ -4501,10 +4759,10 @@ function generateTastingNoteKeywords($tasting_note) {
   $scale = getRatingScale();
   $initials = !empty($tasting_note['initials']) ? $tasting_note['initials'] : 'DM';
   if (($tasting_note['flawed_yn'] ?? '') !== 'yes') {
-    if ($scale === '100-point' && !empty($tasting_note['pts_100'])) {
+    if ($scale === '100-point' && isset($tasting_note['pts_100']) && $tasting_note['pts_100'] !== '') {
       $terms[] = $initials . $tasting_note['pts_100'];
       $terms[] = '100-point scale';
-    } elseif (!empty($tasting_note['pts_20']) || !empty($tasting_note['dmpts'])) {
+    } elseif (($tasting_note['pts_20'] ?? $tasting_note['dmpts'] ?? '') !== '') {
       $score = $tasting_note['pts_20'] ?? $tasting_note['dmpts'];
       $terms[] = $initials . $score;
       $terms[] = '20-point scale';
@@ -4530,9 +4788,9 @@ function generateTastingNoteDescription($tasting_note, $wine_name) {
   $ratingStr = '';
   if (($tasting_note['flawed_yn'] ?? '') === 'yes') {
     $ratingStr = ' (Flawed bottle)';
-  } elseif ($scale === '100-point' && !empty($tasting_note['pts_100'])) {
+  } elseif ($scale === '100-point' && isset($tasting_note['pts_100']) && $tasting_note['pts_100'] !== '') {
     $ratingStr = ' (' . $initials . $tasting_note['pts_100'] . '/100)';
-  } elseif (!empty($tasting_note['pts_20']) || !empty($tasting_note['dmpts'])) {
+  } elseif (($tasting_note['pts_20'] ?? $tasting_note['dmpts'] ?? '') !== '') {
     $score = $tasting_note['pts_20'] ?? $tasting_note['dmpts'];
     $ratingStr = ' (' . $initials . $score . '/20)';
   }
@@ -4544,7 +4802,7 @@ function generateTastingNoteDescription($tasting_note, $wine_name) {
   
   $drinkStr = '';
   if (!empty($tasting_note['drinkwindow_min']) && !empty($tasting_note['drinkwindow_max'])) {
-    $drinkStr = ' Drink ' . $tasting_note['drinkwindow_min'] . '–' . $tasting_note['drinkwindow_max'] . '.';
+    $drinkStr = ' Drink ' . $tasting_note['drinkwindow_min'] . '-' . $tasting_note['drinkwindow_max'] . '.';
   } elseif (!empty($tasting_note['drinkwindow_max'])) {
     $drinkStr = ' Drink through ' . $tasting_note['drinkwindow_max'] . '.';
   }
@@ -4595,14 +4853,14 @@ function generateTastingNoteJsonLd($tasting_note, $wine_name, $canonical_url) {
   
   $scale = getRatingScale();
   if (($tasting_note['flawed_yn'] ?? '') !== 'yes') {
-    if ($scale === '100-point' && !empty($tasting_note['pts_100'])) {
+    if ($scale === '100-point' && isset($tasting_note['pts_100']) && $tasting_note['pts_100'] !== '') {
       $data['reviewRating'] = [
         '@type' => 'Rating',
         'ratingValue' => (string)$tasting_note['pts_100'],
         'bestRating' => '100',
         'worstRating' => '50'
       ];
-    } elseif (!empty($tasting_note['pts_20']) || !empty($tasting_note['dmpts'])) {
+    } elseif (($tasting_note['pts_20'] ?? $tasting_note['dmpts'] ?? '') !== '') {
       $score = $tasting_note['pts_20'] ?? $tasting_note['dmpts'];
       $data['reviewRating'] = [
         '@type' => 'Rating',
@@ -4963,22 +5221,31 @@ function checkStorageBinCapacity($conn, $bin_id, $bottle_count = 1, $exclude_bot
 
   if ($exclude_bottle_id && is_numeric($exclude_bottle_id)) {
     $stmt_cnt = $conn->prepare("SELECT COUNT(*) FROM bottles WHERE storage_location = ? AND status = 'in cellar' AND bottle_id != ?");
+    if (!$stmt_cnt) {
+      return [
+        'allowed' => true,
+        'bin_name' => $bin_name,
+        'max_capacity' => $max_capacity,
+        'current_occupancy' => 0,
+        'available' => $max_capacity,
+        'error' => null
+      ];
+    }
     $ex_id = (int)$exclude_bottle_id;
     $stmt_cnt->bind_param("ii", $bin_id, $ex_id);
   } else {
     $stmt_cnt = $conn->prepare("SELECT COUNT(*) FROM bottles WHERE storage_location = ? AND status = 'in cellar'");
+    if (!$stmt_cnt) {
+      return [
+        'allowed' => true,
+        'bin_name' => $bin_name,
+        'max_capacity' => $max_capacity,
+        'current_occupancy' => 0,
+        'available' => $max_capacity,
+        'error' => null
+      ];
+    }
     $stmt_cnt->bind_param("i", $bin_id);
-  }
-
-  if (!$stmt_cnt) {
-    return [
-      'allowed' => true,
-      'bin_name' => $bin_name,
-      'max_capacity' => $max_capacity,
-      'current_occupancy' => 0,
-      'available' => $max_capacity,
-      'error' => null
-    ];
   }
 
   $stmt_cnt->execute();
@@ -5687,36 +5954,68 @@ function updateVariety($conn, string $old_grape, string $new_grape, ?string $gra
   $conn->begin_transaction();
   try {
     if ($old_grape !== $new_grape) {
+      $chk = $conn->prepare("SELECT 1 FROM variety WHERE grape = ? LIMIT 1");
+      if (!$chk) {
+        throw new Exception("Failed to prepare duplicate check statement: " . $conn->error);
+      }
+      $chk->bind_param("s", $new_grape);
+      $chk->execute();
+      $chkRes = $chk->get_result();
+      $alreadyExists = $chkRes && $chkRes->num_rows > 0;
+      $chk->close();
+      if ($alreadyExists) {
+        throw new Exception(sprintf("Grape variety '%s' already exists.", $new_grape));
+      }
+
       // Temporarily insert new grape so foreign keys can be updated
       $ins = $conn->prepare("INSERT INTO variety (grape, grape_desc) VALUES (?, ?)");
-      if ($ins) {
-        $ins->bind_param("ss", $new_grape, $grape_desc);
-        $ins->execute();
-        $ins->close();
+      if (!$ins) {
+        throw new Exception("Failed to prepare insert statement: " . $conn->error);
       }
+      $ins->bind_param("ss", $new_grape, $grape_desc);
+      if (!$ins->execute()) {
+        $err = $ins->error;
+        $ins->close();
+        throw new Exception("Failed to insert renamed variety: " . $err);
+      }
+      $ins->close();
 
       // Update references in wines_master
       $upWm = $conn->prepare("UPDATE wines_master SET grape = ? WHERE grape = ?");
-      if ($upWm) {
-        $upWm->bind_param("ss", $new_grape, $old_grape);
-        $upWm->execute();
-        $upWm->close();
+      if (!$upWm) {
+        throw new Exception("Failed to prepare master update statement: " . $conn->error);
       }
+      $upWm->bind_param("ss", $new_grape, $old_grape);
+      if (!$upWm->execute()) {
+        $err = $upWm->error;
+        $upWm->close();
+        throw new Exception("Failed to update master wine references: " . $err);
+      }
+      $upWm->close();
 
       // Delete old grape
       $del = $conn->prepare("DELETE FROM variety WHERE grape = ?");
-      if ($del) {
-        $del->bind_param("s", $old_grape);
-        $del->execute();
-        $del->close();
+      if (!$del) {
+        throw new Exception("Failed to prepare delete statement: " . $conn->error);
       }
+      $del->bind_param("s", $old_grape);
+      if (!$del->execute()) {
+        $err = $del->error;
+        $del->close();
+        throw new Exception("Failed to remove old variety record: " . $err);
+      }
+      $del->close();
     } else {
       $stmt = $conn->prepare("UPDATE variety SET grape_desc = ? WHERE grape = ?");
       if (!$stmt) {
         throw new Exception("Failed to prepare statement: " . $conn->error);
       }
       $stmt->bind_param("ss", $grape_desc, $old_grape);
-      $stmt->execute();
+      if (!$stmt->execute()) {
+        $err = $stmt->error;
+        $stmt->close();
+        throw new Exception("Failed to update variety description: " . $err);
+      }
       $stmt->close();
     }
 
@@ -7169,10 +7468,15 @@ function deleteComment($conn, int $comment_id): bool {
   }
 
   // Explicitly remove junction and notification rows first to guarantee cleanup even if foreign key cascade is disabled
-  $conn->query("DELETE FROM notifications WHERE comment_id = " . (int)$comment_id);
-  $conn->query("DELETE FROM x_comments_blogposts WHERE comment_id = " . (int)$comment_id);
-  $conn->query("DELETE FROM x_comments_tnotes WHERE comment_id = " . (int)$comment_id);
-  $conn->query("DELETE FROM x_comments_wines WHERE comment_id = " . (int)$comment_id);
+  $cleanupTables = ['notifications', 'x_comments_blogposts', 'x_comments_tnotes', 'x_comments_wines'];
+  foreach ($cleanupTables as $tbl) {
+    $delRel = $conn->prepare("DELETE FROM {$tbl} WHERE comment_id = ?");
+    if ($delRel) {
+      $delRel->bind_param("i", $comment_id);
+      $delRel->execute();
+      $delRel->close();
+    }
+  }
 
   $stmt = $conn->prepare("DELETE FROM comments WHERE comment_id = ?");
   if (!$stmt) {

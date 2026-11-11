@@ -103,7 +103,7 @@
   <!-- Schema.org JSON-LD Structured Data -->
   <?php if (!empty($json_ld)): ?>
   <script type="application/ld+json">
-<?php echo json_encode($json_ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT); ?>
+<?php echo json_encode($json_ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_PRETTY_PRINT); ?>
   </script>
   <?php endif; ?>
   <?php endif; ?>
@@ -273,6 +273,7 @@
           $canEditNote = hasPrivilege($conn, 'edit_tasting_note') || hasPrivilege($conn, 'edit_all_tasting_notes');
           $canAddBlog = hasPrivilege($conn, 'add_blogpost');
           $canEditBlog = hasPrivilege($conn, 'edit_blogpost') || hasPrivilege($conn, 'edit_all_blogposts');
+          $canModerateComments = hasPrivilege($conn, 'moderate_comments');
 
           $hasContributeMenuItems = $canAddNote || $canEditNote || $canAddBlog || $canEditBlog || $canModerateComments;
 
@@ -295,13 +296,13 @@
               $isEditNoteActive = ($currentPath == '/backend/manageTastingNotes.php' && ((isset($_GET['mode']) && $_GET['mode'] === 'edit') || isset($_GET['note_id']))) || ($currentPath == '/backend/editTastingNote.php');
               echo "<li><a class='" . ($isEditNoteActive ? 'active' : '') . "' href='/backend/manageTastingNotes.php?mode=edit' title='Edit tasting notes'>Edit tasting note</a></li>";
             }
+            $isEditBlogActive = ($currentPath == '/backend/manageBlogposts.php' && ((isset($_GET['mode']) && $_GET['mode'] === 'edit') || isset($_GET['blog_id']) || isset($_GET['edit_post']) || isset($_GET['blogpost_id']))) || ($currentPath == '/backend/editBlogpost.php');
             if ($canAddBlog) {
-              $isAddBlogActive = ($currentPath == '/backend/manageBlogposts.php' && !isset($_GET['blogpost_id'])) || ($currentPath == '/backend/addBlogpost.php');
+              $isAddBlogActive = ($currentPath == '/backend/manageBlogposts.php' && !$isEditBlogActive) || ($currentPath == '/backend/addBlogpost.php');
               echo "<li><a class='" . ($isAddBlogActive ? 'active' : '') . "' href='/backend/manageBlogposts.php' title='Add new story'>Write story</a></li>";
             }
             if ($canEditBlog) {
-              $isEditBlogActive = ($currentPath == '/backend/manageBlogposts.php' && isset($_GET['blogpost_id'])) || ($currentPath == '/backend/editBlogpost.php');
-              echo "<li><a class='" . ($isEditBlogActive ? 'active' : '') . "' href='/backend/manageBlogposts.php' title='Edit a blogpost'>Edit story</a></li>";
+              echo "<li><a class='" . ($isEditBlogActive ? 'active' : '') . "' href='/backend/manageBlogposts.php?mode=edit' title='Edit a blogpost'>Edit story</a></li>";
             }
             if ($canModerateComments) {
               echo "<li><a class='" . (($currentPath == '/backend/manageComments.php') ? 'active' : '') . "' href='/backend/manageComments.php' title='Moderate tasting note comments'>Moderate comments</a></li>";
