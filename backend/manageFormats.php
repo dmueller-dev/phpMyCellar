@@ -221,7 +221,7 @@
                         <?php echo htmlspecialchars($fCode, ENT_QUOTES, 'UTF-8'); ?>
                       </td>
                       <td data-label="Description" style="padding: 8px 10px; color: #555;">
-                        <?php echo !empty($fmt['format_desc']) ? htmlspecialchars($fmt['format_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">&mdash;</span>'; ?>
+                        <?php echo !empty($fmt['format_desc']) ? htmlspecialchars($fmt['format_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">-</span>'; ?>
                       </td>
                       <td data-label="Inventory" style="padding: 8px 10px; text-align: right;">
                         <strong><?php echo $bCount; ?></strong> btl<?php echo ($bCount === 1 ? '' : 's'); ?>
@@ -234,7 +234,7 @@
                           Edit
                         </a>
                         <?php if ($bCount === 0 && $oCount === 0): ?>
-                          <form action="manageFormats.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete format \'<?php echo htmlspecialchars($fCode, ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                          <form action="manageFormats.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete format \'<?php echo htmlspecialchars(addslashes($fCode), ENT_QUOTES, 'UTF-8'); ?>\'?');">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             <input type="hidden" name="action" value="delete_format">
                             <input type="hidden" name="format" value="<?php echo htmlspecialchars($fCode, ENT_QUOTES, 'UTF-8'); ?>">

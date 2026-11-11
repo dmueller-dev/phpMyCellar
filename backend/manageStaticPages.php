@@ -46,14 +46,14 @@
     'welcome' => [
       'group' => 'Homepage Content Cards',
       'title' => 'Homepage: Welcome Introduction',
-      'location' => 'Homepage — Main Welcome Card (Left)',
+      'location' => 'Homepage - Main Welcome Card (Left)',
       'url' => '/index.php',
       'description' => 'Welcome message and introduction to the cellar notebook on the homepage.'
     ],
     'get_in_touch' => [
       'group' => 'Homepage Content Cards',
       'title' => 'Homepage: Get in Touch Card',
-      'location' => 'Homepage — Get in Touch Card (Right)',
+      'location' => 'Homepage - Get in Touch Card (Right)',
       'url' => '/index.php',
       'description' => 'Contact invitation and cellar notebook access request details on the homepage.'
     ],
@@ -62,35 +62,35 @@
     'tnotes_sidebar' => [
       'group' => 'Section Sidebars & Notices',
       'title' => 'Tasting Notes: Sidebar Introduction',
-      'location' => 'Tasting Notes Index — Right Sidebar',
+      'location' => 'Tasting Notes Index - Right Sidebar',
       'url' => '/tnotes.php',
       'description' => 'Introductory text explaining the tasting notes list and tasting frequency.'
     ],
     'wines_sidebar' => [
       'group' => 'Section Sidebars & Notices',
       'title' => 'Wine Database: Sidebar Notice',
-      'location' => 'Wine Database Index — Right Sidebar',
+      'location' => 'Wine Database Index - Right Sidebar',
       'url' => '/wines.php',
       'description' => 'Notice clarifying that listed wines are bottles reviewed across notes and stories.'
     ],
     'winemenu_sidebar' => [
       'group' => 'Section Sidebars & Notices',
       'title' => 'Wine Menu: Cellar Invitation Sidebar',
-      'location' => 'Wine Menu / Cellar — Right Sidebar',
+      'location' => 'Wine Menu / Cellar - Right Sidebar',
       'url' => '/winemenu.php',
       'description' => 'Invitation welcoming guests to select and open any ready cellar bottle.'
     ],
     'vintages_sidebar' => [
       'group' => 'Section Sidebars & Notices',
       'title' => 'Vintage Reports: Sidebar Overview & Note',
-      'location' => 'Vintage Reports Index — Right Sidebar',
+      'location' => 'Vintage Reports Index - Right Sidebar',
       'url' => '/vintages.php',
       'description' => 'Explanatory note on how vintage scores and reports are dynamically compiled.'
     ],
     'blog_sidebar' => [
       'group' => 'Section Sidebars & Notices',
       'title' => 'Stories: Sidebar Introduction',
-      'location' => 'Stories / Blog Index — Right Sidebar',
+      'location' => 'Stories / Blog Index - Right Sidebar',
       'url' => '/blog.php',
       'description' => 'Introduction to stories, tasting retrospectives, and wine trips.'
     ],

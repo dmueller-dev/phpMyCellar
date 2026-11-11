@@ -640,7 +640,7 @@
                   <option value="">-- Select Producer --</option>
                   <?php foreach ($producers as $p): ?>
                     <option value="<?php echo (int)$p['producer_id']; ?>" data-producer="<?php echo htmlspecialchars($p['producer'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo ((int)$producer_id === (int)$p['producer_id']) ? 'selected' : ''; ?>>
-                      <?php echo htmlspecialchars($p['country'] . ': ' . $p['region'] . ' — ' . $p['producer'], ENT_QUOTES, 'UTF-8'); ?>
+                      <?php echo htmlspecialchars($p['country'] . ': ' . $p['region'] . ' - ' . $p['producer'], ENT_QUOTES, 'UTF-8'); ?>
                     </option>
                   <?php endforeach; ?>
                 </select>

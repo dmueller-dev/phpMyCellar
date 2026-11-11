@@ -167,7 +167,7 @@
   $conventions = getDisplayOptionsWithStats($conn);
 
   $csrf_token = generateCSRFToken();
-  $page_title = 'Manage Wine Attributes - Catalog Administration';
+  $page_title = 'Manage Wine Attributes - Catalogue Administration';
   require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -188,7 +188,7 @@
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <?php if (hasPrivilege($conn, 'browse_wines')): ?>
             <a href="browseWines.php" class="btn-action btn-secondary" style="text-decoration: none; font-size: 0.88rem; padding: 6px 14px;">
-              Wine Catalog &rarr;
+              Wine Catalogue &rarr;
             </a>
           <?php endif; ?>
         </div>
@@ -228,10 +228,10 @@
         <?php $is_edit_style = !empty($editingStyle); ?>
         <!-- Mobile Switcher for Dual-Pane Layout -->
         <div class="admin-mobile-pane-switch">
-          <button type="button" class="admin-pane-btn <?= !$is_edit_style ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          <button type="button" class="admin-mobile-pane-btn <?= !$is_edit_style ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
             📋 Wine Styles
           </button>
-          <button type="button" class="admin-pane-btn <?= $is_edit_style ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+          <button type="button" class="admin-mobile-pane-btn <?= $is_edit_style ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
             <?= $is_edit_style ? '✏️ Edit Style' : '➕ Add Style' ?>
           </button>
         </div>
@@ -261,7 +261,7 @@
                         <?php echo htmlspecialchars($sName, ENT_QUOTES, 'UTF-8'); ?>
                       </td>
                       <td data-label="Description" style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
-                        <?php echo !empty($st['style_desc']) ? htmlspecialchars($st['style_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">&mdash;</span>'; ?>
+                        <?php echo !empty($st['style_desc']) ? htmlspecialchars($st['style_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">-</span>'; ?>
                       </td>
                       <td data-label="Cuv&eacute;es" style="padding: 8px 10px; text-align: right;">
                         <?php echo $mCount; ?>
@@ -271,7 +271,7 @@
                           Edit
                         </a>
                         <?php if ($mCount === 0): ?>
-                          <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete style \'<?php echo htmlspecialchars($sName, ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                          <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete style \'<?php echo htmlspecialchars(addslashes($sName), ENT_QUOTES, 'UTF-8'); ?>\'?');">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             <input type="hidden" name="action" value="delete_style">
                             <input type="hidden" name="style" value="<?php echo htmlspecialchars($sName, ENT_QUOTES, 'UTF-8'); ?>">
@@ -334,10 +334,10 @@
       <?php elseif ($activeTab === 'colours'): ?>
         <!-- Mobile Switcher for Dual-Pane Layout -->
         <div class="admin-mobile-pane-switch">
-          <button type="button" class="admin-pane-btn active" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          <button type="button" class="admin-mobile-pane-btn active" id="tabBtnList" onclick="switchAdminMobilePane('list')">
             📋 Wine Colours
           </button>
-          <button type="button" class="admin-pane-btn" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+          <button type="button" class="admin-mobile-pane-btn" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
             ➕ Add Colour
           </button>
         </div>
@@ -375,7 +375,7 @@
                       </td>
                       <td data-label="Actions" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
                         <?php if ($mCount === 0): ?>
-                          <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete colour \'<?php echo htmlspecialchars($cName, ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                          <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete colour \'<?php echo htmlspecialchars(addslashes($cName), ENT_QUOTES, 'UTF-8'); ?>\'?');">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             <input type="hidden" name="action" value="delete_colour">
                             <input type="hidden" name="colour" value="<?php echo htmlspecialchars($cName, ENT_QUOTES, 'UTF-8'); ?>">
@@ -424,10 +424,10 @@
         <?php $is_edit_conv = !empty($editingConv); ?>
         <!-- Mobile Switcher for Dual-Pane Layout -->
         <div class="admin-mobile-pane-switch">
-          <button type="button" class="admin-pane-btn <?= !$is_edit_conv ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          <button type="button" class="admin-mobile-pane-btn <?= !$is_edit_conv ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
             📋 Naming Conventions
           </button>
-          <button type="button" class="admin-pane-btn <?= $is_edit_conv ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+          <button type="button" class="admin-mobile-pane-btn <?= $is_edit_conv ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
             <?= $is_edit_conv ? '✏️ Edit Convention' : '➕ Add Convention' ?>
           </button>
         </div>
@@ -467,7 +467,7 @@
                           Edit
                         </a>
                         <?php if ($mCount === 0): ?>
-                          <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete naming convention \'<?php echo htmlspecialchars($cCode, ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                          <form action="manageWineAttributes.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete naming convention \'<?php echo htmlspecialchars(addslashes($cCode), ENT_QUOTES, 'UTF-8'); ?>\'?');">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             <input type="hidden" name="action" value="delete_conv">
                             <input type="hidden" name="nameconvention" value="<?php echo htmlspecialchars($cCode, ENT_QUOTES, 'UTF-8'); ?>">

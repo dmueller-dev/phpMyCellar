@@ -217,10 +217,10 @@
       <?php if ($activeTab === 'vintages'): ?>
         <!-- Mobile Switcher for Dual-Pane Layout -->
         <div class="admin-mobile-pane-switch">
-          <button type="button" class="admin-pane-btn active" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          <button type="button" class="admin-mobile-pane-btn active" id="tabBtnList" onclick="switchAdminMobilePane('list')">
             📋 Harvest Vintages
           </button>
-          <button type="button" class="admin-pane-btn" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+          <button type="button" class="admin-mobile-pane-btn" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
             ➕ Add Vintage
           </button>
         </div>
@@ -271,7 +271,7 @@
                             <?php echo $rCount; ?> report<?php echo ($rCount === 1 ? '' : 's'); ?>
                           </a>
                         <?php else: ?>
-                          <span style="color: #aaa;">&mdash;</span>
+                          <span style="color: #aaa;">-</span>
                         <?php endif; ?>
                       </td>
                       <td data-label="Actions" class="card-actions-cell" style="padding: 8px 10px; text-align: right;">
@@ -330,10 +330,10 @@
         <?php $is_edit_report = !empty($editingReport); ?>
         <!-- Mobile Switcher for Dual-Pane Layout -->
         <div class="admin-mobile-pane-switch">
-          <button type="button" class="admin-pane-btn <?= !$is_edit_report ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          <button type="button" class="admin-mobile-pane-btn <?= !$is_edit_report ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
             📋 Regional Reports
           </button>
-          <button type="button" class="admin-pane-btn <?= $is_edit_report ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+          <button type="button" class="admin-mobile-pane-btn <?= $is_edit_report ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
             <?= $is_edit_report ? '✏️ Edit Report' : '➕ Author Report' ?>
           </button>
         </div>

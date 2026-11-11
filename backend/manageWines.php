@@ -252,7 +252,7 @@
               <option value="">All Cuv&eacute;es</option>
               <?php foreach ($masters as $m): ?>
                 <option value="<?php echo (int)$m['master_id']; ?>" <?php echo ($filter_master_id === (int)$m['master_id']) ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($m['producer'] . ' — ' . $m['name'], ENT_QUOTES, 'UTF-8'); ?>
+                  <?php echo htmlspecialchars($m['producer'] . ' - ' . $m['name'], ENT_QUOTES, 'UTF-8'); ?>
                 </option>
               <?php endforeach; ?>
             </select>
@@ -345,7 +345,7 @@
                   <option value="">-- Select Cuv&eacute;e Master --</option>
                   <?php foreach ($masters as $m): ?>
                     <option value="<?php echo (int)$m['master_id']; ?>" <?php echo ((int)$master_id === (int)$m['master_id']) ? 'selected' : ''; ?>>
-                      <?php echo htmlspecialchars($m['country'] . ': ' . $m['region'] . ' — ' . $m['producer'] . ' — ' . $m['name'] . ' (' . $m['grape'] . ')', ENT_QUOTES, 'UTF-8'); ?>
+                      <?php echo htmlspecialchars($m['country'] . ': ' . $m['region'] . ' - ' . $m['producer'] . ' - ' . $m['name'] . ' (' . $m['grape'] . ')', ENT_QUOTES, 'UTF-8'); ?>
                     </option>
                   <?php endforeach; ?>
                 </select>

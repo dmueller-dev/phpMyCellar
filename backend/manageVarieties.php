@@ -173,10 +173,10 @@
       <?php $is_edit = !empty($editingVariety); ?>
       <!-- Mobile Switcher for Dual-Pane Layout -->
       <div class="admin-mobile-pane-switch">
-        <button type="button" class="admin-pane-btn <?= !$is_edit ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+        <button type="button" class="admin-mobile-pane-btn <?= !$is_edit ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
           📋 Grape Varieties
         </button>
-        <button type="button" class="admin-pane-btn <?= $is_edit ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+        <button type="button" class="admin-mobile-pane-btn <?= $is_edit ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
           <?= $is_edit ? '✏️ Edit Variety' : '➕ Add Variety' ?>
         </button>
       </div>
@@ -218,7 +218,7 @@
                         <?php echo htmlspecialchars($gName, ENT_QUOTES, 'UTF-8'); ?>
                       </td>
                       <td data-label="Description &amp; Origin" style="padding: 8px 10px; color: #555; font-size: 0.85rem;">
-                        <?php echo !empty($v['grape_desc']) ? htmlspecialchars($v['grape_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">&mdash;</span>'; ?>
+                        <?php echo !empty($v['grape_desc']) ? htmlspecialchars($v['grape_desc'], ENT_QUOTES, 'UTF-8') : '<span style="color:#aaa;">-</span>'; ?>
                       </td>
                       <td data-label="Cuv&eacute;es" style="padding: 8px 10px; text-align: right;">
                         <?php if ($mCount > 0): ?>
@@ -234,7 +234,7 @@
                           Edit
                         </a>
                         <?php if ($mCount === 0): ?>
-                          <form action="manageVarieties.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete grape variety \'<?php echo htmlspecialchars($gName, ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                          <form action="manageVarieties.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete grape variety \'<?php echo htmlspecialchars(addslashes($gName), ENT_QUOTES, 'UTF-8'); ?>\'?');">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             <input type="hidden" name="action" value="delete_variety">
                             <input type="hidden" name="grape" value="<?php echo htmlspecialchars($gName, ENT_QUOTES, 'UTF-8'); ?>">

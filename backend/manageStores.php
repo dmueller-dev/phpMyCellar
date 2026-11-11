@@ -242,7 +242,7 @@
                         <?php echo htmlspecialchars($store['country'], ENT_QUOTES, 'UTF-8'); ?>
                       </td>
                       <td data-label="Address" style="padding: 8px 10px; color: #666; font-size: 0.85rem;">
-                        <?php echo !empty($store['address']) ? htmlspecialchars($store['address'], ENT_QUOTES, 'UTF-8') : '&mdash;'; ?>
+                        <?php echo !empty($store['address']) ? htmlspecialchars($store['address'], ENT_QUOTES, 'UTF-8') : '-'; ?>
                       </td>
                       <td data-label="Orders" style="padding: 8px 10px; text-align: right;">
                         <?php echo $oCount; ?>
@@ -255,7 +255,7 @@
                           Edit
                         </a>
                         <?php if ($oCount === 0 && $bCount === 0): ?>
-                          <form action="manageStores.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete wine merchant \'<?php echo htmlspecialchars($store['store_name'], ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                          <form action="manageStores.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete wine merchant \'<?php echo htmlspecialchars(addslashes($store['store_name']), ENT_QUOTES, 'UTF-8'); ?>\'?');">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             <input type="hidden" name="action" value="delete_store">
                             <input type="hidden" name="store_id" value="<?php echo $sId; ?>">

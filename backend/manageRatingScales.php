@@ -104,7 +104,7 @@
 
       try {
         if ($min_pts !== null && $max_pts !== null && updateScale100Descriptor($conn, $min_pts, $max_pts, $pts_desc, $pts_class)) {
-          $success_message = "Descriptor for range " . $min_pts . "–" . $max_pts . " points updated successfully.";
+          $success_message = "Descriptor for range " . $min_pts . "-" . $max_pts . " points updated successfully.";
           $editing100 = null;
         }
       } catch (Exception $e) {
@@ -179,13 +179,13 @@
       <!-- Navigation Tabs -->
       <div class="admin-mode-tabs" style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
         <a href="?tab=scale_20" class="admin-mode-tab <?= $activeTab === 'scale_20' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'scale_20' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
-          20-Point Scale (0–20 pts)
+          20-Point Scale (0-20 pts)
         </a>
         <a href="?tab=scale_100" class="admin-mode-tab <?= $activeTab === 'scale_100' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'scale_100' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
-          100-Point Scale (50–100 pts)
+          100-Point Scale (50-100 pts)
         </a>
         <a href="?tab=wsetpts" class="admin-mode-tab <?= $activeTab === 'wsetpts' ? 'active' : '' ?>" style="text-decoration: none; padding: 9px 18px; border-radius: 4px 4px 0 0; font-weight: bold; <?php echo $activeTab === 'wsetpts' ? 'background: #333; color: #fff;' : 'background: #f0f0f0; color: #333;'; ?>">
-          WSET Qualitative Scale (0.0–4.0 pts)
+          WSET Qualitative Scale (0.0-4.0 pts)
         </a>
       </div>
 
@@ -194,10 +194,10 @@
         <?php $is_edit_20 = !empty($editing20); ?>
         <!-- Mobile Switcher for Dual-Pane Layout -->
         <div class="admin-mobile-pane-switch">
-          <button type="button" class="admin-pane-btn <?= !$is_edit_20 ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          <button type="button" class="admin-mobile-pane-btn <?= !$is_edit_20 ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
             📋 20-Point Scale
           </button>
-          <button type="button" class="admin-pane-btn <?= $is_edit_20 ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+          <button type="button" class="admin-mobile-pane-btn <?= $is_edit_20 ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
             <?= $is_edit_20 ? '✏️ Edit Descriptor' : '✏️ Edit Tier' ?>
           </button>
         </div>
@@ -291,7 +291,7 @@
                   </div>
                 </form>
               <?php else: ?>
-                <p style="color: #666; font-size: 0.88rem;">Click <strong>Edit</strong> beside any point rating on the left to customize its definition and classification tier.</p>
+                <p style="color: #666; font-size: 0.88rem;">Click <strong>Edit</strong> beside any point rating on the left to customise its definition and classification tier.</p>
               <?php endif; ?>
             </div>
           </div>
@@ -302,11 +302,11 @@
         <?php $is_edit_100 = !empty($editing100); ?>
         <!-- Mobile Switcher for Dual-Pane Layout -->
         <div class="admin-mobile-pane-switch">
-          <button type="button" class="admin-pane-btn <?= !$is_edit_100 ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          <button type="button" class="admin-mobile-pane-btn <?= !$is_edit_100 ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
             📋 100-Point Scale
           </button>
-          <button type="button" class="admin-pane-btn <?= $is_edit_100 ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
-            <?= $is_edit_100 ? '✏️ Edit Band' : '✏️ Edit Band' ?>
+          <button type="button" class="admin-mobile-pane-btn <?= $is_edit_100 ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+            <?= $is_edit_100 ? '✏️ Edit Descriptor' : '✏️ Edit Band' ?>
           </button>
         </div>
 
@@ -332,7 +332,7 @@
                     ?>
                     <tr style="border-bottom: 1px solid #eee; <?php echo $isEditingThis ? 'background-color: #fff9e6;' : ''; ?>">
                       <td data-label="Point Range" class="card-primary-cell" style="padding: 8px 10px; font-weight: bold; color: #222; font-size: 0.95rem;">
-                        <?php echo $minP; ?>–<?php echo $maxP; ?> pts
+                        <?php echo $minP; ?>-<?php echo $maxP; ?> pts
                       </td>
                       <td data-label="Classification" style="padding: 8px 10px; white-space: nowrap;">
                         <span style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; background: #e0e0e0; color: #333;">
@@ -358,7 +358,7 @@
           <div id="adminDualFormPane" class="admin-dual-pane <?= !$is_edit_100 ? 'mobile-hidden' : '' ?>">
             <div style="background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px;">
               <h3 style="margin-top: 0; color: var(--secondary-accent, firebrick); border-bottom: 1px solid #eee; padding-bottom: 6px;">
-                <?php echo $editing100 ? 'Edit Band (' . (int)$editing100['min_pts'] . '–' . (int)$editing100['max_pts'] . ' pts)' : 'Select Rating Band to Edit'; ?>
+                <?php echo $editing100 ? 'Edit Band (' . (int)$editing100['min_pts'] . '-' . (int)$editing100['max_pts'] . ' pts)' : 'Select Rating Band to Edit'; ?>
               </h3>
 
               <?php if ($editing100): ?>
@@ -399,10 +399,10 @@
         <?php $is_edit_wset = !empty($editingWset); ?>
         <!-- Mobile Switcher for Dual-Pane Layout -->
         <div class="admin-mobile-pane-switch">
-          <button type="button" class="admin-pane-btn <?= !$is_edit_wset ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+          <button type="button" class="admin-mobile-pane-btn <?= !$is_edit_wset ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
             📋 WSET Scale
           </button>
-          <button type="button" class="admin-pane-btn <?= $is_edit_wset ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+          <button type="button" class="admin-mobile-pane-btn <?= $is_edit_wset ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
             <?= $is_edit_wset ? '✏️ Edit Definition' : '✏️ Edit Point' ?>
           </button>
         </div>

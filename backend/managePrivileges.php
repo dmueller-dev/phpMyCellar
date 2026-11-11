@@ -4,7 +4,11 @@
   // Include the initialization file
   require_once __DIR__ . '/../includes/init.php';
 
-  // Check admin permission
+  /**
+   * Configure role permissions, public visibility settings, and user privilege overrides.
+   *
+   * Required privilege: 'manage_privileges'
+   */
   if (!hasPrivilege($conn, 'manage_privileges')) {
     header("Location: /backend/index.php");
     exit();
@@ -57,15 +61,34 @@
         if ($postUserId === 1) {
           $error = "The root administrator account (user #1) has full immutable privileges and cannot be modified.";
         } else {
-          $newRole = $_POST['user_role'] ?? '';
+          $newRole = trim((string)($_POST['user_role'] ?? ''));
           $privilegeOverrides = $_POST['privilege_override'] ?? [];
+
+          $targetCurrentRole = null;
+          foreach ($userList as $u) {
+            if ((int)$u['user_id'] === $postUserId) {
+              $targetCurrentRole = $u['role'];
+              break;
+            }
+          }
 
           // 1. Update user role if valid
           if (!empty($newRole)) {
-            if ($newRole === 'admin') {
+            if ($newRole === 'admin' && $targetCurrentRole !== 'admin') {
               $error = "Backstop protection: Users cannot be elevated to the Administrator role via the interface.";
-            } else {
-              updateUserRole($conn, $postUserId, $newRole);
+            } elseif ($newRole === 'public') {
+              $error = "Invalid base role selection.";
+            } elseif ($newRole !== $targetCurrentRole) {
+              if (updateUserRole($conn, $postUserId, $newRole)) {
+                foreach ($userList as &$uRef) {
+                  if ((int)$uRef['user_id'] === $postUserId) {
+                    $uRef['role'] = $newRole;
+                  }
+                }
+                unset($uRef);
+              } else {
+                $error = "Invalid or unassignable user role.";
+              }
             }
           }
 

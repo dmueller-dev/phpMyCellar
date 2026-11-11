@@ -255,7 +255,7 @@
 
               <div>
                 <label for="initials" style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9rem;">
-                  Initials (2&ndash;5 Alphanumeric): <span style="color: red;">*</span>
+                  Initials (2 - 5 Alphanumeric): <span style="color: red;">*</span>
                 </label>
                 <input type="text" name="initials" id="initials" required minlength="2" maxlength="5" pattern="[A-Za-z0-9]{2,5}" style="width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-height: 44px; text-transform: uppercase;">
               </div>
@@ -365,7 +365,7 @@
 
                 <div>
                   <label for="edit_initials" style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9rem;">
-                    Initials (2&ndash;5 Alphanumeric): <span style="color: red;">*</span>
+                    Initials (2 - 5 Alphanumeric): <span style="color: red;">*</span>
                   </label>
                   <input type="text" name="initials" id="edit_initials" required minlength="2" maxlength="5" pattern="[A-Za-z0-9]{2,5}" value="<?php echo htmlspecialchars($selectedUser['initials'], ENT_QUOTES, 'UTF-8'); ?>" style="width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-height: 44px; text-transform: uppercase;">
                 </div>

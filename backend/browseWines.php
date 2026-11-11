@@ -7,6 +7,16 @@
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/../includes/init.php';
 
+  /**
+   * Browse catalogued wine vintages in the cellar database.
+   *
+   * Required privilege: 'browse_wines'
+   */
+  if (!hasPrivilege($conn, 'browse_wines')) {
+    header("Location: /backend/index.php");
+    exit();
+  }
+
   // Get sort logic
   if (empty($_GET['sort'])) {
     $sort="region";
@@ -21,6 +31,9 @@
     $sqlOrderBy="order by vintage desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc";
   } elseif ($sort=="variety") {
     $sqlOrderBy="order by grape asc,country asc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
+  } else {
+    $sort="region";
+    $sqlOrderBy="order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
   }
 
   $extra_head = <<<HTML
@@ -69,7 +82,7 @@
   HTML;
 
   // Get header
-  $page_title = 'Dominik Mueller - Browse all wines';
+  $page_title = getSiteSetting('site_name', 'phpMyCellar') . ' - Browse all wines';
   require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -250,57 +263,67 @@
     // Generate shortcut link if user is authorized to contribute
     $add_note_link = "";
     if ($has_contribution_rights) {
-      $add_note_link = " <a href='/backend/manageTastingNotes.php?wine_id=" . $wine["wine_id"] . "' title='Add a tasting note for this wine' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
+      $add_note_link = " <a href='/backend/manageTastingNotes.php?wine_id=" . (int)$wine["wine_id"] . "' title='Add a tasting note for this wine' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
     }
+
+    $safe_wine_id = (int)$wine["wine_id"];
+    $safe_region_id = (int)$wine["region_id"];
+    $safe_producer_id = (int)$wine["producer_id"];
+    $safe_wine_name = htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8');
+    $safe_country = htmlspecialchars($wine["country"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_region = htmlspecialchars($wine["region"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_producer = htmlspecialchars($wine["producer"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_vintage = htmlspecialchars((string)$wine["vintage"], ENT_QUOTES, 'UTF-8');
+    $safe_grape = htmlspecialchars($wine["grape"] ?? '', ENT_QUOTES, 'UTF-8');
 
     // Output
     if($sort=="region" || $sort=="tenyearsold") {
       if($wine["country"]!=$prevCountry) {
         echo ($prevCountry!="") ? "</ul></details></li></ul></details><br>" : "";
-        echo "<details><summary><b>".$wine["country"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<details><summary><b>".$safe_country."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         $prevRegion="";
       }
       if($wine["region"]!=$prevRegion) {
         echo ($prevRegion!="") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["region"]."</i></summary><small><a href='/backend/manageRegions.php?region_id=".$wine["region_id"]."'>Edit region.</a></small><br><hr><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$safe_region."</i></summary><small><a href='/backend/manageRegions.php?region_id=".$safe_region_id."'>Edit region.</a></small><br><hr><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageWines.php?wine_id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageWines.php?wine_id=".$safe_wine_id."'>".$safe_wine_name."</a>" . $add_note_link . "</li>";
     } elseif($sort=="producer") {
       if ($wine["producer"]!=$prevProducer) {
         echo ($prevProducer!="") ? "</ul></details><br>" : "";
         if ($wine["producer_desc"]!=null) {
-          echo "<details><summary><b>".htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8')."</b></summary><small><a href='/backend/manageProducers.php?producer_id=".$wine["producer_id"]."'>Edit producer.</a></small><br><hr><small>".$wine["producer_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".$safe_producer."</b></summary><small><a href='/backend/manageProducers.php?producer_id=".$safe_producer_id."'>Edit producer.</a></small><br><hr><small>".sanitizeRichHtml($wine["producer_desc"])."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
         } else {
-          echo "<details><summary><b>".htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8')."</b></summary><small><a href='/backend/manageProducers.php?producer_id=".$wine["producer_id"]."'>Edit producer.</a></small><br><hr><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".$safe_producer."</b></summary><small><a href='/backend/manageProducers.php?producer_id=".$safe_producer_id."'>Edit producer.</a></small><br><hr><ul style='list-style-type:none;padding:0;margin:0;'>";
         }
       }
-      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/manageWines.php?wine_id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
+      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/manageWines.php?wine_id=".$safe_wine_id."'>".$safe_wine_name."</a>" . $add_note_link . "</li>";
     } elseif($sort=="vintage") {
       if($wine["vintage"]!=$prevVintage) {
         echo ($prevVintage!="") ? "</ul></details></li></ul></details><br>" : "";
-        echo "<details><summary><b>".$wine["vintage"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<details><summary><b>".$safe_vintage."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         $prevCountry="";
       }
       if($wine["country"]!=$prevCountry) {
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$safe_country."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageWines.php?wine_id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageWines.php?wine_id=".$safe_wine_id."'>".$safe_wine_name."</a>" . $add_note_link . "</li>";
     } elseif($sort=="variety") {
       if($wine["grape"]!=$prevVariety) {
         echo ($prevVariety!="") ? "</ul></details></li></ul></details><br>" : "";
         if($wine["grape_desc"]!=null) {
-          echo "<details><summary><b>".$wine["grape"]."</b></summary><hr><small>".$wine["grape_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".$safe_grape."</b></summary><hr><small>".sanitizeRichHtml($wine["grape_desc"])."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
         } else {
-          echo "<details><summary><b>".$wine["grape"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".$safe_grape."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         }
         $prevCountry="";
       }
       if($wine["country"]!=$prevCountry) {
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$safe_country."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageWines.php?wine_id=".$wine["wine_id"]."'>".$wine_name."</a>" . $add_note_link . "</li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageWines.php?wine_id=".$safe_wine_id."'>".$safe_wine_name."</a>" . $add_note_link . "</li>";
     }
     // Set previous values
     $prevCountry=$wine["country"];
