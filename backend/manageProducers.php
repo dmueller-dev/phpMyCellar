@@ -57,11 +57,22 @@
       die("CSRF token validation failed");
     }
 
-    $action = sanitizeInput($_POST['action'] ?? '');
-    $producer_input = sanitizeInput($_POST['producer'] ?? '');
+    $action = sanitizeInput($_POST['action'] ?? '', '');
+    $producer_input = sanitizeInput($_POST['producer'] ?? '', '');
     $region_id_input = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
     $address_input = sanitizeInput($_POST['address'] ?? '');
     $producer_desc_input = sanitizeInput($_POST['producer_desc'] ?? '');
+    $post_producer_id = filter_input(INPUT_POST, 'producer_id', FILTER_VALIDATE_INT);
+
+    // Preserve submitted values on validation failure
+    $region_id = $region_id_input ?: '';
+    $producer = $producer_input;
+    $address = $address_input;
+    $producer_desc = $producer_desc_input;
+    if ($action === 'edit' && $post_producer_id) {
+      $is_edit = true;
+      $producer_id = $post_producer_id;
+    }
 
     $valErrors = validateProducerInput($producer_input, $region_id_input, $address_input, $producer_desc_input);
     if (!empty($valErrors)) {
@@ -87,7 +98,6 @@
           $errors[] = "Database error inserting producer: " . $e->getMessage();
         }
       } elseif ($action === 'edit') {
-        $post_producer_id = filter_input(INPUT_POST, 'producer_id', FILTER_VALIDATE_INT);
         $conn->begin_transaction();
         try {
           if (updateProducer($conn, $post_producer_id, $region_id_input, $producer_input, $address_input, $producer_desc_input)) {
@@ -356,7 +366,7 @@
               <label for="address" style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9rem;">
                 Address &amp; Contact:
               </label>
-              <textarea name="address" id="address" rows="3" maxlength="1500" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 0.9rem;" placeholder="e.g. 1 Place de l'&Eacute;glise, 21700 Vosne-Roman&eacute;e"><?php echo htmlspecialchars($address, ENT_QUOTES, 'UTF-8'); ?></textarea>
+              <textarea name="address" id="address" rows="3" maxlength="200" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 0.9rem;" placeholder="e.g. 1 Place de l'&Eacute;glise, 21700 Vosne-Roman&eacute;e"><?php echo htmlspecialchars($address, ENT_QUOTES, 'UTF-8'); ?></textarea>
             </div>
 
             <div style="margin-bottom: 20px;">

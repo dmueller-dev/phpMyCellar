@@ -54,10 +54,14 @@
       die("CSRF token validation failed");
     }
 
-    $action = sanitizeInput($_POST['action'] ?? '');
-    $subregion_input = sanitizeInput($_POST['subregion'] ?? '');
+    $action = sanitizeInput($_POST['action'] ?? '', '');
+    $subregion_input = sanitizeInput($_POST['subregion'] ?? '', '');
     $region_id_input = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
     $subregion_desc_input = sanitizeInput($_POST['subregion_desc'] ?? '');
+
+    $region_id = $region_id_input ?: '';
+    $subregion = $subregion_input;
+    $subregion_desc = $subregion_desc_input;
 
     $valErrors = validateSubregionInput($subregion_input, $region_id_input, $subregion_desc_input);
     if (!empty($valErrors)) {
@@ -69,7 +73,7 @@
           if (insertSubregion($conn, $subregion_input, $region_id_input, $subregion_desc_input)) {
             $inserted_id = $conn->insert_id;
             $conn->commit();
-            $success_message = "Subregion '" . htmlspecialchars($subregion_input, ENT_QUOTES, 'UTF-8') . "' inserted successfully. <a href='manageAppellations.php?subregion_id=" . $inserted_id . "'>Add an appellation for this subregion &rarr;</a>";
+            $success_message = "Subregion '" . htmlspecialchars($subregion_input, ENT_QUOTES, 'UTF-8') . "' inserted successfully. <a href='manageAppellations.php?region_id=" . (int)$region_id_input . "'>Add an appellation for this region &rarr;</a>";
             $subregion = '';
             $subregion_desc = '';
             $is_edit = false;
@@ -109,11 +113,10 @@
   $subregions_stmt = $conn->prepare("
     SELECT sr.subregion_id, sr.subregion, sr.region_id, sr.subregion_desc,
            r.region, r.country,
-           COUNT(DISTINCT a.appellation_id) AS appellation_count,
+           COUNT(DISTINCT wm.appellation_id) AS appellation_count,
            COUNT(DISTINCT wm.master_id) AS master_count
     FROM subregions sr
     JOIN regions r ON sr.region_id = r.region_id
-    LEFT JOIN appellations a ON sr.subregion_id = a.subregion_id
     LEFT JOIN wines_master wm ON sr.subregion_id = wm.subregion_id
     GROUP BY sr.subregion_id, sr.subregion, sr.region_id, sr.subregion_desc, r.region, r.country
     ORDER BY r.country ASC, r.region ASC, sr.subregion ASC
@@ -269,7 +272,7 @@
                         <small style="color: #666;"><?php echo htmlspecialchars($sr['region'] . ', ' . $sr['country'], ENT_QUOTES, 'UTF-8'); ?></small>
                       </td>
                       <td data-label="Appellations" style="text-align: center;">
-                        <a href="manageAppellations.php?subregion_id=<?php echo (int)$sr['subregion_id']; ?>" title="View appellations" style="text-decoration: none; color: #555;">
+                        <a href="manageAppellations.php?region_id=<?php echo (int)$sr['region_id']; ?>" title="View appellations" style="text-decoration: none; color: #555;">
                           <?php echo (int)$sr['appellation_count']; ?>
                         </a>
                       </td>

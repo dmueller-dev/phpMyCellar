@@ -54,10 +54,20 @@
       die("CSRF token validation failed");
     }
 
-    $action = sanitizeInput($_POST['action'] ?? '');
-    $appellation_input = sanitizeInput($_POST['appellation'] ?? '');
+    $action = sanitizeInput($_POST['action'] ?? '', '');
+    $appellation_input = sanitizeInput($_POST['appellation'] ?? '', '');
     $region_id_input = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
     $appellation_desc_input = sanitizeInput($_POST['appellation_desc'] ?? '');
+    $post_appellation_id = filter_input(INPUT_POST, 'appellation_id', FILTER_VALIDATE_INT);
+
+    // Preserve submitted values on validation failure
+    $region_id = $region_id_input ?: '';
+    $appellation = $appellation_input;
+    $appellation_desc = $appellation_desc_input;
+    if ($action === 'edit' && $post_appellation_id) {
+      $is_edit = true;
+      $appellation_id = $post_appellation_id;
+    }
 
     $valErrors = validateAppellationInput($appellation_input, $region_id_input, $appellation_desc_input);
     if (!empty($valErrors)) {
@@ -82,7 +92,6 @@
           $errors[] = "Database error inserting appellation: " . $e->getMessage();
         }
       } elseif ($action === 'edit') {
-        $post_appellation_id = filter_input(INPUT_POST, 'appellation_id', FILTER_VALIDATE_INT);
         $conn->begin_transaction();
         try {
           if (updateAppellation($conn, $post_appellation_id, $region_id_input, $appellation_input, $appellation_desc_input)) {
@@ -335,7 +344,7 @@
               </label>
               <textarea id="appellation_desc_field" name="appellation_desc" rows="10" maxlength="1500"
                         style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; font-family: inherit;"
-                        placeholder="<p>Appellation law regulations, authorized cépages, minimum aging requirements, and terroir profile...</p>"><?php echo htmlspecialchars($appellation_desc, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                        placeholder="<p>Appellation law regulations, authorised cépages, minimum ageing requirements, and terroir profile...</p>"><?php echo htmlspecialchars($appellation_desc, ENT_QUOTES, 'UTF-8'); ?></textarea>
               <small style="color: #777;">Optional HTML permitted (e.g. &lt;p&gt;, &lt;em&gt;). Maximum 1,500 characters.</small>
             </div>
 

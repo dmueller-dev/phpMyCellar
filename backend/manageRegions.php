@@ -54,10 +54,14 @@
       die("CSRF token validation failed");
     }
 
-    $action = sanitizeInput($_POST['action'] ?? '');
-    $country_input = sanitizeInput($_POST['country'] ?? '');
-    $region_input = sanitizeInput($_POST['region'] ?? '');
+    $action = sanitizeInput($_POST['action'] ?? '', '');
+    $country_input = sanitizeInput($_POST['country'] ?? '', '');
+    $region_input = sanitizeInput($_POST['region'] ?? '', '');
     $region_desc_input = sanitizeInput($_POST['region_desc'] ?? '');
+
+    $country = $country_input;
+    $region = $region_input;
+    $region_desc = $region_desc_input;
 
     $valErrors = validateRegionInput($region_input, $country_input, $region_desc_input);
     if (!empty($valErrors)) {
@@ -66,7 +70,7 @@
       if ($action === 'add') {
         $conn->begin_transaction();
         try {
-          if (insertRegion($conn, $country_input, $region_input, $region_desc_input)) {
+          if (insertRegion($conn, $region_input, $country_input, $region_desc_input)) {
             $inserted_id = $conn->insert_id;
             $conn->commit();
             $success_message = "Region '" . htmlspecialchars($region_input, ENT_QUOTES, 'UTF-8') . "' inserted successfully. <a href='manageSubregions.php?region_id=" . $inserted_id . "'>Add a subregion for this region &rarr;</a>";
@@ -85,7 +89,7 @@
         $post_region_id = filter_input(INPUT_POST, 'region_id', FILTER_VALIDATE_INT);
         $conn->begin_transaction();
         try {
-          if (updateRegion($conn, $post_region_id, $country_input, $region_input, $region_desc_input)) {
+          if (updateRegion($conn, $post_region_id, $region_input, $country_input, $region_desc_input)) {
             $conn->commit();
             $success_message = "Region '" . htmlspecialchars($region_input, ENT_QUOTES, 'UTF-8') . "' updated successfully.";
             $region_id = $post_region_id;

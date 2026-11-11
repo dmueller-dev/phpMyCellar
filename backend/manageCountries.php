@@ -23,7 +23,7 @@
   $success_message = '';
 
   // Determine requested country for editing
-  $requested_country = sanitizeInput($_GET['country'] ?? $_GET['country_select'] ?? '');
+  $requested_country = sanitizeInput($_GET['country'] ?? $_GET['country_select'] ?? '', '');
   $is_edit = false;
   $country = '';
   $country_desc = '';
@@ -45,9 +45,16 @@
       die("CSRF token validation failed");
     }
 
-    $action = sanitizeInput($_POST['action'] ?? '');
-    $country_input = sanitizeInput($_POST['country'] ?? '');
+    $action = sanitizeInput($_POST['action'] ?? '', '');
+    $country_input = sanitizeInput($_POST['country'] ?? '', '');
     $country_desc_input = sanitizeInput($_POST['country_desc'] ?? '');
+    $original_country = sanitizeInput($_POST['original_country'] ?? $country_input, '');
+
+    $country = ($action === 'edit' && $original_country !== '') ? $original_country : $country_input;
+    $country_desc = $country_desc_input;
+    if ($action === 'edit') {
+      $is_edit = true;
+    }
 
     $valErrors = validateCountryInput($country_input, $country_desc_input);
     if (!empty($valErrors)) {
@@ -71,7 +78,6 @@
           $errors[] = "Database error inserting country: " . $e->getMessage();
         }
       } elseif ($action === 'edit') {
-        $original_country = sanitizeInput($_POST['original_country'] ?? $country_input);
         $conn->begin_transaction();
         try {
           if (updateCountry($conn, $original_country, $country_desc_input)) {
