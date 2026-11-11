@@ -8,6 +8,11 @@
 
 session_start();
 
+if (empty($_SESSION['install_csrf_token'])) {
+  $_SESSION['install_csrf_token'] = bin2hex(random_bytes(32));
+}
+$install_csrf_token = $_SESSION['install_csrf_token'];
+
 // Define paths
 define('ROOT_DIR', dirname(__DIR__));
 define('INSTALL_DIR', __DIR__);
@@ -77,26 +82,32 @@ function execute_sql_file($mysqli, $file_path) {
 }
 
 // Helper: Generate .env file content
-function generate_env_content($db_host, $db_name, $db_user, $db_pass, $site_url, $mail_from) {
+function generate_env_content($db_host, $db_port, $db_name, $db_user, $db_pass, $site_url, $mail_from) {
   $out = "# ==============================================================================\n";
   $out .= "# phpMyCellar Environment Configuration\n";
   $out .= "# Generated on " . date('r') . "\n";
   $out .= "# ==============================================================================\n\n";
   $out .= "# Database Connection Settings\n";
-  $out .= "DB_HOST=" . addcslashes($db_host, '"') . "\n";
-  $out .= "DB_NAME=" . addcslashes($db_name, '"') . "\n";
-  $out .= "DB_USER=" . addcslashes($db_user, '"') . "\n";
-  $out .= "DB_PASS=" . addcslashes($db_pass, '"') . "\n\n";
+  $out .= 'DB_HOST="' . addcslashes((string)$db_host, '"\\') . '"' . "\n";
+  $out .= 'DB_PORT="' . (int)$db_port . '"' . "\n";
+  $out .= 'DB_NAME="' . addcslashes((string)$db_name, '"\\') . '"' . "\n";
+  $out .= 'DB_USER="' . addcslashes((string)$db_user, '"\\') . '"' . "\n";
+  $out .= 'DB_PASS="' . addcslashes((string)$db_pass, '"\\') . '"' . "\n\n";
   $out .= "# Application Base Settings\n";
-  $out .= "APP_ENV=production\n";
-  $out .= "APP_URL=" . addcslashes($site_url, '"') . "\n\n";
+  $out .= 'APP_ENV="production"' . "\n";
+  $out .= 'APP_URL="' . addcslashes((string)$site_url, '"\\') . '"' . "\n\n";
   $out .= "# System Notifications & Mail Sender\n";
-  $out .= "MAIL_FROM=" . addcslashes($mail_from, '"') . "\n";
+  $out .= 'MAIL_FROM="' . addcslashes((string)$mail_from, '"\\') . '"' . "\n";
   return $out;
 }
 
 // Handle Form Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
+  $submitted_csrf = $_POST['csrf_token'] ?? '';
+  if (!is_string($submitted_csrf) || !hash_equals($install_csrf_token, $submitted_csrf)) {
+    http_response_code(403);
+    die('Invalid CSRF token. Please reload the page and try again.');
+  }
   $action = $_POST['action'] ?? '';
 
   // ----------------------------------------------------
@@ -190,7 +201,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
           $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
           // Clear any existing user with ID 1 or same username
-          $conn->query("DELETE FROM users WHERE user_id = 1 OR username = '" . $conn->real_escape_string($username) . "'");
+          $stmt_del = $conn->prepare("DELETE FROM users WHERE user_id = 1 OR username = ?");
+          if ($stmt_del) {
+            $stmt_del->bind_param("s", $username);
+            $stmt_del->execute();
+            $stmt_del->close();
+          }
 
           $stmt = $conn->prepare("INSERT INTO users (user_id, username, password, displayname, role, email, initials, email_notifications) VALUES (1, ?, ?, ?, 'admin', ?, ?, 1)");
           $stmt->bind_param("sssss", $username, $password_hash, $displayname, $email, $initials);
@@ -271,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
           $conn->close();
 
           // Write .env file
-          $env_content = generate_env_content($db['host'], $db['name'], $db['user'], $db['pass'], $site_url, $mail_from);
+          $env_content = generate_env_content($db['host'], $db['port'] ?? 3306, $db['name'], $db['user'], $db['pass'], $site_url, $mail_from);
           if (@file_put_contents(ENV_FILE, $env_content) === false) {
             $errors[] = 'Failed to write configuration to ' . ENV_FILE . '. Please ensure write permissions on root directory.';
           } else {
@@ -282,6 +298,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
             // Clean install session data
             unset($_SESSION['install_db']);
             unset($_SESSION['install_admin']);
+            unset($_SESSION['install_csrf_token']);
 
             header("Location: index.php?step=5");
             exit();
@@ -638,7 +655,7 @@ foreach ($checks as $c) {
         <div class="lock-icon">🔒</div>
         <h2 style="margin-bottom:12px;color:var(--text);">Installation is Complete & Locked</h2>
         <p style="color:var(--text-muted);max-width:520px;margin:0 auto 25px;">
-          phpMyCellar is already configured. To prevent unauthorized reinstallation, the setup wizard is locked by <code>install/installed.lock</code>.
+          phpMyCellar is already configured. To prevent unauthorised reinstallation, the setup wizard is locked by <code>install/installed.lock</code>.
         </p>
         <p style="font-size:13px;color:#888;margin-bottom:25px;">
           If you wish to re-run the wizard, remove <code>install/installed.lock</code> on your server.
@@ -752,6 +769,7 @@ foreach ($checks as $c) {
         </p>
 
         <form method="POST" action="index.php?step=2">
+          <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($install_csrf_token, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="action" value="setup_db">
 
           <div class="form-row">
@@ -800,6 +818,7 @@ foreach ($checks as $c) {
         </p>
 
         <form method="POST" action="index.php?step=3">
+          <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($install_csrf_token, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="action" value="create_admin">
 
           <div class="form-row">
@@ -852,6 +871,7 @@ foreach ($checks as $c) {
         </p>
 
         <form method="POST" action="index.php?step=4">
+          <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($install_csrf_token, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="action" value="save_settings">
 
           <div class="form-row">

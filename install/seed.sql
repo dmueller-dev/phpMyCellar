@@ -261,7 +261,7 @@ INSERT INTO `variety` (`grape`, `grape_desc`) VALUES
 ('Cabernet Carbon', 'Fungus-resistant PIWI red variety developed for cool climate resilience.'),
 ('Cabernet Cortis', 'Deeply coloured, tannic PIWI red variety with Cabernet Sauvignon lineage.'),
 ('Cabernet Franc', 'Classic parent of Cabernet Sauvignon and Merlot, offering leafy, violet, and red currant complexity.'),
-('Cabernet Sauvignon', 'The world’s benchmark red grape for structured, cassis-scented, long-lived fine wines.'),
+('Cabernet Sauvignon', 'The world\'s benchmark red grape for structured, cassis-scented, long-lived fine wines.'),
 ('Carménère', 'Historic Bordeaux variety now thriving in Chile, prized for its savoury paprika, cocoa, and plush plum character.'),
 ('Chardonnay', 'The noble white grape of Burgundy and Champagne, capable of extraordinary minerality, richness, and elegance.'),
 ('Chasselas', 'Delicate, terroir-reflective white variety traditional in Switzerland, Alsace, and Baden (Gutedel).'),
@@ -275,7 +275,7 @@ INSERT INTO `variety` (`grape`, `grape_desc`) VALUES
 ('Garganega', 'Delicate, almond-scented white variety behind the great dry whites of Soave in the Veneto.'),
 ('Gewürztraminer', 'Highly aromatic, lychee and rose-perfumed white grape of Alsace, Germany, and Alto Adige.'),
 ('Grenache', 'World-class red grape of the southern Rhône (Châteauneuf-du-Pape) and Spain (Garnacha).'),
-('Grüner Veltliner', 'Austria’s signature white grape, renowned for white pepper, citrus freshness, and ageability.'),
+('Grüner Veltliner', 'Austria\'s signature white grape, renowned for white pepper, citrus freshness, and ageability.'),
 ('Lagrein', 'Indigenous red grape of Alto Adige, producing deeply coloured, velvet-textured wines with plum and chocolate notes.'),
 ('Malbec', 'Dark, rich red grape celebrated in Cahors and Argentina for its plush blackberry and spice.'),
 ('Merlot', 'Plush, generous noble red grape central to the great right bank wines of Bordeaux.'),
@@ -285,7 +285,7 @@ INSERT INTO `variety` (`grape`, `grape_desc`) VALUES
 ('Müller-Thurgau', 'Early-ripening, floral white cross popular throughout Germany, Austria, and northern Italy.'),
 ('Muscat', 'Ancient aromatic family of grapes with exuberant grapey, floral, and citrus aromas.'),
 ('Nebbiolo', 'The noble Italian grape behind Barolo and Barbaresco, famed for tar, roses, ethereal aromas, and profound tannins.'),
-('Nero d\'Avola', 'Sicily’s primary red variety, known for juicy dark cherry, plum, and warm Mediterranean spice.'),
+('Nero d\'Avola', 'Sicily\'s primary red variety, known for juicy dark cherry, plum, and warm Mediterranean spice.'),
 ('Petit Verdot', 'Intensely coloured, spicy, and structured blending component in classic Bordeaux reds.'),
 ('Pinot Blanc', 'Round, gentle white member of the Pinot family with orchard fruit flavours (Weissburgunder).'),
 ('Pinot Gris', 'Rich, textured white variety (Grauburgunder / Pinot Grigio) producing versatile dry and off-dry styles.'),
@@ -294,7 +294,7 @@ INSERT INTO `variety` (`grape`, `grape_desc`) VALUES
 ('Pinotage', 'South African cross between Pinot Noir and Cinsault, producing bold, smoky dark fruit reds.'),
 ('Primitivo/Zinfandel', 'Rich, brambly, sun-drenched red variety celebrated in Puglia and California.'),
 ('Prior', 'Fungus-resistant PIWI red grape variety.'),
-('Riesling', 'One of the world’s greatest white grapes: unmatched precision, crystalline acidity, and longevity across dry and sweet styles.'),
+('Riesling', 'One of the world\'s greatest white grapes: unmatched precision, crystalline acidity, and longevity across dry and sweet styles.'),
 ('Sangiovese', 'The soul of Tuscany: high acidity, firm tannins, and sour cherry flavours in Chianti Classico and Brunello.'),
 ('Sauvignon Blanc', 'Zesty, aromatic white grape renowned in the Loire Valley, Bordeaux (blended with Sémillon), and New Zealand.'),
 ('Scheurebe', 'Aromatic German white cross offering exuberant blackcurrant leaf, grapefruit, and exotic fruit.'),
@@ -304,11 +304,11 @@ INSERT INTO `variety` (`grape`, `grape_desc`) VALUES
 ('St. Laurent', 'Aromatic, silky Austrian red variety related to Pinot Noir.'),
 ('Syrah', 'The noble red grape of the northern Rhône (Hermitage, Côte-Rôtie) and Australia (Shiraz).'),
 ('Tannat', 'Deeply coloured, powerfully tannic red variety of Madiran and Uruguay.'),
-('Tempranillo', 'Spain’s flagship noble red grape, forming the backbone of Rioja and Ribera del Duero.'),
+('Tempranillo', 'Spain\'s flagship noble red grape, forming the backbone of Rioja and Ribera del Duero.'),
 ('Verdejo', 'Aromatic, herbaceous white grape of Rueda in Spain with refreshing citrus and fennel notes.'),
 ('Verdicchio/Turbiana', 'High-acid, mineral white grape of the Marche and Lake Garda (Lugana) in Italy.'),
 ('Viognier', 'Opulent, apricot- and honeysuckle-scented white grape of Condrieu in the northern Rhône.'),
-('Zweigelt', 'Austria’s most widespread red grape, producing bright cherry-scented, spicy wines.');
+('Zweigelt', 'Austria\'s most widespread red grape, producing bright cherry-scented, spicy wines.');
 
 -- --------------------------------------------------------
 -- Key Wine Countries
