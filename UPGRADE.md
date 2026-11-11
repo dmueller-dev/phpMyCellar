@@ -351,7 +351,9 @@ INSERT INTO `role_privileges` (`role_name`, `privilege_code`) VALUES
 ('admin', 'manage_static_pages'),
 ('admin', 'moderate_comments')
 ON DUPLICATE KEY UPDATE `privilege_code` = VALUES(`privilege_code`);
-```---
+```
+
+---
 
 ### 9. Unified Backend Dashboards (`add*.php` & `edit*.php` → `manage*.php`)
 
@@ -370,6 +372,12 @@ In phpMyCellar 1.1.0, all standalone `add*.php` and `edit*.php` scripts were con
 
 #### Backwards-Compatibility & Scheduled Removal
 All 27 legacy script endpoints currently function as transparent HTTP 301 redirect shims preserving incoming query parameters (such as `wine_id`, `bottle_id`, and `mode=blind`) while emitting an `@trigger_error(..., E_USER_DEPRECATED)`. In version **2.0.0**, these 27 legacy shim files will be permanently deleted. Custom bookmarks, webhooks, or browser extensions should be updated to target the `/backend/manage*.php` endpoints directly.
+
+---
+
+### 10. Base Schema Synchronisation (`install/schema.sql`)
+
+`install/schema.sql` has been synchronised with all columns referenced by the unified `manage*.php` controllers and `includes/functions.php` (including `users.initials` `VARCHAR(5)`, `countries.country_desc`, `producers.address`, `wines_master.cuvee_yn`, `wines.ct_id`, `wines.wine_desc`, `orders.shipping_paid`, `orders.discount`, `orders.status`, `order_documents.file_path`, `order_items.total_price`, and `bottles` lifecycle/window columns `purchase_date`, `arrival_date`, `status`, `drink_from`, `drink_through`, `consumption_date`, `consumption_note`, `for_sale`). Existing databases provisioned from earlier schema dumps that lack any of these columns can apply the corresponding `ALTER TABLE` statements from `install/schema.sql`.
 
 ---
 

@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Horizontal momentum scrolling navigation tabs (`.admin-mode-tabs`, `.tab-nav`) preventing button wrapping or clipping on narrow screens.
   - Zero desktop layout regressions: all responsive rules strictly encapsulated within `@media screen and (max-width: 720px)`.
 - Unified administrative dashboards in `/backend/` with cross-device responsive design, horizontal table scroll containment, touch-friendly targets, and dual Add/Edit modes:
-  - `backend/manageBottles.php` (consolidates `addBottle.php` and `editBottle.php` with batch 1–12 bottle additions, bin capacity validation, and quick inventory ledger).
+  - `backend/manageBottles.php` (consolidates `addBottle.php` and `editBottle.php` with batch 1-12 bottle additions, bin capacity validation, and quick inventory ledger).
   - `backend/manageWines.php` (consolidates `addWine.php` and `editWine.php` with harvest vintage management and CellarTracker ID linking).
   - `backend/manageWineMasters.php` (consolidates `addWineMaster.php` and `editWineMaster.php` with live naming convention preview).
   - `backend/manageTastingNotes.php` (consolidates `addTastingNote.php`, `blindTasting.php`, and `editTastingNote.php` with standard and blind tasting modes, WSET SAT BLIC evaluation, bottle consumption prompts, and notes journal).
@@ -89,7 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced comment moderation search (`manageComments.php` and `includes/functions.php`) to query wine cuvée names, producers, and story titles alongside comment content and authors, adding instant live client-side filtering as users type.
 - Restored missing search filter inputs on form dropdowns across unified `manage*.php` scripts that were lost during CRUD consolidation (including wine master selection when adding vintages, wine cuvée selection when editing bottles, user selection, story selection, tasting note and wine selection, and terroir region and appellation dropdowns).
 - Restored discrete BLIC score inputs and dynamic WSET score recommendation logic in `backend/manageTastingNotes.php`, including suggested 100-point and 20-point ranges and an instant score population button.
-- Replaced double-escaped HTML dash entities (`&mdash;`) in backend dropdown options and item labels across `manageBottles.php`, `manageWineMasters.php`, `manageWines.php`, `manageTastingNotes.php`, `manageBlogposts.php`, `manageStaticPages.php`, and `settings.php` with native UTF-8 em dashes (`—`), preventing literal `&mdash;` strings from displaying in dropdown lists.
+- Replaced double-escaped HTML dash entities (`&mdash;`) in backend dropdown options and item labels across `manageBottles.php`, `manageWineMasters.php`, `manageWines.php`, `manageTastingNotes.php`, `manageBlogposts.php`, `manageStaticPages.php`, and `settings.php` with standard spaced ASCII hyphens (` - `), preventing literal `&mdash;` strings from displaying in dropdown lists.
 - Resolved immediate redirects to `/backend/index.php` in `manageWines.php`, `manageWineMasters.php`, `manageStaticPages.php`, `manageUsers.php`, and `manageOrders.php` caused by non-canonical privilege checks:
   - Replaced non-existent `manage_wines` check with dual granular `add_wine` and `edit_wine` verification in `manageWines.php`.
   - Replaced non-existent `manage_master` check with dual granular `add_wine_master` and `edit_wine_master` verification in `manageWineMasters.php`.
@@ -106,6 +106,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Guarded against fatal `fetch_assoc() on bool` TypeErrors by verifying `mysqli_result` instances across `getVintageSummary()`, `getVintageRegionStats()`, `getVintageCountryStats()`, `getVintageTopWines()`, and `getAdjacentVintages()`.
   - Resolved `ONLY_FULL_GROUP_BY` and unindexed `TEXT` column grouping incompatibilities in `view_vintage_region_colour_stats` and fallback query by utilising `MAX(xvr.vintage_desc)` aggregate.
   - Hardened top wines date formatting in `vintages.php` to verify `DateTimeInterface` objects before calling `date_format()`.
+- Fixed swapped `$region_input` and `$country_input` arguments in `backend/manageRegions.php` when calling `insertRegion()` and `updateRegion()`.
+- Fixed `Unknown column 'a.subregion_id'` SQL error in `backend/manageSubregions.php` by counting distinct appellation associations through `wines_master` and passing `region_id` to appellation filter links.
+- Restored per-bottle drinking window override inputs (`drink_from`, `drink_through`) and storage bin capacity annotations in the `backend/manageOrders.php` delivery acceptance grid, and ensured submitted drinking windows are preserved on delivery acceptance.
+- Fixed mobile segmented pane switcher button class names (`admin-mobile-pane-btn`) across `manageRatingScales.php`, `manageStorageBins.php`, `manageStores.php`, `manageVarieties.php`, and `manageWineAttributes.php` so active button states update on mobile viewports.
+- Preserved submitted form inputs upon validation failure across `manageBottles.php`, `manageRegions.php`, `manageSubregions.php`, `manageAppellations.php`, `manageProducers.php`, and `manageCountries.php`, and fixed edit-mode wine search filtering in `manageBottles.php`.
+- Fixed comment editing state and target links in `backend/manageComments.php` (`/blog.php`, `/tnotes.php`, `/wines.php`), and story public links and author display in `backend/manageBlogposts.php`.
+- Fixed PHP 8.0+ parameter ordering in `includes/functions.php` (`updateVineyard()`, `insertWineMaster()`, `insertBottle()`, `insertTastingNote()`, and `validateBottleInput()`), duplicate name validation in `updateVariety()`, statement check ordering in `checkStorageBinCapacity()`, and `0`-point rating handling in SEO metadata helpers.
+- Fixed overall vintage average calculation in `vintages.php` to weight regional means by `note_count` and fall back to the active scale's average when `avg_score` is absent; fixed `ONLY_FULL_GROUP_BY` compliance in `winemenu.php`.
+- Synchronised `install/schema.sql` with application queries across `users`, `countries`, `producers`, `wines_master`, `wines`, `orders`, `order_documents`, `order_items`, and `bottles`, and configured `install/index.php` to persist `DB_PORT` and quote `.env` values.
+
+### Security
+- Fixed critical IDOR and authorisation bypass in `backend/manageBlogposts.php` where story updates executed inside the validation `else` branch even when ownership or publish privilege checks failed; restricted loading and editing of published stories for users without `publish` or `edit_all` privileges.
+- Enforced granular action-level RBAC checks across `backend/manageOrders.php` (`add_order` vs `manage_orders`), `backend/manageStorageBins.php` (`manage_storage_bins`), `backend/manageTastingNotes.php` (`edit_all` and bottle consumption authorisation), `backend/managePrivileges.php` (role validation and privilege override saving), `backend/settings.php` (`manage_privileges`), `backend/browseBottles.php`, and `backend/browseWines.php`.
+- Implemented `DOMDocument`-backed HTML whitelist sanitisation (`sanitizeRichHtml()`) in `includes/functions.php` to strip event handler attributes (`on*`), `style`, and unsafe URI protocols (`javascript:`, `data:`, `vbscript:`) from rich-text inputs while enforcing plain-text stripping on entity names.
+- Escaped unescaped output across `includes/footer.php`, `interpolateSiteSettings()`, `renderBlogReferences()`, `blog.php`, `tnotes.php`, `wines.php`, `vintages.php`, `producers.php`, `impressum.php`, `backend/browseBottles.php`, `backend/browseWines.php`, and inline JavaScript `confirm()` prompts across backend dashboards.
+- Enforced strict cookie minimisation in `includes/init.php` and `login.php`: configured `HttpOnly`, `SameSite=Lax`, and conditional `Secure` session cookie flags, avoided starting sessions for unauthenticated visitors without an existing session cookie, and regenerated session IDs (`session_regenerate_id(true)`) upon login.
+- Converted state-changing notification toggle in `notifications.php` from `GET` to CSRF-protected `POST`, and added CSRF token validation and prepared statements to `install/index.php`.
+- Restricted direct access to unpublished draft stories in `blog.php` and draft tasting notes in `tnotes.php` to their author or users with `edit_all` / `publish` privileges, and filtered `renderComments()` and `latestComments()` to display only approved comments.
 
 ## [1.1.0] - 2026-09-08
 
@@ -119,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unified blind tasting workflow and cellar bottle selection into `backend/addTastingNote.php`, featuring concealed bottle selection, wine reveal disclosure, and post-submission bottle consumption tracking.
 - Modern, responsive **Admin Hub** control center (`backend/index.php`) featuring at-a-glance KPI metric cards (bottles in cellar, ready-to-drink percentage, catalog vintages/masters, tasting notes, pending orders), touch-friendly quick action shortcuts, domain cards, compact terroir matrix, and interactive storage location breakdown.
 - Section headers (`.submenu-header`) in dropdown navigation menus for clearer visual grouping of administrative tools.
-- Intermediate responsive navigation rules (721px–1060px viewports) providing comfortable padding and font-sizing on tablet screens without navbar wrapping.
+- Intermediate responsive navigation rules (721px-1060px viewports) providing comfortable padding and font-sizing on tablet screens without navbar wrapping.
 
 ### Changed
 - Streamlined Admin navigation dropdown across desktop and mobile viewports: removed redundant `Browse wines` and `Add wine` links, and consolidated separate `Add user` and `Edit user` links into a single `Users` management interface (`backend/editUser.php`).
@@ -151,7 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Configurable primary rating scale system (20-point vs. 100-point) in Site Settings and Installation Wizard.
 - Optional WSET Systematic Approach to Tasting (SAT) qualitative assessment toggle.
-- Database CHECK constraint ensuring 100-point scores remain within 50–100.
+- Database CHECK constraint ensuring 100-point scores remain within 50-100.
 - Reference lookup tables `scale_20` and `scale_100` with score tier descriptions.
 - Scale-aware vintage statistics, regional averages, and rankings.
 
