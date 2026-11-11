@@ -42,8 +42,8 @@
       exit;
     }
 
-    // Generate the token for the comments form
-    $csrf_token = generateCSRFToken();
+    // Generate the token for the comments form when logged in
+    $csrf_token = $user_id ? generateCSRFToken() : '';
 
     // Initialize error and success messages
     $error = "";
@@ -58,34 +58,40 @@
       } elseif (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $error = "Security check failed. Please refresh the page and try again.";
       } else {
-        $comment = $_POST['comment'] ?? '';
-        $mysqli->autocommit(FALSE);
-        $post = $mysqli->prepare("INSERT INTO comments (user_id, content) VALUES (?, ?)");
-        $post->bind_param('is', $user_id, $comment);
-        if ($post->execute()) {
-          $last_id = $mysqli->insert_id;
-          $post->close();
-          $post = $mysqli->prepare("INSERT INTO x_comments_blogposts (comment_id, blog_id) VALUES (?, ?)");
-          $post->bind_param('ii', $last_id, $blogID);
+        $comment = trim((string)($_POST['comment'] ?? ''));
+        if ($comment === '') {
+          $error = "Comment cannot be empty.";
+        } elseif (mb_strlen($comment, 'UTF-8') > 2000) {
+          $error = "Comment must not exceed 2000 characters.";
+        } else {
+          $mysqli->autocommit(FALSE);
+          $post = $mysqli->prepare("INSERT INTO comments (user_id, content) VALUES (?, ?)");
+          $post->bind_param('is', $user_id, $comment);
           if ($post->execute()) {
-            $success = "Thank you! Comment posted successfully.";
-            $mysqli->commit();
-            $mysqli->autocommit(TRUE);
-            
-            // Auto-subscribe the commenter and notify existing subscribers
-            autoSubscribe($mysqli, $user_id, $blogID, 'blog');
-            createNotificationsForComment($mysqli, $user_id, $blogID, 'blog', $last_id);
+            $last_id = $mysqli->insert_id;
+            $post->close();
+            $post = $mysqli->prepare("INSERT INTO x_comments_blogposts (comment_id, blog_id) VALUES (?, ?)");
+            $post->bind_param('ii', $last_id, $blogID);
+            if ($post->execute()) {
+              $success = "Thank you! Comment posted successfully.";
+              $mysqli->commit();
+              $mysqli->autocommit(TRUE);
+              
+              // Auto-subscribe the commenter and notify existing subscribers
+              autoSubscribe($mysqli, $user_id, $blogID, 'blog');
+              createNotificationsForComment($mysqli, $user_id, $blogID, 'blog', $last_id);
+            } else {
+              $error = "Failed to post comment. Please try again.";
+              $mysqli->rollback();
+              $mysqli->autocommit(TRUE);
+            }
           } else {
             $error = "Failed to post comment. Please try again.";
             $mysqli->rollback();
             $mysqli->autocommit(TRUE);
           }
-        } else {
-          $error = "Failed to post comment. Please try again.";
-          $mysqli->rollback();
-          $mysqli->autocommit(TRUE);
+          $post->close();
         }
-        $post->close();
       }
     }
 
@@ -113,12 +119,12 @@
 <div class="row">
   <div class="column main">
     <div class="card">
-      <h3 style="margin-bottom:0;"><?php echo $blogpost["title"];?></h3>
+      <h3 style="margin-bottom:0;"><?php echo htmlspecialchars((string)$blogpost["title"], ENT_QUOTES, 'UTF-8');?></h3>
       <p style="margin-top:0;">Posted on <?php echo date_format(date_create($blogpost["pub_date"]),"l, j F Y");?><?php if (!empty($blogpost['edit_date']) && strtotime($blogpost['edit_date']) > strtotime($blogpost['pub_date'])): ?> (Last edited: <?php echo date_format(date_create($blogpost['edit_date']),"l, j F Y");?>)<?php endif; ?></p>
     </div>
     <div class="card">
       <section>
-	<?php echo $blogpost["content"];?>
+	<?php echo sanitizeRichHtml($blogpost["content"] ?? '');?>
       </section>
     </div>
   </div>
@@ -292,15 +298,29 @@
   
   // Perform query
   $stmt = $mysqli->prepare("select * from blogposts where blog_id=?");
+  if (!$stmt) {
+    $GLOBALS['blogpost'] = null;
+    return;
+  }
   $stmt->bind_param("i", $id);
   $stmt->execute();
   $result = $stmt->get_result();
 
   if ($result)
   {
-    $GLOBALS['blogpost'] = $result -> fetch_assoc();
-    // Free result set
+    $post = $result -> fetch_assoc();
     $result -> free_result();
+    if ($post && ($post['status'] ?? 'published') !== 'published') {
+      $uid = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+      $can_view_draft = $uid > 0 && (
+        hasPrivilege($conn, 'edit_all_blogposts') ||
+        (hasPrivilege($conn, 'edit_blogpost') && (int)($post['user_id'] ?? 0) === $uid)
+      );
+      if (!$can_view_draft) {
+        $post = null;
+      }
+    }
+    $GLOBALS['blogpost'] = $post;
   }
   $stmt->close();
 } ?>
@@ -315,9 +335,12 @@
                                 left join wines_master on wines.master_id=wines_master.master_id
                                 left join producers on wines_master.producer_id=producers.producer_id
                                 left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
-                                left join (select note_id, wine_id as w_id, tasting_date, flawed_yn, pts_20, pts_100, dmpts, wsetpts, status, users.initials from tnotes left join users on tnotes.user_id=users.user_id) tnotes on x_blog_wines.wine_id=tnotes.w_id
+                                left join (select note_id, wine_id as w_id, tasting_date, flawed_yn, pts_20, pts_100, pts_20 as dmpts, wsetpts, status, users.initials from tnotes left join users on tnotes.user_id=users.user_id) tnotes on x_blog_wines.wine_id=tnotes.w_id
                               where x_blog_wines.blog_id=?
                               order by producers.producer asc, wines_master.name asc, wines.vintage asc, tnotes.tasting_date desc");
+  if (!$stmt) {
+    return;
+  }
   $stmt->bind_param("i", $id);
   $stmt->execute();
   $result = $stmt->get_result();
@@ -327,11 +350,11 @@
     $wine_name = getWineName($wine["nameconvention"], $wine["vintage"], $wine["name"], $wine["producer"], $wine["grape"], $wine["vineyard"]);
     // Output
     if ($wine_name!=$prevWine) {
-      echo "<li><a href='/wines.php?id=".$wine["wine_id"]."'>".$wine_name."</a></li>";
+      echo "<li><a href='/wines.php?id=".(int)$wine["wine_id"]."'>".htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8')."</a></li>";
       $prevWine=$wine_name;
     }
     $rating_badge = formatNoteRatingBadge($wine, $scale, true);
-    if ($wine["note_id"]!=null and $wine["status"]=="published") { echo "<ul><li>Tasted on ".date_format(date_create($wine["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$wine["note_id"]."'>".$rating_badge."</a></li></ul>"; }
+    if ($wine["note_id"]!=null and $wine["status"]=="published") { echo "<ul><li>Tasted on ".date_format(date_create($wine["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".(int)$wine["note_id"]."'>".htmlspecialchars($rating_badge, ENT_QUOTES, 'UTF-8')."</a></li></ul>"; }
   }
   if (mysqli_num_rows($result)==0) { echo "<li>No wines were featured in this story.</li>"; }
   $stmt->close();
@@ -342,15 +365,20 @@
 {
   global $mysqli, $conn;
   $prevYear="";
+  $num = (int)$num;
+  $comments_meta = function_exists('getCommentsTableMetadata') ? getCommentsTableMetadata($conn) : ['has_status' => false];
+  $c_subquery = !empty($comments_meta['has_status'])
+    ? "select xb.blog_id as c_blog_id, count(xb.comment_id) as comment_count from x_comments_blogposts xb inner join comments cm on xb.comment_id = cm.comment_id where cm.status = 'approved' group by xb.blog_id"
+    : "select blog_id as c_blog_id, count(comment_id) as comment_count from x_comments_blogposts group by blog_id";
   // Perform query
-  $result = $mysqli -> query("select blogposts.*, coalesce(c.comment_count, 0) as comment_count from blogposts left join (select blog_id as c_blog_id, count(comment_id) as comment_count from x_comments_blogposts group by blog_id) c on blogposts.blog_id=c.c_blog_id where status='published' order by pub_date desc, blog_id desc limit 0,".$num);
+  $result = $mysqli -> query("select blogposts.*, coalesce(c.comment_count, 0) as comment_count from blogposts left join ({$c_subquery}) c on blogposts.blog_id=c.c_blog_id where status='published' order by pub_date desc, blog_id desc limit 0,".$num);
   // Output
   while ($blogs = $result->fetch_assoc()) {
-    $comment_badge = getCommentBadgeHtml($blogs["comment_count"] ?? 0, "/blog.php?id=" . $blogs["blog_id"] . "#comments");
+    $comment_badge = getCommentBadgeHtml($blogs["comment_count"] ?? 0, "/blog.php?id=" . (int)$blogs["blog_id"] . "#comments");
     if (date_format(date_create($blogs["pub_date"]),"Y")!=$prevYear) {
       echo "<br><li><b>".date_format(date_create($blogs["pub_date"]),"Y")."</b></li>";
     }
-    echo "<li>".date_format(date_create($blogs["pub_date"]),"d M Y").": <a href='/blog.php?id=".$blogs['blog_id']."'>".$blogs["title"]."</a>" . $comment_badge . "</li>";
+    echo "<li>".date_format(date_create($blogs["pub_date"]),"d M Y").": <a href='/blog.php?id=".(int)$blogs['blog_id']."'>".htmlspecialchars((string)$blogs["title"], ENT_QUOTES, 'UTF-8')."</a>" . $comment_badge . "</li>";
     $prevYear=date_format(date_create($blogs["pub_date"]),"Y");
   }
   $result -> free_result();

@@ -29,6 +29,9 @@
     $sqlOrderBy="order by cellar_name asc,bin_name asc,regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
   } elseif ($sort=="style") {
     $sqlOrderBy="order by wines_master.style asc,regions.country asc,region asc,producer asc,wines_master.name asc,subregion asc,appellation asc,vineyard asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
+  } else {
+    $sort="region";
+    $sqlOrderBy="order by regions.country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,storageBins.bin_name asc,bottle_formats.format asc,bottle_id asc";
   }
 ?>
 
@@ -119,7 +122,7 @@
               $cellarRes = $mysqli->query("SELECT cellar_id, cellar_name FROM cellars ORDER BY cellar_name ASC");
               while($c = $cellarRes->fetch_assoc()) {
                 $selected = (isset($_GET['cellar']) && $_GET['cellar'] == $c['cellar_id']) ? 'selected' : '';
-                echo "<option value='{$c['cellar_id']}' $selected>{$c['cellar_name']}</option>";
+                echo "<option value='" . (int)$c['cellar_id'] . "' $selected>" . htmlspecialchars((string)$c['cellar_name'], ENT_QUOTES, 'UTF-8') . "</option>";
               }
             ?>
           </select>
@@ -326,38 +329,38 @@
   $result = $mysqli -> query(
     "select
       min(bottles.bottle_id) as bottle_id,
-      bottles.status,
+      max(bottles.status) as status,
       min(bottles.drink_from) as drink_from,
       max(bottles.drink_through) as drink_through,
       max(case when bottles.for_sale = 'yes' then 1 else 0 end) as for_sale,
       " . $restricted_select . "
       bottle_formats.format,
-      bottle_formats.format_desc,
-      cellars.cellar_name,
+      max(bottle_formats.format_desc) as format_desc,
+      max(cellars.cellar_name) as cellar_name,
       storageBins.bin_id,
       storageBins.bin_name,
       wines.wine_id,
-      wines.vintage,
-      wines.wine_desc,
-      wines_master.master_id,
-      wines_master.name,
-      wines_master.nameconvention,
-      wines_master.producer_id,
-      wines_master.region_id,
-      wines_master.subregion_id,
-      wines_master.appellation_id,
-      wines_master.vineyard_id,
-      wines_master.grape,
-      wines_master.colour,
-      wines_master.style,
-      producers.producer,
-      producers.producer_desc,
-      vineyards.vineyard,
-      regions.region,
-      regions.country,
-      subregions.subregion,
-      appellations.appellation,
-      v.grape_desc,
+      max(wines.vintage) as vintage,
+      max(wines.wine_desc) as wine_desc,
+      max(wines_master.master_id) as master_id,
+      max(wines_master.name) as name,
+      max(wines_master.nameconvention) as nameconvention,
+      max(wines_master.producer_id) as producer_id,
+      max(wines_master.region_id) as region_id,
+      max(wines_master.subregion_id) as subregion_id,
+      max(wines_master.appellation_id) as appellation_id,
+      max(wines_master.vineyard_id) as vineyard_id,
+      max(wines_master.grape) as grape,
+      max(wines_master.colour) as colour,
+      max(wines_master.style) as style,
+      max(producers.producer) as producer,
+      max(producers.producer_desc) as producer_desc,
+      max(vineyards.vineyard) as vineyard,
+      max(regions.region) as region,
+      max(regions.country) as country,
+      max(subregions.subregion) as subregion,
+      max(appellations.appellation) as appellation,
+      max(v.grape_desc) as grape_desc,
       sum(count(bottles.bottle_id)) over (partition by wines.wine_id, bottle_formats.format) as numWine,
       count(bottles.bottle_id) as numWineBin,
       (SELECT COUNT(1) FROM tnotes WHERE tnotes.wine_id = wines.wine_id AND tnotes.favourite = 'yes' AND tnotes.status = 'published') AS is_favourite
@@ -385,14 +388,14 @@
         ($sort=="twentyplus") ? " and vintage is not null and (year(curdate())-vintage>=20)" : ""
       )
     )
-    ." group by wines.wine_id, bottle_formats.format, storageBins.bin_name "
+    ." group by wines.wine_id, bottle_formats.format, storageBins.bin_id, storageBins.bin_name "
     .$sqlOrderBy
   );
 
   // Display message if no bottle found
-  if ($result->num_rows == 0) {
+  if (!$result || $result->num_rows == 0) {
     echo "<div class='card' style='text-align:center; padding:20px;'>
-      <p>No bottles currently match your selection in <strong>$cellarMsg</strong>.<br>
+      <p>No bottles currently match your selection in <strong>" . htmlspecialchars($cellarMsg, ENT_QUOTES, 'UTF-8') . "</strong>.<br>
       <small>Please adjust your filters or explore another cellar to view the collection.
       </small></p></div>";
     return; // Exit function so the rest of the code doesn't run
@@ -633,7 +636,7 @@
 
         echo "<li>";
         echo "<span class='bin-format'>{$format_label}</span>";
-        echo "<span class='bin-sep'>—</span>";
+        echo "<span class='bin-sep'>-</span>";
         echo "<span class='bin-loc'>{$loc_label}</span>";
         echo "<span class='bin-badges'>{$bin_badges}</span>";
         echo "<span class='bin-qty'>{$b_qty}</span>";

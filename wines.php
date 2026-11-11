@@ -7,8 +7,8 @@
   $is_single = isset($_GET['id']) && trim($_GET['id']) !== '';
 
   if ($is_single) {
-    // Generate the token for the comments form
-    $csrf_token = generateCSRFToken();
+    // Generate the token for the comments form when logged in
+    $csrf_token = isset($_SESSION['user_id']) ? generateCSRFToken() : '';
 
     // Get wine ID
     $wineID = $_GET['id'];
@@ -50,32 +50,39 @@
       } elseif (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $error = "Security check failed. Please refresh the page and try again.";
       } else {
-        $comment = $_POST['comment'] ?? '';
-        $mysqli->autocommit(FALSE);
-        $post = $mysqli->prepare("INSERT INTO comments (user_id, content) VALUES (?, ?)");
-        $post->bind_param('is', $user_id, $comment);
-        if ($post->execute()) {
-          $last_id = $mysqli->insert_id;
-          $post->close();
-          $post = $mysqli->prepare("INSERT INTO x_comments_wines (comment_id, wine_id) VALUES (?, ?)");
-          $post->bind_param('ii', $last_id, $wineID);
+        $comment = trim((string)($_POST['comment'] ?? ''));
+        if ($comment === '') {
+          $error = "Comment cannot be empty.";
+        } elseif (mb_strlen($comment, 'UTF-8') > 2000) {
+          $error = "Comment must not exceed 2000 characters.";
+        } else {
+          $mysqli->autocommit(FALSE);
+          $post = $mysqli->prepare("INSERT INTO comments (user_id, content) VALUES (?, ?)");
+          $post->bind_param('is', $user_id, $comment);
           if ($post->execute()) {
-            $success = "Thank you! Comment posted successfully.";
-            $mysqli->commit();
-            $mysqli->autocommit(TRUE);
-            
-            // Auto-subscribe the commenter and notify existing subscribers
-            autoSubscribe($mysqli, $user_id, $wineID, 'wine');
-            createNotificationsForComment($mysqli, $user_id, $wineID, 'wine', $last_id);
+            $last_id = $mysqli->insert_id;
+            $post->close();
+            $post = $mysqli->prepare("INSERT INTO x_comments_wines (comment_id, wine_id) VALUES (?, ?)");
+            $post->bind_param('ii', $last_id, $wineID);
+            if ($post->execute()) {
+              $success = "Thank you! Comment posted successfully.";
+              $mysqli->commit();
+              $mysqli->autocommit(TRUE);
+              
+              // Auto-subscribe the commenter and notify existing subscribers
+              autoSubscribe($mysqli, $user_id, $wineID, 'wine');
+              createNotificationsForComment($mysqli, $user_id, $wineID, 'wine', $last_id);
+            } else {
+              $error = "Failed to post comment. Please try again.";
+              $mysqli->rollback();
+              $mysqli->autocommit(TRUE);
+            }
           } else {
             $error = "Failed to post comment. Please try again.";
             $mysqli->rollback();
             $mysqli->autocommit(TRUE);
           }
-        } else {
-          $error = "Failed to post comment. Please try again.";
-          $mysqli->rollback();
-          $mysqli->autocommit(TRUE);
+          $post->close();
         }
       }
     }
@@ -113,7 +120,7 @@
 <div class="row">
   <div class="column main">
     <div class="card">
-      <h3><?php echo $wine_name;?></h3>
+      <h3><?php echo htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8');?></h3>
     </div>
     <div class="card">
       <section>
@@ -122,7 +129,7 @@
           <?php if ($wine["wine_desc"]==null) {
             echo "Sorry, no description on this wine yet.";
           } else {
-            echo $wine["wine_desc"];
+            echo sanitizeRichHtml($wine["wine_desc"]);
           } ?>
         </p>
       </section>
@@ -362,6 +369,9 @@
       $sqlOrderBy="order by vintage desc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc,name asc";
     } elseif ($sort=="variety") {
       $sqlOrderBy="order by grape asc,country asc,producer asc,region asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
+    } else {
+      $sort="region";
+      $sqlOrderBy="order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc";
     }
 
     $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
@@ -545,7 +555,7 @@
   while ($tasting_note = $result->fetch_assoc()) {
     $rating_badge = formatNoteRatingBadge($tasting_note, $scale, true);
     // Output
-    echo "<li>Tasted by ".$tasting_note["displayname"]." on ".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$tasting_note['note_id']."'>".$rating_badge."</a></li>";
+    echo "<li>Tasted by ".htmlspecialchars((string)$tasting_note["displayname"], ENT_QUOTES, 'UTF-8')." on ".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".(int)$tasting_note['note_id']."'>".htmlspecialchars($rating_badge, ENT_QUOTES, 'UTF-8')."</a></li>";
   }
   if (mysqli_num_rows($result)==0) { echo "<li>No tasting notes for this wine, yet.</li>"; }
   $stmt->close();
@@ -623,6 +633,12 @@
     }
   }
 
+  $num = (int)$num;
+  $comments_meta = function_exists('getCommentsTableMetadata') ? getCommentsTableMetadata($conn) : ['has_status' => false];
+  $c_subquery = !empty($comments_meta['has_status'])
+    ? "select xw.wine_id as c_wine_id, count(xw.comment_id) as comment_count from x_comments_wines xw inner join comments cm on xw.comment_id = cm.comment_id where cm.status = 'approved' group by xw.wine_id"
+    : "select wine_id as c_wine_id, count(comment_id) as comment_count from x_comments_wines group by wine_id";
+
   // Perform query
   $result = $mysqli -> query("select
                                 wines.wine_id,
@@ -656,7 +672,7 @@
                                 left join subregions on wines_master.subregion_id=subregions.subregion_id
                                 left join appellations on wines_master.appellation_id=appellations.appellation_id
                                 left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
-                                left join (select wine_id as c_wine_id, count(comment_id) as comment_count from x_comments_wines group by wine_id) c on wines.wine_id=c.c_wine_id
+                                left join ({$c_subquery}) c on wines.wine_id=c.c_wine_id
                                 " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
 
   // Display message if no results found

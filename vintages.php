@@ -54,8 +54,8 @@
       $top_wines = getVintageTopWines($conn, $selected_vintage);
       $adjacent = getAdjacentVintages($conn, $selected_vintage);
       $all_vintages_list = getAllVintagesSummary($conn);
-      $avg_display = $vintage_summary['avg_score'] ?? $vintage_summary['avg_dmpts'] ?? null;
-      $max_display = $vintage_summary['max_score'] ?? $vintage_summary['max_dmpts'] ?? null;
+      $avg_display = array_key_exists('avg_score', $vintage_summary) ? $vintage_summary['avg_score'] : ($vintage_summary['avg_dmpts'] ?? null);
+      $max_display = array_key_exists('max_score', $vintage_summary) ? $vintage_summary['max_score'] : ($vintage_summary['max_dmpts'] ?? null);
     ?>
 
     <!-- Top Centre Back Button -->
@@ -111,7 +111,7 @@
           <?php foreach ($region_stats as $r): ?>
             <?php
               $label = htmlspecialchars($r['country_region_colour'], ENT_QUOTES, 'UTF-8');
-              $score_val = $r['avg_score'] ?? $r['avg_dmpts'] ?? null;
+              $score_val = array_key_exists('avg_score', $r) ? $r['avg_score'] : ($r['avg_dmpts'] ?? null);
               $avg = ($score_val !== null) ? number_format((float)$score_val, 1) : 'NR';
               $count_label = $r['note_count'] . ' note' . ($r['note_count'] > 1 ? 's' : '');
               $has_desc = !empty($r['vintage_desc']);
@@ -240,7 +240,7 @@
           <select id="vintageSelect" onchange="if(this.value) window.location.href='/vintages.php?vintage=' + this.value;" style="width: 100%; padding: 6px; font-family: Georgia, serif; font-size: 14px;">
             <option value="">-- Select a vintage --</option>
             <?php foreach ($all_vintages_list as $v_item): ?>
-              <?php $v_item_avg = $v_item['avg_score'] ?? $v_item['avg_dmpts'] ?? null; ?>
+              <?php $v_item_avg = array_key_exists('avg_score', $v_item) ? $v_item['avg_score'] : ($v_item['avg_dmpts'] ?? null); ?>
               <option value="<?php echo (int)$v_item['vintage']; ?>" <?php echo ((int)$v_item['vintage'] === $selected_vintage) ? 'selected' : ''; ?>>
                 <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> note<?php echo (int)$v_item['note_count'] === 1 ? '' : 's'; ?><?php echo ($v_item_avg !== null) ? ', avg ' . $v_item_avg : ', avg n/a'; ?>)
               </option>
@@ -329,15 +329,16 @@
       foreach ($all_vintages as $v_data) {
         $v_num = (int)$v_data['vintage'];
         $n_count = (int)$v_data['note_count'];
+        $r_count = isset($v_data['rated_count']) ? (int)$v_data['rated_count'] : $n_count;
         $total_all_notes += $n_count;
 
-        $v_score_val = $v_data['avg_score'] ?? $v_data['avg_dmpts'] ?? null;
-        if ($v_score_val !== null) {
+        $v_score_val = array_key_exists('avg_score', $v_data) ? $v_data['avg_score'] : ($v_data['avg_dmpts'] ?? null);
+        if ($v_score_val !== null && $r_count > 0) {
           $avg_val = (float)$v_score_val;
-          $weighted_score_sum += ($avg_val * $n_count);
-          $weighted_notes_count += $n_count;
+          $weighted_score_sum += ($avg_val * $r_count);
+          $weighted_notes_count += $r_count;
 
-          if ($avg_val > $highest_vintage_score && $n_count >= 5) {
+          if ($avg_val > $highest_vintage_score && $r_count >= 5) {
             $highest_vintage_score = $avg_val;
             $highest_vintage = $v_num;
           }
@@ -381,7 +382,7 @@
                   <?php
                     $v_year = (int)$v['vintage'];
                     $v_count = (int)$v['note_count'];
-                    $v_score_val = $v['avg_score'] ?? $v['avg_dmpts'] ?? null;
+                    $v_score_val = array_key_exists('avg_score', $v) ? $v['avg_score'] : ($v['avg_dmpts'] ?? null);
                     $v_avg = ($v_score_val !== null) ? number_format((float)$v_score_val, 1) : null;
                   ?>
                   <!-- Link to vintages.php?vintage=NNNN -->
@@ -438,7 +439,7 @@
         <select onchange="if(this.value) window.location.href='/vintages.php?vintage=' + this.value;" style="width: 100%; padding: 6px; font-family: Georgia, serif; font-size: 14px;">
           <option value="">-- Choose a vintage --</option>
           <?php foreach ($all_vintages as $v_item): ?>
-            <?php $v_item_avg = $v_item['avg_score'] ?? $v_item['avg_dmpts'] ?? null; ?>
+            <?php $v_item_avg = array_key_exists('avg_score', $v_item) ? $v_item['avg_score'] : ($v_item['avg_dmpts'] ?? null); ?>
             <option value="<?php echo (int)$v_item['vintage']; ?>">
               <?php echo (int)$v_item['vintage']; ?> (<?php echo $v_item['note_count']; ?> note<?php echo (int)$v_item['note_count'] === 1 ? '' : 's'; ?><?php echo ($v_item_avg !== null) ? ', avg ' . $v_item_avg : ', avg n/a'; ?>)
             </option>

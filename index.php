@@ -102,7 +102,7 @@
       $wine_name=$tasting_note["vintage"]." ".$tasting_note["producer"]." ".$tasting_note["name"];
     }
     // Print tasting notes
-    echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M y").": <a href='/tnotes.php?id=".$tasting_note['note_id']."'>".$wine_name."</a></li>";
+    echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M y").": <a href='/tnotes.php?id=".(int)$tasting_note['note_id']."'>".htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8')."</a></li>";
   }
   $result -> free_result();
   } ?>
@@ -110,10 +110,11 @@
 <?php function latestBlogs($num)
 {
   global $mysqli, $conn;
+  $num = (int)$num;
     // Perform query
   $result = $mysqli -> query("select * from blogposts where status='published' order by pub_date desc limit 0,".$num);
   while ($blog = $result->fetch_assoc()) {
-    echo "<li>".date_format(date_create($blog["pub_date"]),"d M y").": <a href='/blog.php?id=".$blog['blog_id']."'>".$blog["title"]."</a></li>";
+    echo "<li>".date_format(date_create($blog["pub_date"]),"d M y").": <a href='/blog.php?id=".(int)$blog['blog_id']."'>".htmlspecialchars((string)$blog["title"], ENT_QUOTES, 'UTF-8')."</a></li>";
   }
   $result -> free_result();
   } ?>

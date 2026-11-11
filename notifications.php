@@ -20,17 +20,17 @@ $csrf_token = generateCSRFToken();
 $error = "";
 $success = "";
 
-// Handle actions (mark read, delete, mark all read, clear all)
-if (isset($_GET['action'])) {
+// Handle actions (mark read, delete, mark all read, clear all) via POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   try {
-    $action = $_GET['action'];
-    $action_token = $_GET['csrf_token'] ?? '';
+    $action = $_POST['action'];
+    $action_token = $_POST['csrf_token'] ?? '';
 
     if (!validateCSRFToken($action_token)) {
       $error = "Security check failed. Please try again.";
     } else {
       if ($action === 'mark_read') {
-        $notif_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        $notif_id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
         $stmt = $mysqli->prepare("UPDATE notifications SET is_read = 1 WHERE notification_id = ? AND user_id = ?");
         if ($stmt) {
           $stmt->bind_param("ii", $notif_id, $user_id);
@@ -42,7 +42,7 @@ if (isset($_GET['action'])) {
           $error = "Failed to update notification. (Database schema not updated yet)";
         }
       } elseif ($action === 'delete') {
-        $notif_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        $notif_id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
         $stmt = $mysqli->prepare("DELETE FROM notifications WHERE notification_id = ? AND user_id = ?");
         if ($stmt) {
           $stmt->bind_param("ii", $notif_id, $user_id);
@@ -77,7 +77,7 @@ if (isset($_GET['action'])) {
         }
       }
       
-      // Redirect to clear URL parameters and prevent double submission
+      // Redirect to prevent double submission
       header("Location: /notifications.php");
       exit;
     }
@@ -140,9 +140,17 @@ require_once 'includes/header.php';
     <div class="card">
       <div class="notifications-header">
         <h2 style="margin:0;">My Notifications</h2>
-        <div>
-          <a href="/notifications.php?action=mark_all_read&csrf_token=<?= $csrf_token ?>" class="btn-action btn-secondary" title="Mark all notifications as read">Mark all as read</a>
-          <a href="/notifications.php?action=clear_all&csrf_token=<?= $csrf_token ?>" class="btn-action" onclick="return confirm('Are you sure you want to delete all notifications?');" title="Delete all notifications">Clear all</a>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <form method="post" action="/notifications.php" style="margin:0;">
+            <input type="hidden" name="action" value="mark_all_read">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
+            <button type="submit" class="btn-action btn-secondary" title="Mark all notifications as read">Mark all as read</button>
+          </form>
+          <form method="post" action="/notifications.php" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete all notifications?');">
+            <input type="hidden" name="action" value="clear_all">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
+            <button type="submit" class="btn-action" title="Delete all notifications">Clear all</button>
+          </form>
         </div>
       </div>
 
@@ -199,9 +207,19 @@ require_once 'includes/header.php';
             <div class="notification-meta"><?= $pub_time ?></div>
             <div class="notification-actions">
               <?php if (!$is_read): ?>
-                <a href="/notifications.php?action=mark_read&id=<?= $notif_id ?>&csrf_token=<?= $csrf_token ?>" class="action-link" title="Mark notification as read">Mark as read</a>
+                <form method="post" action="/notifications.php" style="display:inline; margin:0;">
+                  <input type="hidden" name="action" value="mark_read">
+                  <input type="hidden" name="id" value="<?= (int)$notif_id ?>">
+                  <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
+                  <button type="submit" class="action-link" style="background:none; border:none; padding:0; cursor:pointer; font:inherit;" title="Mark notification as read">Mark as read</button>
+                </form>
               <?php endif; ?>
-              <a href="/notifications.php?action=delete&id=<?= $notif_id ?>&csrf_token=<?= $csrf_token ?>" class="action-link" title="Delete notification" onclick="return confirm('Are you sure you want to delete this notification?');">Delete</a>
+              <form method="post" action="/notifications.php" style="display:inline; margin:0;" onsubmit="return confirm('Are you sure you want to delete this notification?');">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="<?= (int)$notif_id ?>">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
+                <button type="submit" class="action-link" style="background:none; border:none; padding:0; cursor:pointer; font:inherit;" title="Delete notification">Delete</button>
+              </form>
             </div>
           </div>
           <?php
@@ -221,9 +239,13 @@ require_once 'includes/header.php';
 // Mark read automatically when clicking link via JS helper if desired
 function markAsRead(id) {
   // Make a silent background call to mark read, so by the time they hit back, it is read
+  const formData = new FormData();
+  formData.append('action', 'mark_read');
+  formData.append('id', id);
+  formData.append('csrf_token', '<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>');
   const xhr = new XMLHttpRequest();
-  xhr.open("GET", "/notifications.php?action=mark_read&id=" + id + "&csrf_token=<?= $csrf_token ?>", true);
-  xhr.send();
+  xhr.open("POST", "/notifications.php", true);
+  xhr.send(formData);
 }
 </script>
 

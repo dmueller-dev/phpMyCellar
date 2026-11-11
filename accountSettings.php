@@ -158,8 +158,8 @@
 ?>
 
 <?php
-  $page_title = 'Dominik Mueller - Wine is my hobby';
-  $meta_desc = 'On this website, I share my wine cellar with a community of fellow fine wine enthusiasts.';
+  $page_title = getSiteTitle() . ' - Account Settings';
+  $meta_desc = 'Manage your account settings, password, and notification preferences.';
   
   require_once 'includes/header.php';
 ?>
@@ -474,7 +474,7 @@
       if (totalRows === 0) {
         info.textContent = 'No matching subscriptions';
       } else {
-        info.textContent = `Showing ${startIndex + 1}–${endIndex} of ${totalRows} subscriptions`;
+        info.textContent = `Showing ${startIndex + 1}-${endIndex} of ${totalRows} subscriptions`;
       }
     }
     

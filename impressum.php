@@ -32,7 +32,7 @@
         <address>
           <?php echo htmlspecialchars($owner_name, ENT_QUOTES, 'UTF-8'); ?><br>
           <?php if (!empty($owner_address)): ?>
-            <div class="impressum-address"><?php echo $owner_address; ?></div>
+            <div class="impressum-address"><?php echo (strpos($owner_address, '<') !== false) ? (function_exists('sanitizeRichHtml') ? sanitizeRichHtml($owner_address) : $owner_address) : nl2br(htmlspecialchars($owner_address, ENT_QUOTES, 'UTF-8')); ?></div>
           <?php endif; ?>
           E-Mail: <a href="mailto:<?php echo htmlspecialchars($owner_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($owner_email, ENT_QUOTES, 'UTF-8'); ?></a>
         </address>

@@ -37,15 +37,15 @@
 <div class="row">
   <div class="column main">
     <div class="card">
-      <h3><?php echo $producer["producer"];?></h3>
+      <h3><?php echo htmlspecialchars((string)$producer["producer"], ENT_QUOTES, 'UTF-8');?></h3>
     </div>
     <div class="card">
       <section>
 	<h3>Description</h3>
-        <p>Based in <?php echo $producer["region"].", ".$producer["country"]."."; ?></p>
+        <p>Based in <?php echo htmlspecialchars((string)$producer["region"], ENT_QUOTES, 'UTF-8').", ".htmlspecialchars((string)$producer["country"], ENT_QUOTES, 'UTF-8')."."; ?></p>
         <?php
           if($producer["producer_desc"]!=null) {
-            echo $producer["producer_desc"];
+            echo sanitizeRichHtml($producer["producer_desc"]);
           }
         ?>
       </section>
@@ -73,7 +73,9 @@
         <p>
           <?php
             if($producer["address"]!=null) {
-              echo $producer["address"];
+              echo (strpos((string)$producer["address"], '<') !== false)
+                ? sanitizeRichHtml((string)$producer["address"])
+                : nl2br(htmlspecialchars((string)$producer["address"], ENT_QUOTES, 'UTF-8'));
             } else {
               echo "Not available.";
             } 
@@ -132,7 +134,7 @@
     $wine_name = getWineName($tasting_note["nameconvention"], $tasting_note["vintage"], $tasting_note["name"], $tasting_note["producer"], $tasting_note["grape"], $tasting_note["vineyard"]);
     $rating_badge = formatNoteRatingBadge($tasting_note, $scale, true);
     // Output
-    echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$tasting_note['note_id']."'>".$wine_name."</a> (".$rating_badge.")</li>";
+    echo "<li>".date_format(date_create($tasting_note["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".(int)$tasting_note['note_id']."'>".htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8')."</a> (".htmlspecialchars($rating_badge, ENT_QUOTES, 'UTF-8').")</li>";
   }
   if (mysqli_num_rows($result)==0) { echo "<li>I haven't tasted any of this producer's wines, yet.</li>"; }
   $stmt->close();

@@ -26,11 +26,9 @@
       exit;
     }
 
-    // Generate the token for the form
-    $csrf_token = generateCSRFToken();
-
     // Fetch user details if logged in
     $user_id = $_SESSION['user_id'] ?? null;
+    $csrf_token = $user_id ? generateCSRFToken() : '';
     $username = '';
     $displayname = '';
     if ($user_id) {
@@ -58,34 +56,40 @@
       } elseif (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $error = "Security check failed. Please refresh the page and try again.";
       } else {
-        $comment = $_POST['comment'] ?? '';
-        $mysqli->autocommit(FALSE);
-        $post = $mysqli->prepare("INSERT INTO comments (user_id, content) VALUES (?, ?)");
-        $post->bind_param('is', $user_id, $comment);
-        if ($post->execute()) {
-          $last_id = $mysqli->insert_id;
-          $post->close();
-          $post = $mysqli->prepare("INSERT INTO x_comments_tnotes (comment_id, note_id) VALUES (?, ?)");
-          $post->bind_param('ii', $last_id, $noteID);
+        $comment = trim((string)($_POST['comment'] ?? ''));
+        if ($comment === '') {
+          $error = "Comment cannot be empty.";
+        } elseif (mb_strlen($comment, 'UTF-8') > 2000) {
+          $error = "Comment must not exceed 2000 characters.";
+        } else {
+          $mysqli->autocommit(FALSE);
+          $post = $mysqli->prepare("INSERT INTO comments (user_id, content) VALUES (?, ?)");
+          $post->bind_param('is', $user_id, $comment);
           if ($post->execute()) {
-            $success = "Thank you! Comment posted successfully.";
-            $mysqli->commit();
-            $mysqli->autocommit(TRUE);
-            
-            // Auto-subscribe the commenter and notify existing subscribers
-            autoSubscribe($mysqli, $user_id, $noteID, 'tnote');
-            createNotificationsForComment($mysqli, $user_id, $noteID, 'tnote', $last_id);
+            $last_id = $mysqli->insert_id;
+            $post->close();
+            $post = $mysqli->prepare("INSERT INTO x_comments_tnotes (comment_id, note_id) VALUES (?, ?)");
+            $post->bind_param('ii', $last_id, $noteID);
+            if ($post->execute()) {
+              $success = "Thank you! Comment posted successfully.";
+              $mysqli->commit();
+              $mysqli->autocommit(TRUE);
+              
+              // Auto-subscribe the commenter and notify existing subscribers
+              autoSubscribe($mysqli, $user_id, $noteID, 'tnote');
+              createNotificationsForComment($mysqli, $user_id, $noteID, 'tnote', $last_id);
+            } else {
+              $error = "Failed to post comment. Please try again.";
+              $mysqli->rollback();
+              $mysqli->autocommit(TRUE);
+            }
           } else {
             $error = "Failed to post comment. Please try again.";
             $mysqli->rollback();
             $mysqli->autocommit(TRUE);
           }
-        } else {
-          $error = "Failed to post comment. Please try again.";
-          $mysqli->rollback();
-          $mysqli->autocommit(TRUE);
+          $post->close();
         }
-        $post->close();
       }
     }
 
@@ -127,22 +131,22 @@
 <div class="row">
   <div class="column main">
     <div class="card">
-      <h3><?php echo $wine_name;?></h3>
+      <h3><?php echo htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8');?></h3>
     </div>
     <div class="card">
       <section>
 	<h3>Tasting note</h3>
         <?php
           if($tasting_note["img"]!=null) {
-            echo "<img class='".$tasting_note["img_class"]."' src='/uploads/img/".$tasting_note["img"]."' alt='".$wine_name."'>";
+            echo "<img class='".htmlspecialchars((string)$tasting_note["img_class"], ENT_QUOTES, 'UTF-8')."' src='/uploads/img/".htmlspecialchars((string)$tasting_note["img"], ENT_QUOTES, 'UTF-8')."' alt='".htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8')."'>";
           }
-          echo $tasting_note["tasting_note"];
+          echo sanitizeRichHtml($tasting_note["tasting_note"] ?? '');
           if($tasting_note["drinkwindow_min"]!=null && $tasting_note["drinkwindow_max"]!=null) {
-            echo " <p>Drink from " . $tasting_note["drinkwindow_min"] . " through " . $tasting_note["drinkwindow_max"] . ".</p>";
+            echo " <p>Drink from " . (int)$tasting_note["drinkwindow_min"] . " through " . (int)$tasting_note["drinkwindow_max"] . ".</p>";
           } elseif ($tasting_note["drinkwindow_max"]!=null) {
-            echo " <p>Drink through " . $tasting_note["drinkwindow_max"] . ".</p>";
+            echo " <p>Drink through " . (int)$tasting_note["drinkwindow_max"] . ".</p>";
           }
-          echo "<p><i>Tasted by ".$tasting_note["displayname"]." on ".date_format(date_create($tasting_note["tasting_date"]),"l, j F Y").".</i></p>";
+          echo "<p><i>Tasted by ".htmlspecialchars((string)$tasting_note["displayname"], ENT_QUOTES, 'UTF-8')." on ".date_format(date_create($tasting_note["tasting_date"]),"l, j F Y").".</i></p>";
         ?>
       </section>
     </div>
@@ -437,7 +441,7 @@
       if ($active_scale === '100-point') {
         $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.pts_100 desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
       } else {
-        $sqlOrderBy="order by tnotes.flawed_yn asc, COALESCE(tnotes.pts_20, tnotes.dmpts) desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
+        $sqlOrderBy="order by tnotes.flawed_yn asc, tnotes.pts_20 desc, producers.producer asc, wines.vintage desc, wines_master.name asc, tnotes.tasting_date desc, tnotes.note_id desc";
       }
     } elseif ($sort=="region") {
       $sqlOrderBy="order by regions.country asc, regions.region asc, producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
@@ -447,6 +451,9 @@
       $sqlOrderBy="order by wines.vintage desc, regions.country asc, producers.producer asc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
     } elseif ($sort=="variety") {
       $sqlOrderBy="order by wines_master.grape asc, regions.country asc, producers.producer asc, wines.vintage desc, wines_master.name asc, vineyards.vineyard asc, appellations.appellation asc, tnotes.tasting_date desc, tnotes.note_id desc";
+    } else {
+      $sort="date";
+      $sqlOrderBy="order by tnotes.tasting_date desc, wines.wine_id asc, tnotes.note_id desc";
     }
 
     $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
@@ -613,13 +620,13 @@
 
   // Perform query
   $stmt = $mysqli->prepare("select tnotes.*, users.initials, users.displayname,
-                                   wines.vintage, wines.master_id,
+                                   wines.vintage, wines.master_id, wines.ct_id,
                                    wines_master.*,
                                    producers.producer, producers.producer_desc,
-                                   vineyards.vineyard,
-                                   regions.region, regions.country,
+                                   vineyards.vineyard, vineyards.vineyard_desc,
+                                   regions.region, regions.region_desc, regions.country,
                                    subregions.subregion,
-                                   appellations.appellation,
+                                   appellations.appellation, appellations.appellation_desc,
                                    variety.grape_desc,
                                    scale_20.pts_desc as scale_20_desc, scale_20.pts_class as scale_20_class,
                                    scale_100.pts_desc as scale_100_desc, scale_100.pts_class as scale_100_class,
@@ -636,20 +643,34 @@
                             left join subregions on wines_master.subregion_id=subregions.subregion_id
                             left join appellations on wines_master.appellation_id=appellations.appellation_id
                             left join variety on wines_master.grape=variety.grape
-                            left join scale_20 on (tnotes.pts_20=scale_20.pts or (tnotes.pts_20 is null and tnotes.dmpts=scale_20.pts))
+                            left join scale_20 on tnotes.pts_20=scale_20.pts
                             left join scale_100 on (tnotes.pts_100 >= scale_100.min_pts and tnotes.pts_100 <= scale_100.max_pts)
                             left join wsetpts on tnotes.wsetpts=wsetpts.pts
                             left join (select vintage as vint, region_id as rvid, vintage_desc from x_vintage_region) xvr on wines.vintage=xvr.vint and wines_master.region_id=xvr.rvid
                             where note_id=?");
+  if (!$stmt) {
+    $GLOBALS['tasting_note'] = null;
+    return;
+  }
   $stmt->bind_param("i", $noteID);
   $stmt->execute();
   $result = $stmt->get_result();
 
   if ($result)
   {
-    $GLOBALS['tasting_note'] = $result -> fetch_assoc();
-    // Free result set
+    $note = $result -> fetch_assoc();
     $result -> free_result();
+    if ($note && ($note['status'] ?? 'published') !== 'published') {
+      $uid = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+      $can_view_draft = $uid > 0 && (
+        hasPrivilege($conn, 'edit_all_tasting_notes') ||
+        (hasPrivilege($conn, 'edit_tasting_note') && (int)($note['user_id'] ?? 0) === $uid)
+      );
+      if (!$can_view_draft) {
+        $note = null;
+      }
+    }
+    $GLOBALS['tasting_note'] = $note;
   }
   $stmt->close();
 } ?>
@@ -663,6 +684,9 @@
                               left join users on tnotes.user_id=users.user_id
                               where tnotes.status='published' and tnotes.note_id<>? and tnotes.wine_id=?
                               order by tnotes.tasting_date desc");
+  if (!$stmt) {
+    return;
+  }
   $stmt->bind_param("ii", $id, $wine_id);
   $stmt->execute();
   $result = $stmt->get_result();
@@ -671,7 +695,7 @@
     echo "<div class='card'><h3>More tasting notes on this wine:</h3><p><ul style='list-style-type:none;padding:0;margin:0;'>";
     while ($moreNotes = $result->fetch_assoc()) {
       $rating_badge = formatNoteRatingBadge($moreNotes, $scale, true);
-      echo "<li>".date_format(date_create($moreNotes["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$moreNotes["note_id"]."'>".$wine_name."</a> (".$rating_badge.")</li>";
+      echo "<li>".date_format(date_create($moreNotes["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".(int)$moreNotes["note_id"]."'>".htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8')."</a> (".htmlspecialchars($rating_badge, ENT_QUOTES, 'UTF-8').")</li>";
     }
     echo "</ul></p></div>";
   }
@@ -692,6 +716,9 @@
                                 left join vineyards on wines_master.vineyard_id=vineyards.vineyard_id
                               where tnotes.status='published' and wines.wine_id<>? and wines.master_id=?
                               order by tnotes.tasting_date desc");
+  if (!$stmt) {
+    return;
+  }
   $stmt->bind_param("ii", $wine_id, $master_id);
   $stmt->execute();
   $result = $stmt->get_result();
@@ -702,7 +729,7 @@
       $otherWine = getWineName($otherVintages["nameconvention"], $otherVintages["vintage"], $otherVintages["name"], $otherVintages["producer"], $otherVintages["grape"], $otherVintages["vineyard"]);
       $rating_badge = formatNoteRatingBadge($otherVintages, $scale, true);
       if ($otherVintages["tasting_date"]!=null) {
-        echo "<li>".date_format(date_create($otherVintages["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".$otherVintages["note_id"]."'>".$otherWine."</a> (".$rating_badge.")</li>";
+        echo "<li>".date_format(date_create($otherVintages["tasting_date"]),"d M Y").": <a href='/tnotes.php?id=".(int)$otherVintages["note_id"]."'>".htmlspecialchars($otherWine, ENT_QUOTES, 'UTF-8')."</a> (".htmlspecialchars($rating_badge, ENT_QUOTES, 'UTF-8').")</li>";
       }
     }
     echo "</ul></p></div>";
@@ -759,6 +786,12 @@
     }
   }
 
+  $num = (int)$num;
+  $comments_meta = function_exists('getCommentsTableMetadata') ? getCommentsTableMetadata($conn) : ['has_status' => false];
+  $c_subquery = !empty($comments_meta['has_status'])
+    ? "select xt.note_id as c_note_id, count(xt.comment_id) as comment_count from x_comments_tnotes xt inner join comments cm on xt.comment_id = cm.comment_id where cm.status = 'approved' group by xt.note_id"
+    : "select note_id as c_note_id, count(comment_id) as comment_count from x_comments_tnotes group by note_id";
+
   // Perform query
   $result = $mysqli -> query("select tnotes.*, users.initials, users.displayname,
                                      wines.vintage, wines.master_id,
@@ -782,9 +815,9 @@
                               left join subregions on wines_master.subregion_id=subregions.subregion_id
                               left join appellations on wines_master.appellation_id=appellations.appellation_id
                               left join (select grape as vgrape, grape_desc from variety) v on wines_master.grape=v.vgrape
-                              left join scale_20 s20 on (tnotes.pts_20=s20.pts or (tnotes.pts_20 is null and tnotes.dmpts=s20.pts))
+                              left join scale_20 s20 on tnotes.pts_20=s20.pts
                               left join scale_100 s100 on (tnotes.pts_100 >= s100.min_pts and tnotes.pts_100 <= s100.max_pts)
-                              left join (select note_id as c_note_id, count(comment_id) as comment_count from x_comments_tnotes group by note_id) c on tnotes.note_id=c.c_note_id
+                              left join ({$c_subquery}) c on tnotes.note_id=c.c_note_id
                               " . $sqlWhere . " " . $sqlOrderBy . " limit 0," . $num);
 
   // Display message if no results found
