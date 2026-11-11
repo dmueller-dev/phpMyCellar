@@ -7,6 +7,16 @@
   // Include the initialization file (handles sessions and database connection)
   require_once __DIR__ . '/../includes/init.php';
 
+  /**
+   * Browse physical bottles in the cellar inventory.
+   *
+   * Required privilege: 'browse_bottles'
+   */
+  if (!hasPrivilege($conn, 'browse_bottles')) {
+    header("Location: /backend/index.php");
+    exit();
+  }
+
   // Get sort logic
   if (empty($_GET['sort'])) {
     $sort="region";
@@ -23,10 +33,13 @@
     $sqlOrderBy="order by grape asc,country asc,producer asc,vintage desc,region asc,subregion asc,appellation asc,vineyard asc,name asc,bottle_id asc";
   } elseif ($sort=="location") {
     $sqlOrderBy="order by cellar_name asc,bin_name asc,country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,bottle_id asc";
+  } else {
+    $sort="region";
+    $sqlOrderBy="order by country asc,region asc,producer asc,subregion asc,appellation asc,vineyard asc,name asc,vintage desc,bottle_id asc";
   }
 
   // Include header
-  $page_title = 'Dominik Mueller - Browse all wines';
+  $page_title = getSiteSetting('site_name', 'phpMyCellar') . ' - Browse all bottles';
 
   $extra_head = <<<HTML
     <script>
@@ -157,6 +170,7 @@
   $prevRegion="";
   $prevProducer="";
   $prevVintage="";
+  $prevVariety="";
   $prevLocation="";
   $can_add_note = hasPrivilege($conn, 'add_tasting_note');
 
@@ -293,7 +307,7 @@
     // Generate shortcut link if user can add tasting notes
     $blind_taste_link = "";
     if ($can_add_note) {
-      $blind_taste_link = " <a href='/backend/manageTastingNotes.php?mode=blind&bottle_id=" . $wine["bottle_id"] . "' title='Write blind tasting note' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
+      $blind_taste_link = " <a href='/backend/manageTastingNotes.php?mode=blind&bottle_id=" . (int)$wine["bottle_id"] . "' title='Write blind tasting note' style='font-size:0.85em; text-decoration:none; margin-left:6px; color:indianred;'>[+ note]</a>";
     }
 
     // Subtle lock icon if bottle is restricted
@@ -301,60 +315,75 @@
       ? " " . renderRestrictedIconSvg('chip-icon-restricted', 'Restricted bottle / Private reserve', 12)
       : "";
 
+    $safe_bottle_id = (int)$wine["bottle_id"];
+    $safe_wine_name = htmlspecialchars($wine_name, ENT_QUOTES, 'UTF-8');
+    $safe_format = htmlspecialchars($wine["format"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_country = htmlspecialchars($wine["country"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_region = htmlspecialchars($wine["region"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_producer = htmlspecialchars($wine["producer"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_vintage = htmlspecialchars((string)$wine["vintage"], ENT_QUOTES, 'UTF-8');
+    $safe_grape = htmlspecialchars($wine["grape"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_cellar = htmlspecialchars($wine["cellar_name"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_bin = htmlspecialchars($wine["bin_name"] ?? '', ENT_QUOTES, 'UTF-8');
+    $safe_status = htmlspecialchars($wine["status"] ?? '', ENT_QUOTES, 'UTF-8');
+    $location_badge = ($wine["bin_name"] != null)
+      ? "<small style='color:Gray;'><i>" . $safe_cellar . "/" . $safe_bin . "</i></small>"
+      : "<small style='color:LightCoral;'><i>" . $safe_status . "</i></small>";
+
     // Output
     if($sort=="region" || $sort=="tenyearsold") {
       if($wine["country"]!=$prevCountry) {
         echo ($prevCountry!="") ? "</ul></details></li></ul></details><br>" : "";
-        echo "<details><summary><b>".$wine["country"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<details><summary><b>".$safe_country."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         $prevRegion="";
       }
       if($wine["region"]!=$prevRegion) {
         echo ($prevRegion!="") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["region"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$safe_region."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a>" . $restricted_icon . " - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small>" . $blind_taste_link . "</li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$safe_bottle_id."'>".$safe_bottle_id."</a>" . $restricted_icon . " - ".$safe_wine_name." - <small style='color:Gray;'>".$safe_format."</small> - ".$location_badge . $blind_taste_link . "</li>";
     } elseif($sort=="producer") {
       if ($wine["producer"]!=$prevProducer) {
         echo ($prevProducer!="") ? "</ul></details><br>" : "";
         if ($wine["producer_desc"]!=null) {
-          echo "<details><summary><b>".htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8')."</b></summary><hr><small>".$wine["producer_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".$safe_producer."</b></summary><hr><small>".sanitizeRichHtml($wine["producer_desc"])."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
         } else {
-          echo "<details><summary><b>".htmlspecialchars($wine["producer"], ENT_QUOTES, 'UTF-8')."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".$safe_producer."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         }
       }
-      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a>" . $restricted_icon . " - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small>" . $blind_taste_link . "</li>";
+      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$safe_bottle_id."'>".$safe_bottle_id."</a>" . $restricted_icon . " - ".$safe_wine_name." - <small style='color:Gray;'>".$safe_format."</small> - ".$location_badge . $blind_taste_link . "</li>";
     } elseif($sort=="vintage") {
       if($wine["vintage"]!=$prevVintage) {
         echo ($prevVintage!="") ? "</ul></details></li></ul></details><br>" : "";
-        echo "<details><summary><b>".$wine["vintage"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<details><summary><b>".$safe_vintage."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         $prevCountry="";
       }
       if($wine["country"]!=$prevCountry) {
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$safe_country."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a>" . $restricted_icon . " - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small>" . $blind_taste_link . "</li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$safe_bottle_id."'>".$safe_bottle_id."</a>" . $restricted_icon . " - ".$safe_wine_name." - <small style='color:Gray;'>".$safe_format."</small> - ".$location_badge . $blind_taste_link . "</li>";
     } elseif($sort=="variety") {
       if($wine["grape"]!=$prevVariety) {
         echo ($prevVariety!="") ? "</ul></details></li></ul></details><br>" : "";
         if($wine["grape_desc"]!=null) {
-          echo "<details><summary><b>".$wine["grape"]."</b></summary><hr><small>".$wine["grape_desc"]."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".$safe_grape."</b></summary><hr><small>".sanitizeRichHtml($wine["grape_desc"])."</small><ul style='list-style-type:none;padding:0;margin:0;'>";
         } else {
-          echo "<details><summary><b>".$wine["grape"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+          echo "<details><summary><b>".$safe_grape."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
         }
         $prevCountry="";
       }
       if($wine["country"]!=$prevCountry) {
         echo ($prevCountry!="") ? "</ul></details></li>" : "";
-        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$wine["country"]."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<li style='text-indent:10px;margin-top:5px;'><details><summary><i>".$safe_country."</i></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a>" . $restricted_icon . " - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small> - ".(($wine["bin_name"]!=null) ? "<small style='color:Gray;'><i>".$wine["cellar_name"]."/".$wine["bin_name"] : "<small style='color:LightCoral;'><i>".$wine["status"])."</i></small>" . $blind_taste_link . "</li>";
+      echo "<li style='padding-left:43px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$safe_bottle_id."'>".$safe_bottle_id."</a>" . $restricted_icon . " - ".$safe_wine_name." - <small style='color:Gray;'>".$safe_format."</small> - ".$location_badge . $blind_taste_link . "</li>";
     } elseif($sort=="location") {
       if($wine["cellar_name"].$wine["bin_name"]!=$prevLocation) {
         echo ($prevLocation!="") ? "</ul></details><br>" : "";
-        echo "<details><summary><b>".$wine["cellar_name"]." / ".$wine["bin_name"]."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
+        echo "<details><summary><b>".$safe_cellar." / ".$safe_bin."</b></summary><ul style='list-style-type:none;padding:0;margin:0;'>";
       }
-      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$wine["bottle_id"]."'>".$wine["bottle_id"]."</a>" . $restricted_icon . " - ".$wine_name." - <small style='color:Gray;'>".$wine["format"]."</small>" . $blind_taste_link . "</li>";
+      echo "<li style='padding-left:35px;text-indent:-18px;'><a href='/backend/manageBottles.php?bottle_id=".$safe_bottle_id."'>".$safe_bottle_id."</a>" . $restricted_icon . " - ".$safe_wine_name." - <small style='color:Gray;'>".$safe_format."</small>" . $blind_taste_link . "</li>";
     }
     // Set previous values
     $prevCountry=$wine["country"];

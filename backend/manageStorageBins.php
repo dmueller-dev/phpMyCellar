@@ -12,7 +12,8 @@
    *
    * Required privilege: 'manage_storage_bins' (or 'browse_bottles')
    */
-  if (!hasPrivilege($conn, 'manage_storage_bins') && !hasPrivilege($conn, 'browse_bottles')) {
+  $can_manage_bins = hasPrivilege($conn, 'manage_storage_bins');
+  if (!$can_manage_bins && !hasPrivilege($conn, 'browse_bottles')) {
     header("Location: /backend/index.php");
     exit();
   }
@@ -31,7 +32,7 @@
   // Selected bin for editing
   $editBinId = filter_input(INPUT_GET, 'edit_bin', FILTER_VALIDATE_INT);
   $editingBin = null;
-  if ($editBinId) {
+  if ($editBinId && $can_manage_bins) {
     $editingBin = getStorageBinDetails($conn, $editBinId);
     if (!$editingBin) {
       $errors[] = "Storage bin not found.";
@@ -42,7 +43,7 @@
   // Selected cellar for editing
   $editCellarId = filter_input(INPUT_GET, 'edit_cellar', FILTER_VALIDATE_INT);
   $editingCellar = null;
-  if ($editCellarId) {
+  if ($editCellarId && $can_manage_bins) {
     foreach ($cellars as $c) {
       if ((int)$c['cellar_id'] === $editCellarId) {
         $editingCellar = $c;
@@ -61,7 +62,13 @@
       die("CSRF token validation failed");
     }
 
-    $action = sanitizeInput($_POST['action'] ?? '');
+    if (!$can_manage_bins) {
+      http_response_code(403);
+      $errors[] = "You do not have permission to modify cellars or storage bins.";
+      $action = '';
+    } else {
+      $action = sanitizeInput($_POST['action'] ?? '', '');
+    }
 
     // Action: Add Storage Bin
     if ($action === 'add_bin') {
@@ -323,10 +330,10 @@
       <?php $is_edit = (!empty($editingBin) || !empty($editingCellar)); ?>
       <!-- Mobile Switcher for Dual-Pane Layout -->
       <div class="admin-mobile-pane-switch">
-        <button type="button" class="admin-pane-btn <?= !$is_edit ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
+        <button type="button" class="admin-mobile-pane-btn <?= !$is_edit ? 'active' : '' ?>" id="tabBtnList" onclick="switchAdminMobilePane('list')">
           📋 Storage Bins
         </button>
-        <button type="button" class="admin-pane-btn <?= $is_edit ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
+        <button type="button" class="admin-mobile-pane-btn <?= $is_edit ? 'active' : '' ?>" id="tabBtnForm" onclick="switchAdminMobilePane('form')">
           <?= $is_edit ? '✏️ Edit Location' : '➕ Add Bin / Cellar' ?>
         </button>
       </div>
@@ -375,7 +382,7 @@
                         <strong><?php echo (int)$bin['current_bottles']; ?></strong> btl<?php echo ((int)$bin['current_bottles'] === 1 ? '' : 's'); ?>
                       </td>
                       <td data-label="Capacity" style="padding: 8px 10px; text-align: right; color: <?php echo ($bin['max_capacity'] !== null) ? '#333' : '#888'; ?>;">
-                        <?php echo ($bin['max_capacity'] !== null) ? (int)$bin['max_capacity'] : '&mdash;'; ?>
+                        <?php echo ($bin['max_capacity'] !== null) ? (int)$bin['max_capacity'] : '-'; ?>
                       </td>
                       <td data-label="Usage %" style="padding: 8px 10px;">
                         <?php if ($bin['max_capacity'] !== null && $bin['max_capacity'] > 0): ?>
@@ -405,7 +412,7 @@
                           Edit
                         </a>
                         <?php if ((int)$bin['current_bottles'] === 0): ?>
-                          <form action="manageStorageBins.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete storage bin \'<?php echo htmlspecialchars($bin['bin_name'], ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                          <form action="manageStorageBins.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete storage bin \'<?php echo htmlspecialchars(addslashes($bin['bin_name']), ENT_QUOTES, 'UTF-8'); ?>\'?');">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             <input type="hidden" name="action" value="delete_bin">
                             <input type="hidden" name="bin_id" value="<?php echo (int)$bin['bin_id']; ?>">
@@ -551,7 +558,7 @@
                   <div style="white-space: nowrap;">
                     <a href="manageStorageBins.php?edit_cellar=<?php echo $cid; ?>" style="color: #1a73e8; font-size: 0.82rem; text-decoration: none; margin-right: 6px;">Edit</a>
                     <?php if ($bCount === 0): ?>
-                      <form action="manageStorageBins.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete cellar \'<?php echo htmlspecialchars($c['cellar_name'], ENT_QUOTES, 'UTF-8'); ?>\'?');">
+                      <form action="manageStorageBins.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete cellar \'<?php echo htmlspecialchars(addslashes($c['cellar_name']), ENT_QUOTES, 'UTF-8'); ?>\'?');">
                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                         <input type="hidden" name="action" value="delete_cellar">
                         <input type="hidden" name="cellar_id" value="<?php echo $cid; ?>">

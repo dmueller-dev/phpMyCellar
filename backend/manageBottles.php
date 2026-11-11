@@ -60,7 +60,7 @@
   // Form field variables for ADD mode
   $add_wine_id = filter_input(INPUT_GET, 'wine_id', FILTER_VALIDATE_INT) ?: '';
   $add_numBottles = 1;
-  $add_format = '0.75';
+  $add_format = '750ml';
   $add_bin_id = '';
   $add_store_id = '';
   $add_purchase_date = date('Y-m-d');
@@ -111,9 +111,24 @@
       $drink_through = filter_input(INPUT_POST, 'drink_through', FILTER_VALIDATE_INT) ?: null;
       $consumption_date = sanitizeInput($_POST['consumption_date'] ?? '') ?: null;
       $consumption_note = sanitizeInput($_POST['consumption_note'] ?? '') ?: null;
-      $for_sale = sanitizeInput($_POST['for_sale'] ?? 'no');
+      $for_sale = sanitizeInput($_POST['for_sale'] ?? 'no', '');
       $note_id = filter_input(INPUT_POST, 'note_id', FILTER_VALIDATE_INT) ?: null;
       $restricted = filter_input(INPUT_POST, 'restricted', FILTER_VALIDATE_INT) ?? 0;
+
+      // Preserve submitted form values if validation fails
+      $add_wine_id = $wine_id ?: '';
+      $add_numBottles = $numBottles;
+      $add_format = $format;
+      $add_bin_id = $bin_id ?: '';
+      $add_store_id = $store_id ?: '';
+      $add_purchase_date = $purchase_date;
+      $add_purchase_price = $purchase_price ?? '';
+      $add_arrival_date = $arrival_date ?? '';
+      $add_status = $status;
+      $add_drink_from = $drink_from ?? '';
+      $add_drink_through = $drink_through ?? '';
+      $add_for_sale = $for_sale;
+      $add_restricted = (int)$restricted;
 
       $valErrors = validateBottleInput(0, $wine_id, $format, $bin_id, $store_id, $purchase_date, $purchase_price, $arrival_date, $status, $drink_from, $drink_through, $consumption_date, $consumption_note, $for_sale, $note_id, $restricted);
       if (!empty($valErrors)) {
@@ -346,7 +361,7 @@
                     <option value="">-- Select Wine Cuv&eacute;e --</option>
                     <?php foreach ($wines as $w): ?>
                       <option value="<?php echo (int)$w['wine_id']; ?>" <?php echo ((int)$add_wine_id === (int)$w['wine_id']) ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($w['country'] . ': ' . $w['region'] . ' — ' . getWineName($w['nameconvention'], $w['vintage'], $w['name'], $w['producer'], $w['grape'], $w['vineyard']), ENT_QUOTES, 'UTF-8'); ?>
+                        <?php echo htmlspecialchars($w['country'] . ': ' . $w['region'] . ' - ' . getWineName($w['nameconvention'], $w['vintage'], $w['name'], $w['producer'], $w['grape'], $w['vineyard']), ENT_QUOTES, 'UTF-8'); ?>
                       </option>
                     <?php endforeach; ?>
                   </select>
@@ -395,7 +410,7 @@
                       $capText = '';
                       if (!empty($sl['max_capacity'])) {
                         $isFull = ((int)$sl['current_bottles'] >= (int)$sl['max_capacity']);
-                        $capText = ' (' . (int)$sl['current_bottles'] . ' / ' . (int)$sl['max_capacity'] . ' btls' . ($isFull ? ' — Full' : '') . ')';
+                        $capText = ' (' . (int)$sl['current_bottles'] . ' / ' . (int)$sl['max_capacity'] . ' btls' . ($isFull ? ' - Full' : '') . ')';
                       } elseif (isset($sl['current_bottles']) && (int)$sl['current_bottles'] > 0) {
                         $capText = ' (' . (int)$sl['current_bottles'] . ' btls)';
                       }
@@ -414,7 +429,7 @@
                 <select name="store_id" id="store_id" required style="width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-height: 44px;">
                   <option value="">-- Select Store --</option>
                   <?php foreach ($stores as $s): ?>
-                    <option value="<?php echo (int)$s['store_id']; ?>">
+                    <option value="<?php echo (int)$s['store_id']; ?>" <?php echo ((int)$add_store_id === (int)$s['store_id']) ? 'selected' : ''; ?>>
                       <?php echo htmlspecialchars($s['country'] . ': ' . $s['store_name'], ENT_QUOTES, 'UTF-8'); ?>
                     </option>
                   <?php endforeach; ?>
@@ -435,7 +450,7 @@
                 <label for="purchase_price" style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9rem;">
                   Purchase Price per Bottle:
                 </label>
-                <input type="number" step="0.01" name="purchase_price" id="purchase_price" placeholder="0.00" style="width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-height: 44px;">
+                <input type="number" step="0.01" name="purchase_price" id="purchase_price" value="<?php echo htmlspecialchars((string)$add_purchase_price, ENT_QUOTES, 'UTF-8'); ?>" placeholder="0.00" style="width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-height: 44px;">
               </div>
 
               <div>
@@ -443,11 +458,11 @@
                   Status: <span style="color: red;">*</span>
                 </label>
                 <select name="status" id="status" required style="width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-height: 44px;">
-                  <option value="in cellar" selected>in cellar</option>
-                  <option value="pending delivery">pending delivery</option>
-                  <option value="consumed">consumed</option>
-                  <option value="lost">lost</option>
-                  <option value="sold">sold</option>
+                  <option value="in cellar" <?php echo ($add_status === 'in cellar') ? 'selected' : ''; ?>>in cellar</option>
+                  <option value="pending delivery" <?php echo ($add_status === 'pending delivery') ? 'selected' : ''; ?>>pending delivery</option>
+                  <option value="consumed" <?php echo ($add_status === 'consumed') ? 'selected' : ''; ?>>consumed</option>
+                  <option value="lost" <?php echo ($add_status === 'lost') ? 'selected' : ''; ?>>lost</option>
+                  <option value="sold" <?php echo ($add_status === 'sold') ? 'selected' : ''; ?>>sold</option>
                 </select>
               </div>
             </div>
@@ -459,9 +474,9 @@
                   Drinking Window (Years):
                 </label>
                 <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
-                  <input type="text" name="drink_from" maxlength="4" placeholder="From" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
-                  <span>&ndash;</span>
-                  <input type="text" name="drink_through" maxlength="4" placeholder="To" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
+                  <input type="text" name="drink_from" maxlength="4" value="<?php echo htmlspecialchars((string)$add_drink_from, ENT_QUOTES, 'UTF-8'); ?>" placeholder="From" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
+                  <span>-</span>
+                  <input type="text" name="drink_through" maxlength="4" value="<?php echo htmlspecialchars((string)$add_drink_through, ENT_QUOTES, 'UTF-8'); ?>" placeholder="To" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
                 </div>
               </div>
 
@@ -470,8 +485,8 @@
                   Available for Sale:
                 </label>
                 <select name="for_sale" id="for_sale" required style="width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-height: 44px;">
-                  <option value="no" selected>No</option>
-                  <option value="yes">Yes</option>
+                  <option value="no" <?php echo ($add_for_sale === 'no') ? 'selected' : ''; ?>>No</option>
+                  <option value="yes" <?php echo ($add_for_sale === 'yes') ? 'selected' : ''; ?>>Yes</option>
                 </select>
               </div>
 
@@ -480,8 +495,8 @@
                   Private Reserve / Restricted:
                 </label>
                 <select name="restricted" id="restricted" style="width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-height: 44px;">
-                  <option value="0" selected>No (Publicly Visible)</option>
-                  <option value="1">Yes (Private Reserve Only)</option>
+                  <option value="0" <?php echo ((int)$add_restricted === 0) ? 'selected' : ''; ?>>No (Publicly Visible)</option>
+                  <option value="1" <?php echo ((int)$add_restricted === 1) ? 'selected' : ''; ?>>Yes (Private Reserve Only)</option>
                 </select>
               </div>
             </div>
@@ -513,7 +528,7 @@
                 <option value="">-- Choose Bottle --</option>
                 <?php foreach ($bottles as $b): ?>
                   <option value="<?php echo (int)$b['bottle_id']; ?>" <?php echo ($requested_bottle_id === (int)$b['bottle_id']) ? 'selected' : ''; ?>>
-                    #<?php echo (int)$b['bottle_id']; ?> — <?php echo htmlspecialchars(($b['cellar_name'] ?? 'No Cellar') . ' / ' . ($b['bin_name'] ?? 'No Bin') . ' — ' . getWineName($b['nameconvention'], $b['vintage'], $b['name'], $b['producer'], $b['grape'], $b['vineyard']), ENT_QUOTES, 'UTF-8'); ?><?php echo (($b['status'] ?? 'in cellar') !== 'in cellar') ? ' [' . strtoupper($b['status']) . ']' : ''; ?>
+                    #<?php echo (int)$b['bottle_id']; ?> - <?php echo htmlspecialchars(($b['cellar_name'] ?? 'No Cellar') . ' / ' . ($b['bin_name'] ?? 'No Bin') . ' - ' . getWineName($b['nameconvention'], $b['vintage'], $b['name'], $b['producer'], $b['grape'], $b['vineyard']), ENT_QUOTES, 'UTF-8'); ?><?php echo (($b['status'] ?? 'in cellar') !== 'in cellar') ? ' [' . strtoupper($b['status']) . ']' : ''; ?>
                   </option>
                 <?php endforeach; ?>
               </select>
@@ -547,7 +562,7 @@
                       <option value="">-- Select Wine Cuv&eacute;e --</option>
                       <?php foreach ($wines as $w): ?>
                         <option value="<?php echo (int)$w['wine_id']; ?>" <?php echo ((int)$selected_bottle['wine_id'] === (int)$w['wine_id']) ? 'selected' : ''; ?>>
-                          <?php echo htmlspecialchars($w['country'] . ': ' . $w['region'] . ' — ' . getWineName($w['nameconvention'], $w['vintage'], $w['name'], $w['producer'], $w['grape'], $w['vineyard']), ENT_QUOTES, 'UTF-8'); ?>
+                          <?php echo htmlspecialchars($w['country'] . ': ' . $w['region'] . ' - ' . getWineName($w['nameconvention'], $w['vintage'], $w['name'], $w['producer'], $w['grape'], $w['vineyard']), ENT_QUOTES, 'UTF-8'); ?>
                         </option>
                       <?php endforeach; ?>
                     </select>
@@ -581,7 +596,7 @@
                         $capText = '';
                         if (!empty($sl['max_capacity'])) {
                           $isFull = ((int)$sl['current_bottles'] >= (int)$sl['max_capacity']);
-                          $capText = ' (' . (int)$sl['current_bottles'] . ' / ' . (int)$sl['max_capacity'] . ' btls' . ($isFull ? ' — Full' : '') . ')';
+                          $capText = ' (' . (int)$sl['current_bottles'] . ' / ' . (int)$sl['max_capacity'] . ' btls' . ($isFull ? ' - Full' : '') . ')';
                         } elseif (isset($sl['current_bottles']) && (int)$sl['current_bottles'] > 0) {
                           $capText = ' (' . (int)$sl['current_bottles'] . ' btls)';
                         }
@@ -653,7 +668,7 @@
                   </label>
                   <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
                     <input type="text" name="drink_from" maxlength="4" value="<?php echo htmlspecialchars($selected_bottle['drink_from'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="From" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
-                    <span>&ndash;</span>
+                    <span>-</span>
                     <input type="text" name="drink_through" maxlength="4" value="<?php echo htmlspecialchars($selected_bottle['drink_through'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="To" style="flex: 1 1 0; min-width: 0; width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 44px; text-align: center; box-sizing: border-box;">
                   </div>
                 </div>
@@ -728,7 +743,10 @@
           }
         }
         $totalBottlesCount = count($bottles);
-        $initial_display_count = $initial_show_out ? ($ledger_limit === 'all' ? $totalBottlesCount : min($totalBottlesCount, $ledger_limit * 2)) : ($ledger_limit === 'all' ? $inCellarCount : min($inCellarCount, $ledger_limit));
+        $outOfCellarCount = $totalBottlesCount - $inCellarCount;
+        $initial_display_count = $initial_show_out
+          ? ($ledger_limit === 'all' ? $totalBottlesCount : (min($inCellarCount, $ledger_limit) + min($outOfCellarCount, $ledger_limit)))
+          : ($ledger_limit === 'all' ? $inCellarCount : min($inCellarCount, $ledger_limit));
         $initial_display_label = $initial_show_out ? ($initial_display_count === 1 ? 'bottle' : 'bottles') : 'in cellar';
       ?>
       <!-- Quick Inventory Directory / Lookup -->
@@ -870,7 +888,7 @@
   let cachedBottleOptions = [];
 
   document.addEventListener("DOMContentLoaded", function() {
-    const wineSel = document.getElementById('wine_id');
+    const wineSel = document.getElementById('wine_id') || document.getElementById('edit_wine_id');
     if (wineSel) {
       for (let i = 1; i < wineSel.options.length; i++) {
         const opt = wineSel.options[i];

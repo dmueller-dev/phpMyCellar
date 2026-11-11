@@ -43,30 +43,37 @@
   $form_discount = '0.00';
 
   if ($edit_order_id) {
-    $order_sql = "SELECT store_id, order_date, shipping_paid, discount, status FROM orders WHERE order_id = ?";
-    $stmt = $conn->prepare($order_sql);
-    $stmt->bind_param("i", $edit_order_id);
-    $stmt->execute();
-    $stmt->bind_result($db_store_id, $db_order_date, $db_shipping_paid, $db_discount, $db_status);
-    if ($stmt->fetch()) {
-      if ($db_status !== 'pending delivery') {
-        $errors[] = "Only open orders (pending delivery) can be edited.";
-        $edit_order_id = null;
-      } else {
-        $is_edit = true;
-        $form_store_id = $db_store_id;
-        $form_order_date = $db_order_date;
-        $form_shipping_paid = number_format($db_shipping_paid, 2, '.', '');
-        $form_discount = number_format($db_discount, 2, '.', '');
-      }
-    } else {
-      $errors[] = "Order not found.";
+    if (!$can_manage_orders) {
+      $errors[] = "You do not have permission to edit existing orders.";
       $edit_order_id = null;
-    }
-    $stmt->close();
+    } else {
+      $order_sql = "SELECT store_id, order_date, shipping_paid, discount, status FROM orders WHERE order_id = ?";
+      $stmt = $conn->prepare($order_sql);
+      if ($stmt) {
+        $stmt->bind_param("i", $edit_order_id);
+        $stmt->execute();
+        $stmt->bind_result($db_store_id, $db_order_date, $db_shipping_paid, $db_discount, $db_status);
+        if ($stmt->fetch()) {
+          if ($db_status !== 'pending delivery') {
+            $errors[] = "Only open orders (pending delivery) can be edited.";
+            $edit_order_id = null;
+          } else {
+            $is_edit = true;
+            $form_store_id = $db_store_id;
+            $form_order_date = $db_order_date;
+            $form_shipping_paid = number_format($db_shipping_paid, 2, '.', '');
+            $form_discount = number_format($db_discount, 2, '.', '');
+          }
+        } else {
+          $errors[] = "Order not found.";
+          $edit_order_id = null;
+        }
+        $stmt->close();
+      }
 
-    if ($is_edit) {
-      $prepopulated_items = getOrderItems($conn, $edit_order_id);
+      if ($is_edit) {
+        $prepopulated_items = getOrderItems($conn, $edit_order_id);
+      }
     }
   }
 
@@ -78,6 +85,13 @@
 
     $post_edit_id = filter_input(INPUT_POST, 'edit_order_id', FILTER_VALIDATE_INT);
     $is_edit_post = (bool)$post_edit_id;
+
+    if ($is_edit_post && !$can_manage_orders) {
+      die("Permission denied: You do not have privilege to edit existing orders.");
+    }
+    if (!$is_edit_post && !$can_add_order) {
+      die("Permission denied: You do not have privilege to create orders.");
+    }
 
     $form_store_id = filter_input(INPUT_POST, 'store_id', FILTER_VALIDATE_INT);
     $form_order_date = sanitizeInput($_POST['order_date'] ?? '');
@@ -238,14 +252,18 @@
 
           // Delete previously linked items and pending bottles
           $stmt_del = $conn->prepare("DELETE FROM order_items WHERE order_id = ?");
-          $stmt_del->bind_param("i", $order_id);
-          $stmt_del->execute();
-          $stmt_del->close();
+          if ($stmt_del) {
+            $stmt_del->bind_param("i", $order_id);
+            $stmt_del->execute();
+            $stmt_del->close();
+          }
 
           $stmt_del_btl = $conn->prepare("DELETE FROM bottles WHERE order_id = ? AND status = 'pending delivery'");
-          $stmt_del_btl->bind_param("i", $order_id);
-          $stmt_del_btl->execute();
-          $stmt_del_btl->close();
+          if ($stmt_del_btl) {
+            $stmt_del_btl->bind_param("i", $order_id);
+            $stmt_del_btl->execute();
+            $stmt_del_btl->close();
+          }
         } else {
           $order_id = insertOrder($conn, $form_store_id, $form_order_date, $form_shipping_paid, $form_discount, 'pending delivery');
           if (!$order_id) throw new Exception("Failed to insert the order into the database.");
@@ -268,6 +286,12 @@
         }
 
         // Move and Record Uploaded Documents
+        if (!empty($upload_queue)) {
+          $upload_dir = __DIR__ . "/../uploads/invoices";
+          if (!is_dir($upload_dir)) {
+            @mkdir($upload_dir, 0755, true);
+          }
+        }
         foreach ($upload_queue as $up_file) {
           $safe_name = "order_" . $order_id . "_" . time() . "_" . bin2hex(random_bytes(4)) . "." . $up_file['extension'];
           $dest_path = __DIR__ . "/../uploads/invoices/" . $safe_name;
@@ -302,9 +326,12 @@
     if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
       die("CSRF token validation failed");
     }
+    if (!$can_manage_orders) {
+      die("Permission denied: You do not have privilege to accept deliveries.");
+    }
 
     $order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
-    $arrival_date = sanitizeInput($_POST['arrival_date'] ?? '');
+    $arrival_date = sanitizeInput($_POST['arrival_date'] ?? '', '');
     $bin_ids = $_POST['bin_id'] ?? [];
     $drink_froms = $_POST['drink_from'] ?? [];
     $drink_throughs = $_POST['drink_through'] ?? [];
@@ -331,6 +358,7 @@
       try {
         $check_sql = "SELECT status FROM orders WHERE order_id = ? FOR UPDATE";
         $stmt_check = $conn->prepare($check_sql);
+        if (!$stmt_check) throw new Exception("Failed to prepare order check statement.");
         $stmt_check->bind_param("i", $order_id);
         $stmt_check->execute();
         $stmt_check->bind_result($order_status);
@@ -342,13 +370,14 @@
         }
 
         $pending_bottles = getPendingOrderBottles($conn, $order_id);
-        $pending_bottle_ids = array_column($pending_bottles, 'bottle_id');
+        if (empty($pending_bottles)) {
+          throw new Exception("No pending bottles found for this order.");
+        }
 
         $bin_counts = [];
-        foreach ($bin_ids as $btl_id => $bin_id) {
-          $btl_id = (int)$btl_id;
-          $bin_id = empty($bin_id) ? null : (int)$bin_id;
-          if (!in_array($btl_id, $pending_bottle_ids)) continue;
+        foreach ($pending_bottles as $pb) {
+          $btl_id = (int)$pb['bottle_id'];
+          $bin_id = (!empty($bin_ids[$btl_id])) ? (int)$bin_ids[$btl_id] : null;
           if ($bin_id === null || $bin_id <= 0) {
             throw new Exception("Please assign a storage location for all bottles before accepting delivery.");
           }
@@ -364,13 +393,20 @@
         $stmt_up = $conn->prepare($up_bottle_sql);
         if (!$stmt_up) throw new Exception("Failed to prepare bottle update statement.");
 
-        foreach ($bin_ids as $btl_id => $bin_id) {
-          $btl_id = (int)$btl_id;
-          $bin_id = empty($bin_id) ? null : (int)$bin_id;
-          $df = (!empty($drink_froms[$btl_id]) && is_numeric($drink_froms[$btl_id])) ? (int)$drink_froms[$btl_id] : null;
-          $dt = (!empty($drink_throughs[$btl_id]) && is_numeric($drink_throughs[$btl_id])) ? (int)$drink_throughs[$btl_id] : null;
+        foreach ($pending_bottles as $pb) {
+          $btl_id = (int)$pb['bottle_id'];
+          $bin_id = (!empty($bin_ids[$btl_id])) ? (int)$bin_ids[$btl_id] : null;
+          if (is_array($drink_froms) && array_key_exists($btl_id, $drink_froms)) {
+            $df = (trim((string)$drink_froms[$btl_id]) !== '' && is_numeric($drink_froms[$btl_id])) ? (int)$drink_froms[$btl_id] : null;
+          } else {
+            $df = (!empty($pb['drink_from'])) ? (int)$pb['drink_from'] : null;
+          }
+          if (is_array($drink_throughs) && array_key_exists($btl_id, $drink_throughs)) {
+            $dt = (trim((string)$drink_throughs[$btl_id]) !== '' && is_numeric($drink_throughs[$btl_id])) ? (int)$drink_throughs[$btl_id] : null;
+          } else {
+            $dt = (!empty($pb['drink_through'])) ? (int)$pb['drink_through'] : null;
+          }
 
-          if (!in_array($btl_id, $pending_bottle_ids)) continue;
           if ($bin_id === null || $bin_id <= 0) throw new Exception("Please assign a storage location for all bottles.");
 
           $stmt_up->bind_param("isiisi", $bin_id, $arrival_date, $df, $dt, $btl_id, $order_id);
@@ -380,6 +416,7 @@
 
         $up_order_sql = "UPDATE orders SET status = 'delivered' WHERE order_id = ?";
         $stmt_order = $conn->prepare($up_order_sql);
+        if (!$stmt_order) throw new Exception("Failed to prepare order status update statement.");
         $stmt_order->bind_param("i", $order_id);
         $stmt_order->execute();
         $stmt_order->close();
@@ -398,6 +435,9 @@
     if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
       die("CSRF token validation failed");
     }
+    if (!$can_manage_orders) {
+      die("Permission denied: You do not have privilege to cancel orders.");
+    }
 
     $order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
     if (!$order_id) $errors[] = "Invalid order selected.";
@@ -407,6 +447,7 @@
       try {
         $check_sql = "SELECT status FROM orders WHERE order_id = ? FOR UPDATE";
         $stmt_check = $conn->prepare($check_sql);
+        if (!$stmt_check) throw new Exception("Failed to prepare order check statement.");
         $stmt_check->bind_param("i", $order_id);
         $stmt_check->execute();
         $stmt_check->bind_result($order_status);
@@ -419,15 +460,19 @@
 
         $del_btl_sql = "DELETE FROM bottles WHERE order_id = ? AND status = 'pending delivery'";
         $stmt_del_btl = $conn->prepare($del_btl_sql);
-        $stmt_del_btl->bind_param("i", $order_id);
-        $stmt_del_btl->execute();
-        $stmt_del_btl->close();
+        if ($stmt_del_btl) {
+          $stmt_del_btl->bind_param("i", $order_id);
+          $stmt_del_btl->execute();
+          $stmt_del_btl->close();
+        }
 
         $up_order_sql = "UPDATE orders SET status = 'cancelled' WHERE order_id = ?";
         $stmt_order = $conn->prepare($up_order_sql);
-        $stmt_order->bind_param("i", $order_id);
-        $stmt_order->execute();
-        $stmt_order->close();
+        if ($stmt_order) {
+          $stmt_order->bind_param("i", $order_id);
+          $stmt_order->execute();
+          $stmt_order->close();
+        }
 
         $conn->commit();
         $success_message = "Order #{$order_id} has been cancelled successfully. Associated pending bottle records have been removed.";
@@ -737,10 +782,12 @@ HTML;
         }
       }
 
+      let nextWineRowIndex = 0;
+
       function addWineRow(wineId = '', format = '', quantity = 1, totalPrice = '', drinkFrom = '', drinkThrough = '') {
         const tableBody = document.getElementById('order_items_body');
         if (!tableBody) return;
-        const rowIndex = tableBody.children.length;
+        const rowIndex = nextWineRowIndex++;
         
         const row = document.createElement('tr');
         row.className = 'order-item-row';
@@ -786,7 +833,7 @@ HTML;
           <td data-label="Drinking Window">
             <div style="display: flex; align-items: center; gap: 4px;">
               <input type="text" name="drink_from[]" maxlength="4" size="4" value="\${drinkFrom || ''}" placeholder="yyyy" title="Drink from (yyyy)" style="width:52px; padding: 5px; font-size: small; border: 1px solid #ccc; border-radius: 4px; text-align: center;">
-              <span style="color: #666; font-size: small;">&ndash;</span>
+              <span style="color: #666; font-size: small;">-</span>
               <input type="text" name="drink_through[]" maxlength="4" size="4" value="\${drinkThrough || ''}" placeholder="yyyy" title="Drink through (yyyy)" style="width:52px; padding: 5px; font-size: small; border: 1px solid #ccc; border-radius: 4px; text-align: center;">
             </div>
           </td>
@@ -1086,9 +1133,9 @@ HTML;
                           <td data-label="Drinking Window" style="text-align: center;">
                             <?php 
                               if (!empty($item['drink_from']) || !empty($item['drink_through'])) {
-                                echo htmlspecialchars(($item['drink_from'] ?? '?') . ' – ' . ($item['drink_through'] ?? '?'));
+                                echo htmlspecialchars(($item['drink_from'] ?? '?') . ' - ' . ($item['drink_through'] ?? '?'));
                               } else {
-                                echo '<span style="color:#aaa;">—</span>';
+                                echo '<span style="color:#aaa;">-</span>';
                               }
                             ?>
                           </td>
@@ -1147,13 +1194,30 @@ HTML;
                           <div style="font-weight: bold; font-size: 12px; margin-bottom: 4px;">
                             Bottle #<?php echo $b['bottle_id']; ?>: <?php echo htmlspecialchars(getWineName($b['nameconvention'], $b['vintage'], $b['name'], $b['producer'], $b['grape'], $b['vineyard']), ENT_QUOTES, 'UTF-8'); ?>
                           </div>
-                          <div>
-                            <select name="bin_id[<?php echo $b['bottle_id']; ?>]" required style="width: 100%; padding: 4px; font-size: small; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 4px;">
-                              <option value="">-- Assign bin --</option>
-                              <?php foreach ($storage_locations as $sl): ?>
-                                <option value="<?php echo $sl['bin_id']; ?>"><?php echo htmlspecialchars($sl['cellar_name'] . ': ' . $sl['bin_name'], ENT_QUOTES, 'UTF-8'); ?></option>
-                              <?php endforeach; ?>
-                            </select>
+                          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 170px;">
+                              <select name="bin_id[<?php echo $b['bottle_id']; ?>]" required style="width: 100%; padding: 4px; font-size: small; border: 1px solid #ccc; border-radius: 4px;">
+                                <option value="">-- Assign bin --</option>
+                                <?php foreach ($storage_locations as $sl): ?>
+                                  <?php
+                                    $capText = '';
+                                    if (!empty($sl['max_capacity'])) {
+                                      $isFull = ((int)$sl['current_bottles'] >= (int)$sl['max_capacity']);
+                                      $capText = ' (' . (int)$sl['current_bottles'] . ' / ' . (int)$sl['max_capacity'] . ' btls' . ($isFull ? ' - Full' : '') . ')';
+                                    } elseif (isset($sl['current_bottles']) && (int)$sl['current_bottles'] > 0) {
+                                      $capText = ' (' . (int)$sl['current_bottles'] . ' btls)';
+                                    }
+                                  ?>
+                                  <option value="<?php echo $sl['bin_id']; ?>"><?php echo htmlspecialchars($sl['cellar_name'] . ': ' . $sl['bin_name'] . $capText, ENT_QUOTES, 'UTF-8'); ?></option>
+                                <?php endforeach; ?>
+                              </select>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px; font-size: 11px;">
+                              <label style="color: #666;">Window:</label>
+                              <input type="text" name="drink_from[<?php echo (int)$b['bottle_id']; ?>]" maxlength="4" size="4" value="<?php echo htmlspecialchars($b['drink_from'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="yyyy" title="Drink from (yyyy)" style="width: 48px; padding: 3px; font-size: 11px; border: 1px solid #ccc; border-radius: 3px; text-align: center;">
+                              <span>-</span>
+                              <input type="text" name="drink_through[<?php echo (int)$b['bottle_id']; ?>]" maxlength="4" size="4" value="<?php echo htmlspecialchars($b['drink_through'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="yyyy" title="Drink through (yyyy)" style="width: 48px; padding: 3px; font-size: 11px; border: 1px solid #ccc; border-radius: 3px; text-align: center;">
+                            </div>
                           </div>
                         </div>
                       <?php endforeach; ?>
