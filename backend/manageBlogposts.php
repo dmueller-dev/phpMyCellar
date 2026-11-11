@@ -15,8 +15,8 @@
    * Required privileges: 'add_blogpost' or 'edit_blogpost'
    */
   $can_add = hasPrivilege($conn, 'add_blogpost');
-  $can_edit = hasPrivilege($conn, 'edit_blogpost');
   $can_edit_all = hasPrivilege($conn, 'edit_all_blogposts');
+  $can_edit = hasPrivilege($conn, 'edit_blogpost') || $can_edit_all;
   $can_publish = hasPrivilege($conn, 'publish_blogpost');
 
   if (!$can_add && !$can_edit) {
@@ -63,10 +63,13 @@
 
   if ($requested_blog_id) {
     $selected_post = getBlogpostDetails($conn, $requested_blog_id);
-    if (!$selected_post) {
+      if (!$selected_post) {
       $errors[] = "Requested story #" . $requested_blog_id . " not found.";
     } elseif (!$can_edit_all && (int)$selected_post['user_id'] !== (int)$_SESSION['user_id']) {
       $errors[] = "You do not have permission to edit this story.";
+      $selected_post = null;
+    } elseif (!$can_edit_all && $selected_post['status'] === 'published' && !$can_publish) {
+      $errors[] = "This story has been published and can no longer be edited without publishing privileges.";
       $selected_post = null;
     } else {
       // Fetch linked wines from DB
@@ -122,21 +125,25 @@
             // Link wines
             if (!empty($linked_wines)) {
               $stmt = $conn->prepare("INSERT INTO x_blog_wines (blog_id, wine_id) VALUES (?, ?)");
-              foreach ($linked_wines as $w_id) {
-                $stmt->bind_param("ii", $new_blog_id, $w_id);
-                $stmt->execute();
+              if ($stmt) {
+                foreach ($linked_wines as $w_id) {
+                  $stmt->bind_param("ii", $new_blog_id, $w_id);
+                  $stmt->execute();
+                }
+                $stmt->close();
               }
-              $stmt->close();
             }
 
             // Link tasting notes
             if (!empty($linked_tnotes)) {
               $stmt = $conn->prepare("INSERT INTO x_blog_tnotes (blog_id, note_id) VALUES (?, ?)");
-              foreach ($linked_tnotes as $n_id) {
-                $stmt->bind_param("ii", $new_blog_id, $n_id);
-                $stmt->execute();
+              if ($stmt) {
+                foreach ($linked_tnotes as $n_id) {
+                  $stmt->bind_param("ii", $new_blog_id, $n_id);
+                  $stmt->execute();
+                }
+                $stmt->close();
               }
-              $stmt->close();
             }
 
             $conn->commit();
@@ -174,43 +181,53 @@
         }
       }
 
-      $status = $can_publish ? sanitizeInput($_POST['status'] ?? 'draft') : ($check_post ? $check_post['status'] : 'draft');
+      $status = $can_publish ? sanitizeInput($_POST['status'] ?? 'draft', '') : ($check_post ? $check_post['status'] : 'draft');
       $valErrors = validateBlogpostInput($title, $content, $status);
 
       if (!empty($valErrors)) {
         $errors = array_merge($errors, $valErrors);
-      } else {
+      }
+
+      if (empty($errors)) {
         $conn->begin_transaction();
         try {
           if (updateBlogpost($conn, $post_blog_id, $pub_date, $title, $content, $status)) {
             // Re-sync linked wines
             $stmt = $conn->prepare("DELETE FROM x_blog_wines WHERE blog_id = ?");
-            $stmt->bind_param("i", $post_blog_id);
-            $stmt->execute();
-            $stmt->close();
+            if ($stmt) {
+              $stmt->bind_param("i", $post_blog_id);
+              $stmt->execute();
+              $stmt->close();
+            }
 
             if (!empty($linked_wines)) {
               $stmt = $conn->prepare("INSERT INTO x_blog_wines (blog_id, wine_id) VALUES (?, ?)");
-              foreach ($linked_wines as $w_id) {
-                $stmt->bind_param("ii", $post_blog_id, $w_id);
-                $stmt->execute();
+              if ($stmt) {
+                foreach ($linked_wines as $w_id) {
+                  $stmt->bind_param("ii", $post_blog_id, $w_id);
+                  $stmt->execute();
+                }
+                $stmt->close();
               }
-              $stmt->close();
             }
 
             // Re-sync linked notes
             $stmt = $conn->prepare("DELETE FROM x_blog_tnotes WHERE blog_id = ?");
-            $stmt->bind_param("i", $post_blog_id);
-            $stmt->execute();
-            $stmt->close();
+            if ($stmt) {
+              $stmt->bind_param("i", $post_blog_id);
+              $stmt->execute();
+              $stmt->close();
+            }
 
             if (!empty($linked_tnotes)) {
               $stmt = $conn->prepare("INSERT INTO x_blog_tnotes (blog_id, note_id) VALUES (?, ?)");
-              foreach ($linked_tnotes as $n_id) {
-                $stmt->bind_param("ii", $post_blog_id, $n_id);
-                $stmt->execute();
+              if ($stmt) {
+                foreach ($linked_tnotes as $n_id) {
+                  $stmt->bind_param("ii", $post_blog_id, $n_id);
+                  $stmt->execute();
+                }
+                $stmt->close();
               }
-              $stmt->close();
             }
 
             $conn->commit();
@@ -324,7 +341,7 @@
                 <option value="">-- Select Story --</option>
                 <?php foreach ($accessible_posts as $p): ?>
                   <option value="<?php echo (int)$p['blog_id']; ?>" <?php echo ($selected_post && (int)$p['blog_id'] === (int)$selected_post['blog_id']) ? 'selected' : ''; ?>>
-                    #<?php echo (int)$p['blog_id']; ?> &mdash; <?php echo htmlspecialchars($p['pub_date'] . ' — ' . $p['title'], ENT_QUOTES, 'UTF-8'); ?>
+                    #<?php echo (int)$p['blog_id']; ?> - <?php echo htmlspecialchars($p['pub_date'] . ' - ' . $p['title'], ENT_QUOTES, 'UTF-8'); ?>
                   </option>
                 <?php endforeach; ?>
               </select>
@@ -392,7 +409,7 @@
                     <div class="wine-check-item" data-search="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>" style="margin-bottom: 6px;">
                       <label style="font-size: 0.85rem; cursor: pointer; display: flex; align-items: flex-start; gap: 6px;">
                         <input type="checkbox" name="wines[]" value="<?php echo (int)$wine['wine_id']; ?>" <?php echo $w_checked; ?> style="margin-top: 2px;">
-                        <span><?php echo htmlspecialchars($wine['country'] . ': ' . $wine['region'] . ' — ' . getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']), ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span><?php echo htmlspecialchars($wine['country'] . ': ' . $wine['region'] . ' - ' . getWineName($wine['nameconvention'], $wine['vintage'], $wine['name'], $wine['producer'], $wine['grape'], $wine['vineyard']), ENT_QUOTES, 'UTF-8'); ?></span>
                       </label>
                     </div>
                   <?php endforeach; ?>
@@ -411,7 +428,7 @@
                     <div class="note-check-item" data-search="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>" style="margin-bottom: 6px;">
                       <label style="font-size: 0.85rem; cursor: pointer; display: flex; align-items: flex-start; gap: 6px;">
                         <input type="checkbox" name="tnotes[]" value="<?php echo (int)$tn['note_id']; ?>" <?php echo $n_checked; ?> style="margin-top: 2px;">
-                        <span>#<?php echo (int)$tn['note_id']; ?> — <?php echo htmlspecialchars($tn['tasting_date'] . ' — ' . getWineName($tn['nameconvention'], $tn['vintage'], $tn['name'], $tn['producer'], $tn['grape'], $tn['vineyard']), ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span>#<?php echo (int)$tn['note_id']; ?> - <?php echo htmlspecialchars($tn['tasting_date'] . ' - ' . getWineName($tn['nameconvention'], $tn['vintage'], $tn['name'], $tn['producer'], $tn['grape'], $tn['vineyard']), ENT_QUOTES, 'UTF-8'); ?></span>
                       </label>
                     </div>
                   <?php endforeach; ?>
@@ -463,7 +480,7 @@
                   <tr style="<?php echo ($requested_blog_id === (int)$post['blog_id']) ? 'background-color: #fff9e6;' : ''; ?>">
                     <td data-label="Date"><?php echo htmlspecialchars($post['pub_date'], ENT_QUOTES, 'UTF-8'); ?></td>
                     <td class="card-primary-cell"><strong><?php echo htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8'); ?></strong></td>
-                    <td data-label="Author"><?php echo htmlspecialchars($post['author'] ?? $post['initials'] ?? 'Author', ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td data-label="Author"><?php echo htmlspecialchars($post['displayname'] ?? $post['author'] ?? $post['initials'] ?? 'Author', ENT_QUOTES, 'UTF-8'); ?></td>
                     <td data-label="Status">
                       <span style="display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: bold; text-transform: uppercase; <?php echo ($post['status'] === 'published') ? 'background: #e8f5e9; color: #2e7d32;' : 'background: #f5f5f5; color: #666;'; ?>">
                         <?php echo htmlspecialchars($post['status'], ENT_QUOTES, 'UTF-8'); ?>
@@ -475,7 +492,7 @@
                           Edit
                         </a>
                       <?php endif; ?>
-                      <a href="/article.php?id=<?php echo (int)$post['blog_id']; ?>" target="_blank" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none; color: #0d6efd;">
+                      <a href="/blog.php?id=<?php echo (int)$post['blog_id']; ?>" target="_blank" style="font-size: 0.8rem; padding: 4px 8px; text-decoration: none; color: #0d6efd;">
                         View &rarr;
                       </a>
                     </td>

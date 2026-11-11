@@ -53,6 +53,57 @@
   // Selected comment for editing
   $editCommentId = filter_input(INPUT_GET, 'edit_comment', FILTER_VALIDATE_INT);
   $editingComment = null;
+
+  // Handle Form Submissions
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+      die("CSRF token validation failed");
+    }
+
+    $action = sanitizeInput($_POST['action'] ?? '', '');
+    $comment_id = filter_input(INPUT_POST, 'comment_id', FILTER_VALIDATE_INT);
+
+    // Action: Update Status
+    if ($action === 'set_status') {
+      $new_status = sanitizeInput($_POST['status'] ?? '', '');
+      try {
+        if ($comment_id && updateCommentStatus($conn, $comment_id, $new_status)) {
+          $success_message = "Comment #" . $comment_id . " status updated to '" . htmlspecialchars($new_status, ENT_QUOTES, 'UTF-8') . "'.";
+        }
+      } catch (Exception $e) {
+        $errors[] = $e->getMessage();
+      }
+    }
+
+    // Action: Edit Comment Text
+    elseif ($action === 'edit_comment_text') {
+      $comment_text = sanitizeInput($_POST['comment'] ?? '', '');
+      try {
+        if ($comment_id && updateCommentText($conn, $comment_id, $comment_text)) {
+          $success_message = "Comment #" . $comment_id . " text updated successfully.";
+          $editCommentId = null;
+          $editingComment = null;
+        }
+      } catch (Exception $e) {
+        $errors[] = $e->getMessage();
+      }
+    }
+
+    // Action: Delete Comment
+    elseif ($action === 'delete_comment') {
+      try {
+        if ($comment_id && deleteComment($conn, $comment_id)) {
+          $success_message = "Comment #" . $comment_id . " deleted successfully.";
+          if ($editCommentId === $comment_id) {
+            $editCommentId = null;
+          }
+        }
+      } catch (Exception $e) {
+        $errors[] = $e->getMessage();
+      }
+    }
+  }
+
   if ($editCommentId) {
     try {
       // Transitional schema introspection fallback for 1.x; scheduled for removal in v2.0.0.
@@ -73,53 +124,6 @@
     if (!$editingComment) {
       $errors[] = "Comment not found.";
       $editCommentId = null;
-    }
-  }
-
-  // Handle Form Submissions
-  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
-      die("CSRF token validation failed");
-    }
-
-    $action = sanitizeInput($_POST['action'] ?? '');
-    $comment_id = filter_input(INPUT_POST, 'comment_id', FILTER_VALIDATE_INT);
-
-    // Action: Update Status
-    if ($action === 'set_status') {
-      $new_status = sanitizeInput($_POST['status'] ?? '');
-      try {
-        if ($comment_id && updateCommentStatus($conn, $comment_id, $new_status)) {
-          $success_message = "Comment #" . $comment_id . " status updated to '" . htmlspecialchars($new_status, ENT_QUOTES, 'UTF-8') . "'.";
-        }
-      } catch (Exception $e) {
-        $errors[] = $e->getMessage();
-      }
-    }
-
-    // Action: Edit Comment Text
-    elseif ($action === 'edit_comment_text') {
-      $comment_text = sanitizeInput($_POST['comment'] ?? '');
-      try {
-        if ($comment_id && updateCommentText($conn, $comment_id, $comment_text)) {
-          $success_message = "Comment #" . $comment_id . " text updated successfully.";
-          $editCommentId = null;
-          $editingComment = null;
-        }
-      } catch (Exception $e) {
-        $errors[] = $e->getMessage();
-      }
-    }
-
-    // Action: Delete Comment
-    elseif ($action === 'delete_comment') {
-      try {
-        if ($comment_id && deleteComment($conn, $comment_id)) {
-          $success_message = "Comment #" . $comment_id . " deleted successfully.";
-        }
-      } catch (Exception $e) {
-        $errors[] = $e->getMessage();
-      }
     }
   }
 
@@ -325,16 +329,16 @@
                   $targetUrl = '#';
                   $targetLabel = 'Unknown';
                   if (!empty($com['blog_id'])) {
-                    $targetUrl = '/blogpost.php?id=' . (int)$com['blog_id'];
+                    $targetUrl = '/blog.php?id=' . (int)$com['blog_id'];
                     $targetLabel = 'Story: ' . htmlspecialchars($com['blog_title'] ?? ('Story #' . $com['blog_id']), ENT_QUOTES, 'UTF-8');
                   } elseif (!empty($com['note_id'])) {
-                    $targetUrl = '/tnote.php?id=' . (int)$com['note_id'];
+                    $targetUrl = '/tnotes.php?id=' . (int)$com['note_id'];
                     $vintage = !empty($com['wine_vintage']) ? $com['wine_vintage'] . ' ' : '';
                     $producer = !empty($com['wine_producer']) ? $com['wine_producer'] . ' ' : '';
                     $cuvee = $com['wine_master_name'] ?? ('Note #' . $com['note_id']);
                     $targetLabel = 'Tasting Note: ' . htmlspecialchars($vintage . $producer . $cuvee, ENT_QUOTES, 'UTF-8');
                   } elseif (!empty($com['wine_id'])) {
-                    $targetUrl = '/wine.php?id=' . (int)$com['wine_id'];
+                    $targetUrl = '/wines.php?id=' . (int)$com['wine_id'];
                     $vintage = !empty($com['wine_vintage']) ? $com['wine_vintage'] . ' ' : '';
                     $cuvee = $com['wine_master_name'] ?? ('Wine #' . $com['wine_id']);
                     $targetLabel = 'Wine: ' . htmlspecialchars($vintage . $cuvee, ENT_QUOTES, 'UTF-8');

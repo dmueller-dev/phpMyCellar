@@ -18,8 +18,8 @@
    * Required privileges: 'add_tasting_note' or 'edit_tasting_note'
    */
   $can_add = hasPrivilege($conn, 'add_tasting_note');
-  $can_edit = hasPrivilege($conn, 'edit_tasting_note');
   $can_edit_all = hasPrivilege($conn, 'edit_all_tasting_notes');
+  $can_edit = hasPrivilege($conn, 'edit_tasting_note') || $can_edit_all;
   $can_publish = hasPrivilege($conn, 'publish_tasting_note');
 
   if (!$can_add && !$can_edit) {
@@ -128,6 +128,7 @@
       );
 
       if ($wset_enabled && $has_wset_post) {
+        $allowed_blic = ['0.0', '0.5', '1.0'];
         $raw_b = (isset($_POST['wset_balance']) && $_POST['wset_balance'] !== '') ? filter_input(INPUT_POST, 'wset_balance', FILTER_VALIDATE_FLOAT) : null;
         $raw_l = (isset($_POST['wset_length']) && $_POST['wset_length'] !== '') ? filter_input(INPUT_POST, 'wset_length', FILTER_VALIDATE_FLOAT) : null;
         $raw_i = (isset($_POST['wset_intensity']) && $_POST['wset_intensity'] !== '') ? filter_input(INPUT_POST, 'wset_intensity', FILTER_VALIDATE_FLOAT) : null;
@@ -136,7 +137,12 @@
         if ($raw_l !== false && $raw_l !== null) $wset_length = number_format($raw_l, 1, '.', '');
         if ($raw_i !== false && $raw_i !== null) $wset_intensity = number_format($raw_i, 1, '.', '');
         if ($raw_c !== false && $raw_c !== null) $wset_complexity = number_format($raw_c, 1, '.', '');
-        if ($wset_balance !== null || $wset_length !== null || $wset_intensity !== null || $wset_complexity !== null) {
+
+        if ($wset_balance === null || $wset_length === null || $wset_intensity === null || $wset_complexity === null) {
+          $errors[] = "Please evaluate all four WSET SAT BLIC criteria (Balance, Length, Intensity, and Complexity) or leave all four unevaluated.";
+        } elseif (!in_array($wset_balance, $allowed_blic, true) || !in_array($wset_length, $allowed_blic, true) || !in_array($wset_intensity, $allowed_blic, true) || !in_array($wset_complexity, $allowed_blic, true)) {
+          $errors[] = "Invalid WSET SAT BLIC value selected. Each criterion must be 0.0, 0.5, or 1.0.";
+        } else {
           $wsetpts = number_format((float)$wset_balance + (float)$wset_length + (float)$wset_intensity + (float)$wset_complexity, 1, '.', '');
         }
       }
@@ -163,7 +169,7 @@
       if ($is_post_edit) {
         $post_note_id = filter_input(INPUT_POST, 'note_id', FILTER_VALIDATE_INT);
         $check_note = $post_note_id ? getNoteDetails($conn, $post_note_id) : null;
-        $post_user_id = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT) ?: ($check_note ? (int)$check_note['user_id'] : (int)$_SESSION['user_id']);
+        $post_user_id = $check_note ? (int)$check_note['user_id'] : (int)$_SESSION['user_id'];
 
         if (!$check_note) {
           $errors[] = "Error updating tasting note: Invalid note ID.";
@@ -198,10 +204,10 @@
       }
 
       if (!empty($errorsImg)) {
-        $errors[] = $errorsImg[0];
+        $errors = array_merge($errors, $errorsImg);
       }
       if (!empty($errorsDrinkDates)) {
-        $errors[] = $errorsDrinkDates[0];
+        $errors = array_merge($errors, $errorsDrinkDates);
       }
       if (!empty($valErrors)) {
         $errors = array_merge($errors, $valErrors);
@@ -245,10 +251,21 @@
     // Action 2: Confirm Cellar Bottle Consumption
     if (isset($_POST['confirmConsume'])) {
       $consume_bottle_id = filter_input(INPUT_POST, 'consume_bottle_id', FILTER_VALIDATE_INT);
-      $consumption_date = sanitizeInput($_POST['consumption_date'] ?? date('Y-m-d'));
+      $consumption_date = sanitizeInput($_POST['consumption_date'] ?? date('Y-m-d'), '');
       $consume_note_id = filter_input(INPUT_POST, 'tasting_note_id', FILTER_VALIDATE_INT) ?: null;
 
-      if ($consume_bottle_id && !empty($consumption_date)) {
+      $can_consume = hasPrivilege($conn, 'edit_bottle');
+      if (!$can_consume && $consume_bottle_id && $consume_note_id) {
+        $btl_info = getBottleDetails($conn, $consume_bottle_id);
+        $note_info = getNoteDetails($conn, $consume_note_id);
+        if ($btl_info && $note_info && (int)$btl_info['wine_id'] === (int)$note_info['wine_id'] && ($can_edit_all || (int)$note_info['user_id'] === (int)$_SESSION['user_id'])) {
+          $can_consume = true;
+        }
+      }
+
+      if (!$can_consume) {
+        $errors[] = "You do not have permission to mark this bottle as consumed.";
+      } elseif ($consume_bottle_id && !empty($consumption_date)) {
         if (markBottleAsConsumed($conn, $consume_bottle_id, $consumption_date, $consume_note_id)) {
           $success_message = "Bottle #" . (int)$consume_bottle_id . " marked as consumed in inventory.";
         } else {
@@ -428,9 +445,11 @@
             &#9998; Edit Tasting Note
           </a>
         <?php endif; ?>
-        <a href="#notesJournalSection" class="admin-tab-btn" style="color: #555;">
-          &#128203; Notes Directory (<?php echo count($accessible_notes); ?>)
-        </a>
+        <?php if ($mode !== 'blind'): ?>
+          <a href="#notesJournalSection" class="admin-tab-btn" style="color: #555;">
+            &#128203; Notes Directory (<?php echo count($accessible_notes); ?>)
+          </a>
+        <?php endif; ?>
       </div>
 
       <!-- Form Container -->
@@ -464,7 +483,9 @@
                   $rating_label = formatRatingDisplay($n, $scale, true);
                   $full_wine_title = getWineName($n['nameconvention'], $n['vintage'], $n['name'], $n['producer'], $n['grape'], $n['vineyard']);
                   $display_wine_title = ($n['blind'] === 'blind') ? 'Blind tasting' : $full_wine_title;
-                  $search_note_str = implode(' ', array_filter([$n['note_id'], $n['tasting_date'], $rating_label, $full_wine_title, $n['producer'] ?? '', $n['region'] ?? '', $n['country'] ?? '']));
+                  $search_note_str = ($n['blind'] === 'blind')
+                    ? implode(' ', array_filter([$n['note_id'], $n['tasting_date'], $rating_label, 'Blind tasting']))
+                    : implode(' ', array_filter([$n['note_id'], $n['tasting_date'], $rating_label, $full_wine_title, $n['producer'] ?? '', $n['region'] ?? '', $n['country'] ?? '']));
                 ?>
                   <option value="<?php echo (int)$n['note_id']; ?>"
                           data-search="<?php echo htmlspecialchars($search_note_str, ENT_QUOTES, 'UTF-8'); ?>"
@@ -565,19 +586,11 @@
                     Select Cellar Bottle: <span style="color: red;">*</span>
                   </label>
                   <div style="border: 1px solid #ccc; border-radius: 4px; background: white;">
-                    <input type="text" id="searchBottleBox" placeholder="&#128269; Search bottle ID or info..." onkeyup="filterDropdown('bottle_id', 'searchBottleBox', cachedBottleOptions)" oninput="filterDropdown('bottle_id', 'searchBottleBox', cachedBottleOptions)" style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px 10px; box-sizing: border-box; font-family: inherit; font-size: 0.9rem; background: #fafafa; border-radius: 4px 4px 0 0;" autocomplete="off">
+                    <input type="text" id="searchBottleBox" placeholder="&#128269; Search bottle ID..." onkeyup="filterDropdown('bottle_id', 'searchBottleBox', cachedBottleOptions)" oninput="filterDropdown('bottle_id', 'searchBottleBox', cachedBottleOptions)" style="width: 100%; border: none; border-bottom: 1px solid #eee; padding: 8px 10px; box-sizing: border-box; font-family: inherit; font-size: 0.9rem; background: #fafafa; border-radius: 4px 4px 0 0;" autocomplete="off">
                     <select name="bottle_id" id="bottle_id" required onchange="if(this.value) window.location.href='manageTastingNotes.php?mode=blind&bottle_id=' + this.value;" style="width: 100%; border: none; padding: 8px 10px; border-radius: 0 0 4px 4px; box-sizing: border-box; min-height: 44px; font-family: inherit; font-size: 0.9rem;">
                       <option value="">-- Select a bottle from cellar --</option>
                       <?php foreach ($bottles as $b): 
-                        $b_search_parts = [
-                          $b['bottle_id'],
-                          $b['producer'] ?? '',
-                          $b['name'] ?? '',
-                          $b['vintage'] ?? '',
-                          $b['grape'] ?? '',
-                          $b['vineyard'] ?? ''
-                        ];
-                        $b_search_text = implode(' ', array_filter($b_search_parts));
+                        $b_search_text = 'Bottle #' . (int)$b['bottle_id'];
                       ?>
                         <option value="<?php echo (int)$b['bottle_id']; ?>"
                                 data-search="<?php echo htmlspecialchars($b_search_text, ENT_QUOTES, 'UTF-8'); ?>"
@@ -871,6 +884,7 @@
       </div>
 
       <!-- Searchable Tasting Notes Journal Ledger -->
+      <?php if ($mode !== 'blind'): ?>
       <?php
         $totalNotesCount = count($accessible_notes);
         $displayNotes = ($ledger_limit === 'all') ? $accessible_notes : array_slice($accessible_notes, 0, $ledger_limit);
@@ -995,6 +1009,7 @@
           </div>
         </div>
       </div>
+      <?php endif; ?>
 
     </div>
   </div>
