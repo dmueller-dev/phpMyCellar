@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-13
+
 ### Added
 - Cross-device mobile layout transformations across all administrative management pages (`backend/manage*.php`):
   - Responsive card transformation for tables on viewports &le; 720px (`.admin-table-container`), converting tabular rows into touch-friendly cards with `data-label` keys, prominent primary item headers, and &ge; 44 &times; 44 px action targets.

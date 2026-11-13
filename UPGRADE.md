@@ -18,7 +18,9 @@ This guide provides instructions for upgrading **phpMyCellar** between releases,
    - [7. Storage Bin Maximum Capacity & Usage Indicators (`storageBins.max_capacity`, `show_storage_usage_pct`)](#7-storage-bin-maximum-capacity--usage-indicators-storagebinsmax_capacity-show_storage_usage_pct)
    - [8. Full Administrative Entity Coverage & Granular Privileges](#8-full-administrative-entity-coverage--granular-privileges)
    - [9. Unified Backend Dashboards (`add*.php` & `edit*.php` → `manage*.php`)](#9-unified-backend-dashboards-addphp--editphp--managephp)
+   - [10. Base Schema Synchronisation (`install/schema.sql`)](#10-base-schema-synchronisation-installschemasql)
 4. [Step-by-Step Version Upgrade Instructions](#step-by-step-version-upgrade-instructions)
+   - [Upgrading to 1.2.0](#upgrading-to-120)
    - [Upgrading to 1.1.0](#upgrading-to-110)
    - [Upgrading to 1.0.1](#upgrading-to-101)
    - [Upgrading to 1.0.0](#upgrading-to-100)
@@ -52,14 +54,14 @@ The following table summarizes all components deprecated in the `1.x` series tha
 | `tnote.php` | Page / File | `1.0.0` | `2.0.0` | Use `tnotes.php` directly; configure web server rewrite if external links exist |
 | `wine.php` | Page / File | `1.0.0` | `2.0.0` | Use `wines.php` directly; configure web server rewrite if external links exist |
 | `blogpost.php` | Page / File | `1.0.0` | `2.0.0` | Use `blog.php` directly; configure web server rewrite if external links exist |
-| 27 legacy `backend/add*.php` & `backend/edit*.php` scripts | Page / File | `1.1.0` | `2.0.0` | Consolidated into unified `/backend/manage*.php` dashboards with HTTP 301 shims |
+| 27 legacy `backend/add*.php` & `backend/edit*.php` scripts | Page / File | `1.2.0` (`blindTasting.php`: `1.1.0`) | `2.0.0` | Consolidated into unified `/backend/manage*.php` dashboards with HTTP 301 shims |
 | `dmpts` (view column) | SQL View Alias | `1.0.1` | `2.0.0` | Use `pts_20` column in `view_vintage_top_wines` and query results |
 | `avg_dmpts` (view column) | SQL View Alias | `1.0.1` | `2.0.0` | Use `avg_pts_20` or `avg_score` in `view_vintage_region_colour_stats` |
 | `$_POST['dmpts']` | Form Input | `1.0.1` | `2.0.0` | Submit rating using `$_POST['pts_20']` in tasting note forms |
 | `$row['dmpts']` / `$row['avg_dmpts']` | Array Keys | `1.0.1` | `2.0.0` | Update custom themes or scripts to use `$row['pts_20']` / `$row['avg_score']` |
-| `getCommentsTableMetadata()` | PHP Function | `1.1.0` | `2.0.0` | Removed; `comments` table schema is strictly standardised (`pub_time`, `content`, `status`) |
-| Dynamic `comments` column fallbacks | DB Schema Fallback | `1.1.0` | `2.0.0` | Ensure `comments` table has `pub_time`, `content`, and `status` columns per `install/schema.sql` |
-| Transitional RBAC permission fallbacks | RBAC Fallback | `1.1.0` | `2.0.0` | Explicit role privileges required in `role_privileges`; fallbacks to parent privileges will be removed |
+| `getCommentsTableMetadata()` | PHP Function | `1.2.0` | `2.0.0` | Removed; `comments` table schema is strictly standardised (`pub_time`, `content`, `status`) |
+| Dynamic `comments` column fallbacks | DB Schema Fallback | `1.2.0` | `2.0.0` | Ensure `comments` table has `pub_time`, `content`, and `status` columns per `install/schema.sql` |
+| Transitional RBAC permission fallbacks | RBAC Fallback | `1.2.0` | `2.0.0` | Explicit role privileges required in `role_privileges`; fallbacks to parent privileges will be removed |
 
 ---
 
@@ -357,7 +359,7 @@ ON DUPLICATE KEY UPDATE `privilege_code` = VALUES(`privilege_code`);
 
 ### 9. Unified Backend Dashboards (`add*.php` & `edit*.php` → `manage*.php`)
 
-In phpMyCellar 1.1.0, all standalone `add*.php` and `edit*.php` scripts were consolidated into cohesive, cross-device friendly `manage*.php` management dashboards.
+In phpMyCellar 1.2.0, all standalone `add*.php` and `edit*.php` scripts were consolidated into cohesive, cross-device friendly `manage*.php` management dashboards.
 
 #### Script Consolidation Mapping
 * **Cellar & Bottles:** `addBottle.php` & `editBottle.php` &rarr; `manageBottles.php`
@@ -382,6 +384,20 @@ All 27 legacy script endpoints currently function as transparent HTTP 301 redire
 ---
 
 ## Step-by-Step Version Upgrade Instructions
+
+### Upgrading to 1.2.0
+1. **Pull the latest codebase**:
+   ```bash
+   git pull origin main
+   ```
+2. **Apply Database Migrations**:
+   - Apply the SQL snippets in sections 6 to 8 above (`bottles.restricted`, `storageBins.max_capacity`, `comments.status`, and new `site_settings` / `privileges` records) if upgrading an existing database.
+   - Check any missing columns against `install/schema.sql` (section 10).
+3. **Review Site Settings & Role Privileges**:
+   - Navigate to **Backend > Site Settings** to configure **Storage Usage Percentages** (`show_storage_usage_pct`) and **Carte des Vins Unready Wines** (`winemenu_include_unready`).
+   - Review the new granular privileges in **Backend > Manage Privileges** to grant explicit permissions before v2.0.0 removes transitional fallbacks.
+4. **Update Bookmarks**:
+   - Update any saved links from legacy `/backend/add*.php` or `/backend/edit*.php` scripts to `/backend/manage*.php`.
 
 ### Upgrading to 1.1.0
 1. **Pull the latest codebase**:
